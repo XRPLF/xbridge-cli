@@ -15,11 +15,12 @@ include = [
   "LICENSE",
 ]
 packages = [
-  { include = "sidechain-cli" },
+  { include = "sidechain_cli" },
 ]
 
 [tool.poetry.dependencies]
 python = "^3.7.1"
+click = "^8.1.3"
 
 [tool.poetry.dev-dependencies]
 flake8 = "^3.8.4"
