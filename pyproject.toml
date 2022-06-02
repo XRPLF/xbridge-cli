@@ -15,7 +15,7 @@ include = [
   "LICENSE",
 ]
 packages = [
-  { include = "sidechain-cli" },
+  { include = "sidechain_cli" },
 ]
 
 [tool.poetry.dependencies]
