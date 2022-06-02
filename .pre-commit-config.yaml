@@ -29,5 +29,5 @@ repos:
           entry: poetry run mypy
           args: ["--strict", "--implicit-reexport"]
           language: system
-          files: xrpl/
+          files: sidechain_cli/
           types: [python]
