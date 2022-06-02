@@ -32,8 +32,8 @@ jobs:
 
       - name: Lint
         run: |
-          poetry run flake8 sidechain-cli tests
+          poetry run flake8 sidechain_cli tests
 
       - name: Type-check
         run: |
-          poetry run mypy --strict --implicit-reexport sidechain-cli
+          poetry run mypy --strict --implicit-reexport sidechain_cli
