@@ -2,6 +2,7 @@
 
 import click
 
+from sidechain_cli.bridge import setup_bridge
 from sidechain_cli.start import start
 
 
@@ -12,6 +13,7 @@ def main() -> None:
 
 
 main.add_command(start)
+main.add_command(setup_bridge, name="bridge")
 
 
 if __name__ == "__main__":
