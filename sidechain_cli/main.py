@@ -2,6 +2,8 @@
 
 import click
 
+from sidechain_cli.start import start
+
 
 @click.group()
 def main() -> None:
@@ -9,37 +11,7 @@ def main() -> None:
     pass
 
 
-@main.group()
-def start() -> None:
-    """Start a node."""
-    pass
-
-
-@start.command("chain")
-@click.argument("rippled")
-@click.argument("config")
-def start_chain(rippled: str, config: str) -> None:
-    """
-    Start a standalone node of rippled.
-
-    Args:
-        rippled: The filepath to the rippled node.
-        config: The filepath to the rippled config file.
-    """
-    print(rippled)
-    print(config)
-
-
-@main.group()
-@click.argument("name")
-def goodbye(name: str) -> None:
-    """
-    Say goodbye.
-
-    Args:
-        name: The name to say goodbye to.
-    """
-    print("Goodbye, {0}!".format(name))
+main.add_command(start)
 
 
 if __name__ == "__main__":
