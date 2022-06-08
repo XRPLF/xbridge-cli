@@ -4,10 +4,11 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
-from typing import Any, Dict, Type
+from typing import Any, Dict, Optional, Tuple, Type
 
 import click
 from jinja2 import Environment, FileSystemLoader
+from xrpl.wallet import Wallet
 
 JINJA_ENV = Environment(
     loader=FileSystemLoader(searchpath="./sidechain_cli/config/templates")
@@ -125,22 +126,66 @@ def _generate_standalone_config(
     )
 
 
-def generate_rippled_configs(
-    data_dir: str,
-    number: int = 2,
-) -> None:
+def _generate_rippled_configs(data_dir: str) -> Tuple[int, int]:
     """
     Generate the rippled config files.
 
     Args:
         data_dir: The directory to use for the config files.
-        number: The number of rippled configs to generate.
+
+    Returns:
+        The mainchain and sidechain WS ports.
     """
-    for i in range(number):
-        ports = Ports.generate(number)
-        _generate_standalone_config(
-            ports=ports, cfg_type=f"rippled{i}", data_dir=data_dir
-        )
+    mainchain_ports = Ports.generate(0)
+    _generate_standalone_config(
+        ports=mainchain_ports, cfg_type="mainchain", data_dir=data_dir
+    )
+
+    sidechain_ports = Ports.generate(0)
+    _generate_standalone_config(
+        ports=sidechain_ports, cfg_type="sidechain", data_dir=data_dir
+    )
+
+    return mainchain_ports.ws_public_port, sidechain_ports.ws_public_port
+
+
+def _generate_witness_config(
+    data_dir: str, mainchain_port: int, sidechain_port: int, witness_number: int
+) -> None:
+    sub_dir = f"{data_dir}/witness{witness_number}"
+    for path in ["", "/db"]:
+        Path(sub_dir + path).mkdir(parents=True, exist_ok=True)
+
+    template_data = {
+        "mainchain_port": mainchain_port,
+        "sidechain_port": sidechain_port,
+        "witness_port": 6010 + witness_number,
+        "db_dir": f"{sub_dir}/db",
+        "seed": Wallet.create().seed,
+        "src_door": Wallet.create().classic_address,
+        "src_issue": "XRP",
+        "dst_door": "rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh",
+        "dst_issue": "XRP",
+    }
+    # add the rippled.cfg file
+    _generate_template(
+        "witness.jinja",
+        template_data,
+        os.path.join(sub_dir, "rippled.cfg"),
+    )
+
+
+def generate_all_configs(data_dir: str, num_witnesses: int = 5) -> None:
+    """
+    Generate the rippled and witness configs.
+
+    Args:
+        data_dir: The directory to use for the config files.
+        num_witnesses: The number of witnesses configs to generate.
+    """
+    mc_port, sc_port = _generate_rippled_configs(data_dir)
+    for i in range(num_witnesses):
+        _generate_witness_config(data_dir, mc_port, sc_port, i)
 
 
 if __name__ == "__main__":
@@ -149,17 +194,17 @@ if __name__ == "__main__":
     @click.option(
         "--data_dir", required=True, help="The folder in which to store config files."
     )
-    @click.option(
-        "--number", required=True, help="The number of rippled configs to generate."
-    )
-    def main(data_dir: str, number: str) -> None:
+    @click.option("--num_witnesses", help="The number of witness configs to generate.")
+    def main(data_dir: str, num_witnesses: Optional[str]) -> None:
         """
         Generate the config files.
 
         Args:
             data_dir: The directory to use for the config files.
-            number: The number of rippled configs to generate.
+            num_witnesses: The number of witnesses configs to generate.
         """
-        generate_rippled_configs(data_dir, int(number))
+        generate_all_configs(
+            data_dir, int(num_witnesses) if num_witnesses is not None else 5
+        )
 
     main()
