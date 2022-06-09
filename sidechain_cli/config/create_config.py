@@ -141,7 +141,7 @@ def _generate_rippled_configs(data_dir: str) -> Tuple[int, int]:
         ports=mainchain_ports, cfg_type="mainchain", data_dir=data_dir
     )
 
-    sidechain_ports = Ports.generate(0)
+    sidechain_ports = Ports.generate(1)
     _generate_standalone_config(
         ports=sidechain_ports, cfg_type="sidechain", data_dir=data_dir
     )
