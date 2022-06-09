@@ -18,6 +18,9 @@ packages = [
   { include = "sidechain_cli" },
 ]
 
+[tool.poetry.scripts]
+sidechain-cli = 'sidechain_cli.main:main'
+
 [tool.poetry.dependencies]
 python = "^3.7.1"
 click = "^8.1.3"
