@@ -2,7 +2,7 @@
 
 import click
 
-from sidechain_cli.bridge import setup_bridge
+from sidechain_cli.bridge import bridge
 from sidechain_cli.chain import chain
 from sidechain_cli.witness import witness
 
@@ -15,7 +15,7 @@ def main() -> None:
 
 main.add_command(chain)
 main.add_command(witness)
-main.add_command(setup_bridge, name="bridge")
+main.add_command(bridge)
 
 
 if __name__ == "__main__":
