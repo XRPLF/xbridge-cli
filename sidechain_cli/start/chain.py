@@ -7,20 +7,31 @@ import click
 
 
 @click.command(name="chain")
-@click.argument("rippled", required=True, type=click.Path(exists=True))
-@click.argument("config", required=True, type=click.Path(exists=True))
+@click.option(
+    "--rippled",
+    required=True,
+    type=click.Path(exists=True),
+    help="The filepath to the rippled node.",
+)
+@click.option(
+    "--config",
+    required=True,
+    type=click.Path(exists=True),
+    help="The filepath to the rippled config file.",
+)
 @click.option(
     "--verbose", is_flag=True, help="Whether or not to print more verbose information."
 )
 def start_chain(rippled: str, config: str, verbose: bool = False) -> None:
     """
     Start a standalone node of rippled.
+    \f
 
-    \b
     Args:
         rippled: The filepath to the rippled node.
         config: The filepath to the rippled config file.
-    """
+        verbose: Whether or not to print more verbose information.
+    """  # noqa: D301
     to_run = [rippled, "--conf", config, "-a"]
     if verbose:
         print("Starting server...")
