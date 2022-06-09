@@ -9,7 +9,7 @@ from sidechain_cli.witness import witness
 
 @click.group()
 def main() -> None:
-    """The main CLI call."""
+    """The Sidechain Command-Line Interface. Do everything with sidechains."""
     pass
 
 
