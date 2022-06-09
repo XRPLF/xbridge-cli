@@ -171,7 +171,7 @@ def _generate_witness_config(
     _generate_template(
         "witness.jinja",
         template_data,
-        os.path.join(sub_dir, "rippled.cfg"),
+        os.path.join(sub_dir, "witness.json"),
     )
 
 

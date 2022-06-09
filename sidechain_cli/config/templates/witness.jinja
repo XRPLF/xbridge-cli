@@ -11,12 +11,12 @@
     "ip": "127.0.0.1",
     "port": {{ witness_port }}
   },
-  "db_dir": {{ db_dir }},
-  "signing_key_seed": {{ seed }},
+  "db_dir": "{{ db_dir }}",
+  "signing_key_seed": "{{ seed }}",
   "sidechain": {
-    "src_chain_door": {{ src_door }},
-    "src_chain_issue": {{ src_issue }},
-    "dst_chain_door": {{ dst_door }},
-    "dst_chain_issue": {{ dst_issue }}
+    "src_chain_door": "{{ src_door }}",
+    "src_chain_issue": "{{ src_issue }}",
+    "dst_chain_door": "{{ dst_door }}",
+    "dst_chain_issue": "{{ dst_issue }}"
   }
 }
