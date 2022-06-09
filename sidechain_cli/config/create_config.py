@@ -150,7 +150,11 @@ def _generate_rippled_configs(data_dir: str) -> Tuple[int, int]:
 
 
 def _generate_witness_config(
-    data_dir: str, mainchain_port: int, sidechain_port: int, witness_number: int
+    data_dir: str,
+    mainchain_port: int,
+    sidechain_port: int,
+    witness_number: int,
+    src_door: str,
 ) -> None:
     sub_dir = f"{data_dir}/witness{witness_number}"
     for path in ["", "/db"]:
@@ -162,16 +166,30 @@ def _generate_witness_config(
         "witness_port": 6010 + witness_number,
         "db_dir": f"{sub_dir}/db",
         "seed": Wallet.create().seed,
-        "src_door": Wallet.create().classic_address,
+        "src_door": src_door,
         "src_issue": "XRP",
         "dst_door": "rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh",
         "dst_issue": "XRP",
     }
-    # add the rippled.cfg file
+    # add the witness.json file
     _generate_template(
         "witness.jinja",
         template_data,
         os.path.join(sub_dir, "witness.json"),
+    )
+
+
+def _generate_bootstrap(data_dir: str, src_door: Wallet) -> None:
+    template_data = {
+        "mainchain_id": src_door.classic_address,
+        "mainchain_seed": src_door.seed,
+        "sidechain_id": "rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh",
+        "sidechain_seed": "snoPBrXtMeMyMHUVTgbuqAfg1SUTb",
+    }
+    _generate_template(
+        "bootstrap.jinja",
+        template_data,
+        os.path.join(data_dir, "bridge_bootstrap.json"),
     )
 
 
@@ -184,8 +202,12 @@ def generate_all_configs(data_dir: str, num_witnesses: int = 5) -> None:
         num_witnesses: The number of witnesses configs to generate.
     """
     mc_port, sc_port = _generate_rippled_configs(data_dir)
+    src_door = Wallet.create()
     for i in range(num_witnesses):
-        _generate_witness_config(data_dir, mc_port, sc_port, i)
+        _generate_witness_config(
+            data_dir, mc_port, sc_port, i, src_door.classic_address
+        )
+    _generate_bootstrap(data_dir, src_door)
 
 
 if __name__ == "__main__":
