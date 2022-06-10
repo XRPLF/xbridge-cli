@@ -44,8 +44,10 @@ def start_chain(name: str, rippled: str, config: str, verbose: bool = False) -> 
         config: The filepath to the rippled config file.
         verbose: Whether or not to print more verbose information.
     """  # noqa: D301
-    if check_chain_exists(name):
-        print("Error: Chain already running with that name.")
+    rippled = os.path.abspath(rippled)
+    config = os.path.abspath(config)
+    if check_chain_exists(name, config):
+        print("Error: Chain already running with that name or config.")
         return
     to_run = [rippled, "--conf", config, "-a"]
     if verbose:
@@ -55,8 +57,8 @@ def start_chain(name: str, rippled: str, config: str, verbose: bool = False) -> 
     pid = process.pid
     chain_data: ChainData = {
         "name": name,
-        "rippled": os.path.abspath(rippled),
-        "config": os.path.abspath(config),
+        "rippled": rippled,
+        "config": config,
         "pid": pid,
     }
     add_chain(chain_data)
