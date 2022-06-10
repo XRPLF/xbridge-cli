@@ -11,6 +11,7 @@ _HOME = str(Path.home())
 
 _CONFIG_FOLDER = os.path.join(_HOME, ".config", "sidechain-cli")
 
+# ~/.config/sidechain-cli/config.json
 _CONFIG_FILE = os.path.join(_CONFIG_FOLDER, "config.json")
 
 # Initialize config file
