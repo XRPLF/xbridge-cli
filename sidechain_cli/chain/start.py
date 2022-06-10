@@ -53,7 +53,9 @@ def start_chain(name: str, rippled: str, config: str, verbose: bool = False) -> 
     if verbose:
         print("Starting server...")
     fout = open(os.devnull, "w")
-    process = subprocess.Popen(to_run, stdout=fout, close_fds=True)
+    process = subprocess.Popen(
+        to_run, stdout=fout, stderr=subprocess.STDOUT, close_fds=True
+    )
     pid = process.pid
     chain_data: ChainData = {
         "name": name,
@@ -88,7 +90,9 @@ def stop_chain(name: Optional[str] = None, stop_all: bool = False) -> None:
 
 @click.command(name="restart")
 @click.option("--name", help="The name of the chain to restart.")
-@click.option("--all", is_flag=True, help="Whether to restart all of the chains.")
+@click.option(
+    "--all", "restart_all", is_flag=True, help="Whether to stop all of the chains."
+)
 def restart_chain(name: Optional[str] = None, restart_all: bool = False) -> None:
     """
     Restart a rippled node(s).
