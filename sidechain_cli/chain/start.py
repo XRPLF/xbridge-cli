@@ -6,10 +6,15 @@ from typing import Optional
 
 import click
 
+from sidechain_cli.utils import ChainData, add_chain, check_chain_exists
+
 
 @click.command(name="start")
 @click.option(
-    "--name", help="The name of the chain (used for differentiation purposes)."
+    "--name",
+    required=True,
+    prompt=True,
+    help="The name of the chain (used for differentiation purposes).",
 )
 @click.option(
     "--rippled",
@@ -39,6 +44,11 @@ def start_chain(name: str, rippled: str, config: str, verbose: bool = False) -> 
         config: The filepath to the rippled config file.
         verbose: Whether or not to print more verbose information.
     """  # noqa: D301
+    rippled = os.path.abspath(rippled)
+    config = os.path.abspath(config)
+    if check_chain_exists(name, config):
+        print("Error: Chain already running with that name or config.")
+        return
     to_run = [rippled, "--conf", config, "-a"]
     if verbose:
         print("Starting server...")
@@ -47,13 +57,23 @@ def start_chain(name: str, rippled: str, config: str, verbose: bool = False) -> 
         to_run, stdout=fout, stderr=subprocess.STDOUT, close_fds=True
     )
     pid = process.pid
+    chain_data: ChainData = {
+        "name": name,
+        "rippled": rippled,
+        "config": config,
+        "pid": pid,
+    }
+    # TODO: add some sort of check that rippled actually started
+    add_chain(chain_data)
     if verbose:
         print(f"started rippled: {rippled} PID: {pid}", flush=True)
 
 
 @click.command(name="stop")
 @click.option("--name", help="The name of the chain to stop.")
-@click.option("--all", is_flag=True, help="Whether to stop all of the chains.")
+@click.option(
+    "--all", "stop_all", is_flag=True, help="Whether to stop all of the chains."
+)
 def stop_chain(name: Optional[str] = None, stop_all: bool = False) -> None:
     """
     Stop a rippled node(s).
@@ -71,7 +91,9 @@ def stop_chain(name: Optional[str] = None, stop_all: bool = False) -> None:
 
 @click.command(name="restart")
 @click.option("--name", help="The name of the chain to restart.")
-@click.option("--all", is_flag=True, help="Whether to restart all of the chains.")
+@click.option(
+    "--all", "restart_all", is_flag=True, help="Whether to stop all of the chains."
+)
 def restart_chain(name: Optional[str] = None, restart_all: bool = False) -> None:
     """
     Restart a rippled node(s).
