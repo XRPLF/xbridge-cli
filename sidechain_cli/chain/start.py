@@ -6,7 +6,7 @@ from typing import Optional
 
 import click
 
-from sidechain_cli.utils.config_file import add_chain
+from sidechain_cli.utils import ChainData, add_chain
 
 
 @click.command(name="start")
@@ -49,7 +49,7 @@ def start_chain(name: str, rippled: str, config: str, verbose: bool = False) -> 
         to_run, stdout=fout, stderr=subprocess.STDOUT, close_fds=True
     )
     pid = process.pid
-    chain_data = {
+    chain_data: ChainData = {
         "name": name,
         "rippled": rippled,
         "config": config,
@@ -62,7 +62,9 @@ def start_chain(name: str, rippled: str, config: str, verbose: bool = False) -> 
 
 @click.command(name="stop")
 @click.option("--name", help="The name of the chain to stop.")
-@click.option("--all", is_flag=True, help="Whether to stop all of the chains.")
+@click.option(
+    "--all", "stop_all", is_flag=True, help="Whether to stop all of the chains."
+)
 def stop_chain(name: Optional[str] = None, stop_all: bool = False) -> None:
     """
     Stop a rippled node(s).
