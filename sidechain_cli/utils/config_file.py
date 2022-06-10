@@ -20,6 +20,9 @@ if not os.path.exists(_CONFIG_FILE):
         data: Dict[str, Any] = {"chains": []}
         json.dump(data, f, indent=4)
 
+# TODO: consider having separate JSONs for each node type
+# (e.g. chains.json, witnesses.json)
+
 
 class ConfigFile:
     """Helper class for working with the config file."""
