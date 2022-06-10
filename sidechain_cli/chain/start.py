@@ -63,6 +63,7 @@ def start_chain(name: str, rippled: str, config: str, verbose: bool = False) -> 
         "config": config,
         "pid": pid,
     }
+    # TODO: add some sort of check that rippled actually started
     add_chain(chain_data)
     if verbose:
         print(f"started rippled: {rippled} PID: {pid}", flush=True)
