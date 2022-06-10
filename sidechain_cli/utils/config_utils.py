@@ -1,15 +1,14 @@
 """Utils for working with the config file."""
 
-from typing import Any, Dict
-
 from sidechain_cli.utils.config_file import ConfigFile
+from sidechain_cli.utils.types import ChainData
 
 
 def _get_config() -> ConfigFile:
     return ConfigFile.from_file()
 
 
-def add_chain(chain_data: Dict[str, Any]) -> None:
+def add_chain(chain_data: ChainData) -> None:
     """
     Add a chain's data to the config file.
 
