@@ -6,12 +6,15 @@ from typing import Optional
 
 import click
 
-from sidechain_cli.utils import ChainData, add_chain
+from sidechain_cli.utils import ChainData, add_chain, check_chain_exists
 
 
 @click.command(name="start")
 @click.option(
-    "--name", help="The name of the chain (used for differentiation purposes)."
+    "--name",
+    required=True,
+    prompt=True,
+    help="The name of the chain (used for differentiation purposes).",
 )
 @click.option(
     "--rippled",
@@ -41,18 +44,19 @@ def start_chain(name: str, rippled: str, config: str, verbose: bool = False) -> 
         config: The filepath to the rippled config file.
         verbose: Whether or not to print more verbose information.
     """  # noqa: D301
+    if check_chain_exists(name):
+        print("Error: Chain already running with that name.")
+        return
     to_run = [rippled, "--conf", config, "-a"]
     if verbose:
         print("Starting server...")
     fout = open(os.devnull, "w")
-    process = subprocess.Popen(
-        to_run, stdout=fout, stderr=subprocess.STDOUT, close_fds=True
-    )
+    process = subprocess.Popen(to_run, stdout=fout, close_fds=True)
     pid = process.pid
     chain_data: ChainData = {
         "name": name,
-        "rippled": rippled,
-        "config": config,
+        "rippled": os.path.abspath(rippled),
+        "config": os.path.abspath(config),
         "pid": pid,
     }
     add_chain(chain_data)

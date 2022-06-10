@@ -18,3 +18,20 @@ def add_chain(chain_data: ChainData) -> None:
     conf = _get_config()
     conf.chains.append(chain_data)
     conf.write_to_file()
+
+
+def check_chain_exists(chain_name: str) -> bool:
+    """
+    Check if a chain with a given name is already running.
+
+    Args:
+        chain_name: The name of the chain to check.
+
+    Returns:
+        Whether there is already a chain running with that name.
+    """
+    conf = _get_config()
+    for chain in conf.chains:
+        if chain["name"] == chain_name:
+            return True
+    return False
