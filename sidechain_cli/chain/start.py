@@ -6,6 +6,8 @@ from typing import Optional
 
 import click
 
+from sidechain_cli.utils.config_file import add_chain
+
 
 @click.command(name="start")
 @click.option(
@@ -47,6 +49,13 @@ def start_chain(name: str, rippled: str, config: str, verbose: bool = False) -> 
         to_run, stdout=fout, stderr=subprocess.STDOUT, close_fds=True
     )
     pid = process.pid
+    chain_data = {
+        "name": name,
+        "rippled": rippled,
+        "config": config,
+        "pid": pid,
+    }
+    add_chain(chain_data)
     if verbose:
         print(f"started rippled: {rippled} PID: {pid}", flush=True)
 
