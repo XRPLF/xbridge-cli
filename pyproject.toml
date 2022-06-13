@@ -37,6 +37,7 @@ flake8-isort = "^4.0.0"
 flake8-annotations = "^2.5.0"
 flake8-absolute-import = "^1.0"
 darglint = "^1.5.8"
+types-tabulate = "^0.8.9"
 
 [tool.isort]
 # Make sure that isort's settings line up with black
