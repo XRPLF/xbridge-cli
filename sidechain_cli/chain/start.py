@@ -59,7 +59,7 @@ def start_chain(name: str, rippled: str, config: str, verbose: bool = False) -> 
         return
     to_run = [rippled, "--conf", config, "-a", "--silent"]
     if verbose:
-        print("Starting server...")
+        print(f"Starting server {name}...")
 
     output_file = f"{CONFIG_FOLDER}/{name}.out"
     if not os.path.exists(output_file):
@@ -88,7 +88,8 @@ def start_chain(name: str, rippled: str, config: str, verbose: bool = False) -> 
         return
     add_chain(chain_data)
     if verbose:
-        print(f"started rippled: {rippled} PID: {pid}", flush=True)
+        print(f"started rippled at `{rippled}` with config `{config}`", flush=True)
+        print(f"PID: {pid}", flush=True)
 
 
 @click.command(name="stop")
@@ -119,6 +120,9 @@ def stop_chain(
         chains = config.chains
     else:
         chains = [chain for chain in config.chains if chain["name"] == name]
+    if verbose:
+        chain_names = ",".join([chain["name"] for chain in chains])
+        print(f"Shutting down: {chain_names}")
 
     fout = open(os.devnull, "w")
     for chain in chains:
