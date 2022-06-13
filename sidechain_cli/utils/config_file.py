@@ -9,13 +9,13 @@ from typing import Any, Dict, Type
 
 _HOME = str(Path.home())
 
-_CONFIG_FOLDER = os.path.join(_HOME, ".config", "sidechain-cli")
+CONFIG_FOLDER = os.path.join(_HOME, ".config", "sidechain-cli")
 
 # ~/.config/sidechain-cli/config.json
-_CONFIG_FILE = os.path.join(_CONFIG_FOLDER, "config.json")
+_CONFIG_FILE = os.path.join(CONFIG_FOLDER, "config.json")
 
 # Initialize config file
-Path(_CONFIG_FOLDER).mkdir(parents=True, exist_ok=True)
+Path(CONFIG_FOLDER).mkdir(parents=True, exist_ok=True)
 if not os.path.exists(_CONFIG_FILE):
     with open(_CONFIG_FILE, "w") as f:
         data: Dict[str, Any] = {"chains": []}
