@@ -2,11 +2,19 @@
 
 import os
 import subprocess
+import time
 from typing import Optional
 
 import click
 
-from sidechain_cli.utils import ChainData, add_chain, check_chain_exists
+from sidechain_cli.utils import (
+    CONFIG_FOLDER,
+    ChainData,
+    add_chain,
+    check_chain_exists,
+    get_config,
+    remove_chain,
+)
 
 
 @click.command(name="start")
@@ -49,21 +57,34 @@ def start_chain(name: str, rippled: str, config: str, verbose: bool = False) -> 
     if check_chain_exists(name, config):
         print("Error: Chain already running with that name or config.")
         return
-    to_run = [rippled, "--conf", config, "-a"]
+    to_run = [rippled, "--conf", config, "-a", "--silent"]
     if verbose:
         print("Starting server...")
-    fout = open(os.devnull, "w")
+
+    output_file = f"{CONFIG_FOLDER}/{name}.out"
+    if not os.path.exists(output_file):
+        with open(output_file, "w") as f:
+            f.write("")
+    fout = open(output_file, "w")
+
     process = subprocess.Popen(
         to_run, stdout=fout, stderr=subprocess.STDOUT, close_fds=True
     )
     pid = process.pid
+
     chain_data: ChainData = {
         "name": name,
         "rippled": rippled,
         "config": config,
         "pid": pid,
     }
-    # TODO: add some sort of check that rippled actually started
+
+    time.sleep(0.3)
+    if process.poll() is not None:
+        print("ERROR")
+        with open(output_file) as f:
+            print(f.read())
+        return
     add_chain(chain_data)
     if verbose:
         print(f"started rippled: {rippled} PID: {pid}", flush=True)
@@ -74,7 +95,12 @@ def start_chain(name: str, rippled: str, config: str, verbose: bool = False) -> 
 @click.option(
     "--all", "stop_all", is_flag=True, help="Whether to stop all of the chains."
 )
-def stop_chain(name: Optional[str] = None, stop_all: bool = False) -> None:
+@click.option(
+    "--verbose", is_flag=True, help="Whether or not to print more verbose information."
+)
+def stop_chain(
+    name: Optional[str] = None, stop_all: bool = False, verbose: bool = False
+) -> None:
     """
     Stop a rippled node(s).
     \f
@@ -82,11 +108,28 @@ def stop_chain(name: Optional[str] = None, stop_all: bool = False) -> None:
     Args:
         name: The name of the chain to stop.
         stop_all: Whether to stop all of the chains.
+        verbose: Whether or not to print more verbose information.
     """  # noqa: D301
     if name is None and stop_all is False:
         print("Error: Must specify a name or `--all`.")
         return
-    print(name, stop_all)
+    config = get_config()
+    if stop_all:
+        chains = config.chains
+    else:
+        chains = [chain for chain in config.chains if chain["name"] == name]
+
+    fout = open(os.devnull, "w")
+    for chain in chains:
+        name = chain["name"]
+        rippled = chain["rippled"]
+        config = chain["config"]
+        to_run = [rippled, "--conf", config, "stop"]
+        subprocess.call(to_run, stdout=fout, stderr=subprocess.STDOUT)
+        if verbose:
+            print(f"Stopped {name}")
+
+    remove_chain(name, stop_all)
 
 
 @click.command(name="restart")
@@ -106,4 +149,4 @@ def restart_chain(name: Optional[str] = None, restart_all: bool = False) -> None
     if name is None and restart_all is False:
         print("Error: Must specify a name or `--all`.")
         return
-    print(name, restart_all)
+    stop_chain(name, restart_all)
