@@ -18,7 +18,7 @@ _CONFIG_FILE = os.path.join(CONFIG_FOLDER, "config.json")
 Path(CONFIG_FOLDER).mkdir(parents=True, exist_ok=True)
 if not os.path.exists(_CONFIG_FILE):
     with open(_CONFIG_FILE, "w") as f:
-        data: Dict[str, Any] = {"chains": []}
+        data: Dict[str, Any] = {"chains": [], "witnesses": []}
         json.dump(data, f, indent=4)
 
 # TODO: consider having separate JSONs for each node type
@@ -36,6 +36,7 @@ class ConfigFile:
             data: The dictionary with the config data.
         """
         self.chains = data["chains"]
+        self.witnesses = data["witnesses"]
 
     @classmethod
     def from_file(cls: Type[ConfigFile]) -> ConfigFile:
@@ -56,7 +57,7 @@ class ConfigFile:
         Returns:
             A dictionary representing the data in the object.
         """
-        return {"chains": self.chains}
+        return {"chains": self.chains, "witnesses": self.witnesses}
 
     def write_to_file(self: ConfigFile) -> None:
         """Write the ConfigFile data to file."""

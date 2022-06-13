@@ -3,7 +3,7 @@
 from typing import Optional
 
 from sidechain_cli.utils.config_file import ConfigFile
-from sidechain_cli.utils.types import ChainData
+from sidechain_cli.utils.types import ChainData, WitnessData
 
 
 def get_config() -> ConfigFile:
@@ -14,18 +14,6 @@ def get_config() -> ConfigFile:
         The config file, as a ConfigFile object.
     """
     return ConfigFile.from_file()
-
-
-def add_chain(chain_data: ChainData) -> None:
-    """
-    Add a chain's data to the config file.
-
-    Args:
-        chain_data: The data of the chain to add.
-    """
-    conf = get_config()
-    conf.chains.append(chain_data)
-    conf.write_to_file()
 
 
 def check_chain_exists(chain_name: str, chain_config: str) -> bool:
@@ -48,6 +36,38 @@ def check_chain_exists(chain_name: str, chain_config: str) -> bool:
     return False
 
 
+def check_witness_exists(witness_name: str, witness_config: str) -> bool:
+    """
+    Check if a witness with a given name or config is already running.
+
+    Args:
+        witness_name: The name of the witness to check.
+        witness_config: The name of the config to check.
+
+    Returns:
+        Whether there is already a witness running with that name or config.
+    """
+    conf = get_config()
+    for witness in conf.witnesses:
+        if witness["name"] == witness_name:
+            return True
+        if witness["config"] == witness_config:
+            return True
+    return False
+
+
+def add_chain(chain_data: ChainData) -> None:
+    """
+    Add a chain's data to the config file.
+
+    Args:
+        chain_data: The data of the chain to add.
+    """
+    conf = get_config()
+    conf.chains.append(chain_data)
+    conf.write_to_file()
+
+
 def remove_chain(name: Optional[str] = None, remove_all: bool = False) -> None:
     """
     Remove a chain's data to the config file.
@@ -68,4 +88,16 @@ def remove_chain(name: Optional[str] = None, remove_all: bool = False) -> None:
         conf.chains = []
     else:
         conf.chains = [chain for chain in conf.chains if chain["name"] != name]
+    conf.write_to_file()
+
+
+def add_witness(witness_data: WitnessData) -> None:
+    """
+    Add a witness's data to the config file.
+
+    Args:
+        witness_data: The data of the witness to add.
+    """
+    conf = get_config()
+    conf.witnesses.append(witness_data)
     conf.write_to_file()

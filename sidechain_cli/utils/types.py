@@ -10,3 +10,12 @@ class ChainData(TypedDict):
     rippled: str
     config: str
     pid: int
+
+
+class WitnessData(TypedDict):
+    """Helper type for witness data stored in the config file."""
+
+    name: str
+    witnessd: str
+    config: str
+    pid: int

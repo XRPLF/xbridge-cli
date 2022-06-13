@@ -3,17 +3,22 @@
 from sidechain_cli.utils.config_file import CONFIG_FOLDER
 from sidechain_cli.utils.config_utils import (
     add_chain,
+    add_witness,
     check_chain_exists,
+    check_witness_exists,
     get_config,
     remove_chain,
 )
-from sidechain_cli.utils.types import ChainData
+from sidechain_cli.utils.types import ChainData, WitnessData
 
 __all__ = [
     "add_chain",
+    "add_witness",
     "check_chain_exists",
+    "check_witness_exists",
     "get_config",
     "remove_chain",
     "ChainData",
+    "WitnessData",
     "CONFIG_FOLDER",
 ]
