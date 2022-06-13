@@ -63,6 +63,7 @@ def start_chain(name: str, rippled: str, config: str, verbose: bool = False) -> 
 
     output_file = f"{CONFIG_FOLDER}/{name}.out"
     if not os.path.exists(output_file):
+        # initialize file if it doesn't exist
         with open(output_file, "w") as f:
             f.write("")
     fout = open(output_file, "w")
@@ -137,16 +138,42 @@ def stop_chain(
 @click.option(
     "--all", "restart_all", is_flag=True, help="Whether to stop all of the chains."
 )
-def restart_chain(name: Optional[str] = None, restart_all: bool = False) -> None:
+@click.option(
+    "--verbose", is_flag=True, help="Whether or not to print more verbose information."
+)
+@click.pass_context
+def restart_chain(
+    ctx: click.Context,
+    name: Optional[str] = None,
+    restart_all: bool = False,
+    verbose: bool = False,
+) -> None:
     """
     Restart a rippled node(s).
     \f
 
     Args:
+        ctx: The click context.
         name: The name of the chain to restart.
         restart_all: Whether to restart all of the chains.
+        verbose: Whether or not to print more verbose information.
     """  # noqa: D301
     if name is None and restart_all is False:
         print("Error: Must specify a name or `--all`.")
         return
-    stop_chain(name, restart_all)
+
+    config = get_config()
+    if restart_all:
+        chains = config.chains
+    else:
+        chains = [chain for chain in config.chains if chain["name"] == name]
+
+    ctx.invoke(stop_chain, name=name, stop_all=restart_all, verbose=verbose)
+    for chain in chains:
+        ctx.invoke(
+            start_chain,
+            name=chain["name"],
+            rippled=chain["rippled"],
+            config=chain["config"],
+            verbose=verbose,
+        )
