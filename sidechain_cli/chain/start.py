@@ -61,6 +61,7 @@ def start_chain(name: str, rippled: str, config: str, verbose: bool = False) -> 
     if verbose:
         print(f"Starting server {name}...")
 
+    # create output file for easier debug purposes
     output_file = f"{CONFIG_FOLDER}/{name}.out"
     if not os.path.exists(output_file):
         # initialize file if it doesn't exist
@@ -80,12 +81,15 @@ def start_chain(name: str, rippled: str, config: str, verbose: bool = False) -> 
         "pid": pid,
     }
 
+    # check if rippled actually started up correctly
     time.sleep(0.3)
     if process.poll() is not None:
         print("ERROR")
         with open(output_file) as f:
             print(f.read())
         return
+
+    # add chain to config file
     add_chain(chain_data)
     if verbose:
         print(f"started rippled at `{rippled}` with config `{config}`", flush=True)
