@@ -1,6 +1,7 @@
 """CLI functions for starting/stopping a witness node."""
 
 import os
+import signal
 import subprocess
 import time
 from typing import Optional
@@ -128,15 +129,15 @@ def stop_witness(
         witness_names = ",".join([witness["name"] for witness in witnesses])
         print(f"Shutting down: {witness_names}")
 
-    fout = open(os.devnull, "w")
+    # fout = open(os.devnull, "w")
     for witness in witnesses:
-        name = witness["name"]
-        witnessd = witness["witnessd"]
-        config = witness["config"]
-        to_run = [witnessd, "--config", config, "stop"]
-        print(to_run, fout)
-        print("NOTE: You need to kill the witness server by hand.")
+        # name = witness["name"]
+        # witnessd = witness["witnessd"]
+        # config = witness["config"]
+        # to_run = [witnessd, "--config", config, "stop"]
         # subprocess.call(to_run, stdout=fout, stderr=subprocess.STDOUT)
+        pid = witness["pid"]
+        os.kill(pid, signal.SIGINT)
         if verbose:
             print(f"Stopped {name}")
 
