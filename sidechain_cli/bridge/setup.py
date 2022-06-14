@@ -45,7 +45,7 @@ def _get_witness_json(name: str) -> Dict[str, Any]:
         if witness["name"] == name:
             witness_config = witness["config"]
             with open(witness_config) as f:
-                return json.load(f)
+                return cast(Dict[str, Any], json.load(f))
 
     raise Exception("No witness with that name.")
 
@@ -62,7 +62,7 @@ def _get_witness_json(name: str) -> Dict[str, Any]:
     required=True,
     nargs=2,
     type=str,
-    help="The chains that the bridge goes between.",
+    help="The two chains that the bridge goes between.",
 )
 @click.option(
     "--witness",
@@ -78,7 +78,15 @@ def _get_witness_json(name: str) -> Dict[str, Any]:
 def create_bridge(
     name: str, chains: Tuple[str, str], witnesses: List[str], verbose: bool = True
 ) -> None:
-    """Set up a bridge between a mainchain and sidechain."""
+    """
+    Keep track of a bridge between a mainchain and sidechain.
+
+    Args:
+        name: The name of the bridge (used for differentiation purposes).
+        chains: The two chains that the bridge goes between.
+        witnesses: The witness server(s) that monitor the bridge.
+        verbose: Whether or not to print more verbose information.
+    """
     # validate chains
     for chain in chains:
         if not check_chain_exists(chain):
@@ -115,7 +123,7 @@ def _get_bridge(name: str) -> BridgeData:
     config = get_config()
     for bridge in config.bridges:
         if bridge["name"] == name:
-            return bridge
+            return cast(BridgeData, bridge)
     raise Exception(f"No bridge with name {name}.")
 
 
@@ -133,7 +141,9 @@ def _to_issued_currency(
 
 
 @click.command(name="build")
-@click.option("--bridge", required=True, prompt=True, type=str)
+@click.option(
+    "--bridge", required=True, prompt=True, type=str, help="The bridge to build."
+)
 @click.option(
     "--bootstrap",
     required=True,
@@ -142,7 +152,13 @@ def _to_issued_currency(
     help="The filepath to the bootstrap config file.",
 )
 def setup_bridge(bridge: str, bootstrap: str) -> None:
-    """Set up a bridge between a mainchain and sidechain."""
+    """
+    Set up a bridge between a mainchain and sidechain.
+
+    Args:
+        bridge: The bridge to build.
+        bootstrap: The filepath to the bootstrap config file.
+    """
     bridge_config = _get_bridge(bridge)
     with open(bootstrap) as f:
         bootstrap_config = json.load(f)
