@@ -58,6 +58,23 @@ def check_witness_exists(
     return False
 
 
+def check_bridge_exists(bridge_name: str) -> bool:
+    """
+    Check if a bridge with a given name is already running.
+
+    Args:
+        bridge_name: The name of the bridge to check.
+
+    Returns:
+        Whether there is already a bridge running with that name or config.
+    """
+    conf = get_config()
+    for bridge in conf.bridges:
+        if bridge["name"] == bridge_name:
+            return True
+    return False
+
+
 def add_chain(chain_data: ChainData) -> None:
     """
     Add a chain's data to the config file.

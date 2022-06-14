@@ -19,6 +19,7 @@ from sidechain_cli.utils import BridgeData
 from sidechain_cli.utils import Currency as CurrencyDict
 from sidechain_cli.utils import (
     add_bridge,
+    check_bridge_exists,
     check_chain_exists,
     check_witness_exists,
     get_config,
@@ -87,6 +88,10 @@ def create_bridge(
         witnesses: The witness server(s) that monitor the bridge.
         verbose: Whether or not to print more verbose information.
     """
+    # check name
+    if check_bridge_exists(name):
+        print(f"Bridge named {name} already exists.")
+        return
     # validate chains
     for chain in chains:
         if not check_chain_exists(chain):
