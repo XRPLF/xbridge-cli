@@ -133,8 +133,10 @@ def stop_witness(
         name = witness["name"]
         witnessd = witness["witnessd"]
         config = witness["config"]
-        to_run = [witnessd, "--conf", config, "stop"]
-        subprocess.call(to_run, stdout=fout, stderr=subprocess.STDOUT)
+        to_run = [witnessd, "--config", config, "stop"]
+        print(to_run, fout)
+        print("NOTE: You need to kill the witness server by hand.")
+        # subprocess.call(to_run, stdout=fout, stderr=subprocess.STDOUT)
         if verbose:
             print(f"Stopped {name}")
 
