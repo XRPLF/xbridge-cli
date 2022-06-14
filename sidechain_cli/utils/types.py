@@ -1,6 +1,6 @@
 """Helper types."""
 
-from typing import TypedDict
+from typing import List, Tuple, TypedDict, Union
 
 
 class ChainData(TypedDict):
@@ -25,3 +25,23 @@ class WitnessData(TypedDict):
     pid: int
     ip: str
     rpc_port: int
+
+
+class IssuedCurrency(TypedDict):
+    """Helper type for an issued currency dictionary."""
+
+    currency: str
+    issuer: str
+
+
+Currency = Union[str, IssuedCurrency]
+
+
+class BridgeData(TypedDict):
+    """Helper type for bridge data stored in the config file."""
+
+    name: str
+    chains: Tuple[str, str]
+    witnesses: List[str]
+    door_accounts: Tuple[str, str]
+    xchain_currencies: Tuple[Currency, Currency]
