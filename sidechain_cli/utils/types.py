@@ -1,6 +1,6 @@
 """Helper types."""
 
-from typing import List, Tuple, TypedDict, Union
+from typing import List, Literal, Tuple, TypedDict, Union
 
 
 class ChainData(TypedDict):
@@ -27,14 +27,14 @@ class WitnessData(TypedDict):
     rpc_port: int
 
 
-class IssuedCurrency(TypedDict):
+class IssuedCurrencyDict(TypedDict):
     """Helper type for an issued currency dictionary."""
 
     currency: str
     issuer: str
 
 
-Currency = Union[str, IssuedCurrency]
+Currency = Union[Literal["XRP"], IssuedCurrencyDict]
 
 
 class BridgeData(TypedDict):

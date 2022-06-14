@@ -1,10 +1,19 @@
 """CLI command for setting up a bridge."""
 
 import json
-from typing import Any, Dict, List, Tuple, cast
+from typing import Any, Dict, List, Literal, Tuple, Union, cast
 
 import click
-from xrpl.models import IssuedCurrency
+from xrpl.clients import JsonRpcClient
+from xrpl.models import (
+    GenericRequest,
+    IssuedCurrency,
+    Sidechain,
+    Sign,
+    SignerEntry,
+    XChainDoorCreate,
+)
+from xrpl.wallet import Wallet
 
 from sidechain_cli.utils import BridgeData
 from sidechain_cli.utils import Currency as CurrencyDict
@@ -102,8 +111,81 @@ def create_bridge(
     add_bridge(bridge_data)
 
 
+def _get_bridge(name: str) -> BridgeData:
+    config = get_config()
+    for bridge in config.bridges:
+        if bridge["name"] == name:
+            return bridge
+    raise Exception(f"No bridge with name {name}.")
+
+
+def _to_issued_currency(
+    xchain_currency: Union[Literal["XRP"], CurrencyDict]
+) -> Union[Literal["XRP"], IssuedCurrency]:
+    return (
+        cast(Literal["XRP"], "XRP")
+        if xchain_currency == "XRP"
+        else cast(
+            IssuedCurrency,
+            IssuedCurrency.from_dict(cast(Dict[str, Any], xchain_currency)),
+        )
+    )
+
+
 @click.command(name="build")
-@click.argument("bridge", type=str)
-def setup_bridge(bridge: str) -> None:
+@click.option("--bridge", required=True, prompt=True, type=str)
+@click.option(
+    "--bootstrap",
+    required=True,
+    prompt=True,
+    type=click.Path(exists=True),
+    help="The filepath to the bootstrap config file.",
+)
+def setup_bridge(bridge: str, bootstrap: str) -> None:
     """Set up a bridge between a mainchain and sidechain."""
-    print("BUILDING BRIDGE", bridge)
+    bridge_config = _get_bridge(bridge)
+    with open(bootstrap) as f:
+        bootstrap_config = json.load(f)
+
+    signer_entries = []
+    for witness in bridge_config["witnesses"]:
+        witness_config = _get_witness_json(witness)
+        account = Wallet(witness_config["signing_key_seed"], 0).classic_address
+        signer_entries.append(SignerEntry(account=account, signer_weight=1))
+
+    src_chain_issue = _to_issued_currency(bridge_config["xchain_currencies"][0])
+    dst_chain_issue = _to_issued_currency(bridge_config["xchain_currencies"][1])
+
+    create_tx1 = XChainDoorCreate(
+        account=bridge_config["door_accounts"][0],
+        sidechain=Sidechain(
+            src_chain_door=bridge_config["door_accounts"][0],
+            src_chain_issue=src_chain_issue,
+            dst_chain_door=bridge_config["door_accounts"][1],
+            dst_chain_issue=dst_chain_issue,
+        ),
+        signer_entries=signer_entries,
+        signer_quorum=max(1, len(signer_entries)),
+    )
+    client1 = JsonRpcClient("http://localhost:5005")
+    client1.request(
+        Sign(transaction=create_tx1, secret=bootstrap_config["mainchain_door"]["seed"])
+    )
+    client1.request(GenericRequest(method="ledger_accept"))
+
+    create_tx2 = XChainDoorCreate(
+        account=bridge_config["door_accounts"][1],
+        sidechain=Sidechain(
+            src_chain_door=bridge_config["door_accounts"][0],
+            src_chain_issue=src_chain_issue,
+            dst_chain_door=bridge_config["door_accounts"][1],
+            dst_chain_issue=dst_chain_issue,
+        ),
+        signer_entries=signer_entries,
+        signer_quorum=max(1, len(signer_entries)),
+    )
+    client2 = JsonRpcClient("http://localhost:5006")
+    client2.request(
+        Sign(transaction=create_tx2, secret=bootstrap_config["sidechain_door"]["seed"])
+    )
+    client2.request(GenericRequest(method="ledger_accept"))
