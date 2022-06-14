@@ -12,6 +12,8 @@ from sidechain_cli.utils import (
     WitnessData,
     add_witness,
     check_witness_exists,
+    get_config,
+    remove_witness,
 )
 
 
@@ -96,8 +98,15 @@ def start_witness(name: str, witnessd: str, config: str, verbose: bool = False) 
 
 @click.command(name="stop")
 @click.option("--name", help="The name of the witness to stop.")
-@click.option("--all", is_flag=True, help="Whether to stop all of the witnesses.")
-def stop_witness(name: Optional[str] = None, stop_all: bool = False) -> None:
+@click.option(
+    "--all", "stop_all", is_flag=True, help="Whether to stop all of the witnesses."
+)
+@click.option(
+    "--verbose", is_flag=True, help="Whether or not to print more verbose information."
+)
+def stop_witness(
+    name: Optional[str] = None, stop_all: bool = False, verbose: bool = False
+) -> None:
     """
     Stop a witness node(s).
     \f
@@ -105,26 +114,77 @@ def stop_witness(name: Optional[str] = None, stop_all: bool = False) -> None:
     Args:
         name: The name of the witness to stop.
         stop_all: Whether to stop all of the witnesses.
+        verbose: Whether or not to print more verbose information.
     """  # noqa: D301
     if name is None and stop_all is False:
         print("Error: Must specify a name or `--all`.")
         return
-    print(name, stop_all)
+    config = get_config()
+    if stop_all:
+        witnesses = config.witnesses
+    else:
+        witnesses = [witness for witness in config.witnesses if witness["name"] == name]
+    if verbose:
+        witness_names = ",".join([witness["name"] for witness in witnesses])
+        print(f"Shutting down: {witness_names}")
+
+    fout = open(os.devnull, "w")
+    for witness in witnesses:
+        name = witness["name"]
+        witnessd = witness["witnessd"]
+        config = witness["config"]
+        to_run = [witnessd, "--conf", config, "stop"]
+        subprocess.call(to_run, stdout=fout, stderr=subprocess.STDOUT)
+        if verbose:
+            print(f"Stopped {name}")
+
+    remove_witness(name, stop_all)
 
 
 @click.command(name="restart")
 @click.option("--name", help="The name of the witness to restart.")
-@click.option("--all", is_flag=True, help="Whether to restart all of the witnesses.")
-def restart_witness(name: Optional[str] = None, restart_all: bool = False) -> None:
+@click.option(
+    "--all",
+    "restart_all",
+    is_flag=True,
+    help="Whether to restart all of the witnesses.",
+)
+@click.option(
+    "--verbose", is_flag=True, help="Whether or not to print more verbose information."
+)
+@click.pass_context
+def restart_witness(
+    ctx: click.Context,
+    name: Optional[str] = None,
+    restart_all: bool = False,
+    verbose: bool = False,
+) -> None:
     """
     Restart a witness node(s).
     \f
 
     Args:
+        ctx: The click context.
         name: The name of the witness to restart.
         restart_all: Whether to restart all of the witnesses.
+        verbose: Whether or not to print more verbose information.
     """  # noqa: D301
     if name is None and restart_all is False:
         print("Error: Must specify a name or `--all`.")
         return
-    print(name, restart_all)
+
+    config = get_config()
+    if restart_all:
+        witnesses = config.witnesses
+    else:
+        witnesses = [witness for witness in config.witnesses if witness["name"] == name]
+
+    ctx.invoke(stop_witness, name=name, stop_all=restart_all, verbose=verbose)
+    for witness in witnesses:
+        ctx.invoke(
+            start_witness,
+            name=witness["name"],
+            witnessd=witness["witnessd"],
+            config=witness["config"],
+            verbose=verbose,
+        )

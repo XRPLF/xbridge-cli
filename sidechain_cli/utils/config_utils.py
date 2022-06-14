@@ -101,3 +101,28 @@ def add_witness(witness_data: WitnessData) -> None:
     conf = get_config()
     conf.witnesses.append(witness_data)
     conf.write_to_file()
+
+
+def remove_witness(name: Optional[str] = None, remove_all: bool = False) -> None:
+    """
+    Remove a witness's data to the config file.
+
+    Args:
+        name: The data of the witness to remove.
+        remove_all: Whether to remove all of the witnesses.
+
+    Raises:
+        Exception: If `name` is `None` and `remove_all` is `False`.
+    """
+    if name is None and remove_all is False:
+        raise Exception(
+            "Cannot remove witness if name is `None` and remove_all is `False`."
+        )
+    conf = get_config()
+    if remove_all:
+        conf.witnesses = []
+    else:
+        conf.witnesses = [
+            witness for witness in conf.witnesses if witness["name"] != name
+        ]
+    conf.write_to_file()

@@ -8,6 +8,7 @@ from sidechain_cli.utils.config_utils import (
     check_witness_exists,
     get_config,
     remove_chain,
+    remove_witness,
 )
 from sidechain_cli.utils.types import ChainData, WitnessData
 
@@ -18,6 +19,7 @@ __all__ = [
     "check_witness_exists",
     "get_config",
     "remove_chain",
+    "remove_witness",
     "ChainData",
     "WitnessData",
     "CONFIG_FOLDER",
