@@ -1,5 +1,6 @@
 """CLI functions for starting/stopping a witness node."""
 
+import json
 import os
 import signal
 import subprocess
@@ -55,6 +56,7 @@ def start_witness(name: str, witnessd: str, config: str, verbose: bool = False) 
     """  # noqa: D301
     witnessd = os.path.abspath(witnessd)
     config = os.path.abspath(config)
+
     if check_witness_exists(name, config):
         print("Error: Witness already running with that name or config.")
         return
@@ -74,12 +76,16 @@ def start_witness(name: str, witnessd: str, config: str, verbose: bool = False) 
         to_run, stdout=fout, stderr=subprocess.STDOUT, close_fds=True
     )
     pid = process.pid
+    with open(config) as f:
+        config_json = json.load(f)
 
     witness_data: WitnessData = {
         "name": name,
         "witnessd": witnessd,
         "config": config,
         "pid": pid,
+        "ip": config_json["rpc_endpoint"]["ip"],
+        "rpc_port": config_json["rpc_endpoint"]["port"],
     }
 
     # check if witnessd actually started up correctly

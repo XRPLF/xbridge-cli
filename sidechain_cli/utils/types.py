@@ -10,6 +10,10 @@ class ChainData(TypedDict):
     rippled: str
     config: str
     pid: int
+    ws_ip: str
+    ws_port: int
+    http_ip: str
+    http_port: int
 
 
 class WitnessData(TypedDict):
@@ -19,3 +23,5 @@ class WitnessData(TypedDict):
     witnessd: str
     config: str
     pid: int
+    ip: str
+    rpc_port: int

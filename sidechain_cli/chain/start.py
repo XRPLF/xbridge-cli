@@ -10,6 +10,7 @@ import click
 from sidechain_cli.utils import (
     CONFIG_FOLDER,
     ChainData,
+    RippledConfig,
     add_chain,
     check_chain_exists,
     get_config,
@@ -54,6 +55,7 @@ def start_chain(name: str, rippled: str, config: str, verbose: bool = False) -> 
     """  # noqa: D301
     rippled = os.path.abspath(rippled)
     config = os.path.abspath(config)
+    config_object = RippledConfig(file_name=config)
     if check_chain_exists(name, config):
         print("Error: Chain already running with that name or config.")
         return
@@ -79,6 +81,10 @@ def start_chain(name: str, rippled: str, config: str, verbose: bool = False) -> 
         "rippled": rippled,
         "config": config,
         "pid": pid,
+        "ws_ip": config_object.port_ws_admin_local.ip,
+        "ws_port": int(config_object.port_ws_admin_local.port),
+        "http_ip": config_object.port_rpc_admin_local.ip,
+        "http_port": int(config_object.port_rpc_admin_local.port),
     }
 
     # check if rippled actually started up correctly
