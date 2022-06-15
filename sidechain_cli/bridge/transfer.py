@@ -119,17 +119,14 @@ def send_transfer(
     )
     seq_num_result = _submit_tx(seq_num_tx, dst_client, to_wallet.seed, verbose)
     nodes = seq_num_result.result["meta"]["AffectedNodes"]
-    modified_nodes = [
-        node["ModifiedNode"]["PreviousFields"]
-        for node in nodes
-        if "ModifiedNode" in node.keys()
-        and "PreviousFields" in node["ModifiedNode"].keys()
+    created_nodes = [
+        node["CreatedNode"] for node in nodes if "CreatedNode" in node.keys()
     ]
-    xchain_seq = [
-        node["XChainSequence"]
-        for node in modified_nodes
-        if "XChainSequence" in node.keys()
-    ][0]
+    seqnum_ledger_entries = [
+        node for node in created_nodes if node["LedgerEntryType"] == "CrosschainSeqNum"
+    ]
+    assert len(seqnum_ledger_entries) == 1
+    xchain_seq = seqnum_ledger_entries[0]["NewFields"]["XChainSequence"]
 
     # XChainTransfer
     transfer_tx = XChainTransfer(
@@ -156,7 +153,7 @@ def send_transfer(
 
     proof_result = requests.post(witness_url, json=proof_request).json()
     if verbose:
-        print(proof_result)
+        pprint(proof_result)
     proof = proof_result["result"]["proof"]
     # TODO: add support for multiple witnesses
 
