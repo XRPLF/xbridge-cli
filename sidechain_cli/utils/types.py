@@ -1,6 +1,6 @@
 """Helper types."""
 
-from typing import Optional, TypedDict
+from typing import TypedDict
 
 
 class ChainData(TypedDict):
@@ -13,7 +13,7 @@ class ChainData(TypedDict):
     ws_ip: str
     ws_port: int
     http_ip: str
-    http_port: Optional[int]
+    http_port: int
 
 
 class WitnessData(TypedDict):
