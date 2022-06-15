@@ -5,8 +5,7 @@ from typing import cast
 
 import click
 from xrpl.clients import JsonRpcClient
-from xrpl.models import AccountInfo, GenericRequest, Payment
-from xrpl.transaction import safe_sign_and_autofill_transaction, submit_transaction
+from xrpl.models import AccountInfo, GenericRequest, Payment, SignAndSubmit
 from xrpl.utils import xrp_to_drops
 from xrpl.wallet import Wallet
 
@@ -59,8 +58,7 @@ def fund_account(chain: str, account: str, verbose: bool = False) -> None:
     payment = Payment(
         account=wallet.classic_address, destination=account, amount=xrp_to_drops(1000)
     )
-    signed = safe_sign_and_autofill_transaction(payment, wallet, client)
-    submit_transaction(signed, client)
+    client.request(SignAndSubmit(transaction=payment, secret=wallet.seed))
     client.request(GenericRequest(method="ledger_accept"))
     if verbose:
         pprint(client.request(AccountInfo(account=account)).result)
