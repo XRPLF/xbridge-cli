@@ -1,15 +1,14 @@
 """CLI command for setting up a bridge."""
 
 from pprint import pprint
-from typing import Any, Dict, Literal, Union, cast
+from typing import cast
 
 import click
+import requests
 from xrpl.clients import JsonRpcClient
 from xrpl.models import (
     GenericRequest,
-    IssuedCurrency,
     Response,
-    Sidechain,
     SignAndSubmit,
     Transaction,
     Tx,
@@ -17,19 +16,10 @@ from xrpl.models import (
     XChainSeqNumCreate,
     XChainTransfer,
 )
+from xrpl.models.xchain_claim_proof import XChainClaimProof
 from xrpl.wallet import Wallet
 
-from sidechain_cli.utils import IssuedCurrencyDict, get_config
-
-
-def _to_currency(
-    token: Union[Literal["XRP"], IssuedCurrencyDict]
-) -> Union[Literal["XRP"], IssuedCurrency]:
-    if isinstance(token, dict):
-        return cast(
-            IssuedCurrency, IssuedCurrency.from_dict(cast(Dict[str, Any], token))
-        )
-    return token
+from sidechain_cli.utils import get_config
 
 
 def _submit_tx(
@@ -39,10 +29,10 @@ def _submit_tx(
         print(f"submitting tx to {client.url}:")
         pprint(tx.to_xrpl())
     result = client.request(SignAndSubmit(transaction=tx, secret=secret))
-    print(result)
+    if verbose:
+        pprint(result.result)
     client.request(GenericRequest(method="ledger_accept"))
     tx_hash = result.result["tx_json"]["hash"]
-    print(tx_hash)
     tx_result = client.request(Tx(transaction=tx_hash))
     if verbose:
         pprint(tx_result.result)
@@ -94,7 +84,17 @@ def send_transfer(
     to_account: str,
     verbose: bool = False,
 ) -> None:
-    """Set up a bridge between a mainchain and sidechain."""
+    """
+    Set up a bridge between a mainchain and sidechain.
+
+    Args:
+        bridge: The bridge to transfer across.
+        src_chain: The chain to transfer from.
+        amount: The amount to transfer.
+        from_account: The seed of the account to transfer from.
+        to_account: The seed of the account to transfer to.
+        verbose: Whether or not to print more verbose information.
+    """
     # TODO: validate
     print(bridge, src_chain, amount, from_account, to_account)
     from_wallet = Wallet(from_account, 0)
@@ -105,22 +105,14 @@ def send_transfer(
         print(f"Error: {src_chain} not one of the chains in {bridge}.")
         return
     dst_chain = [chain for chain in bridge_config.chains if chain != src_chain][0]
-    dst_door = bridge_config.door_accounts[bridge_config.chains.index(dst_chain)]
+    src_door = bridge_config.door_accounts[bridge_config.chains.index(src_chain)]
     src_chain_config = get_config().get_chain(src_chain)
     dst_chain_config = get_config().get_chain(dst_chain)
     witness_config = get_config().get_witness(bridge_config.witnesses[0])
     src_client = src_chain_config.get_client()
     dst_client = dst_chain_config.get_client()
-    witness_client = JsonRpcClient(
-        f"http://{witness_config.ip}:{witness_config.rpc_port}"
-    )
 
-    sidechain = Sidechain(
-        src_chain_door=bridge_config.door_accounts[0],
-        src_chain_issue=_to_currency(bridge_config.xchain_currencies[0]),
-        dst_chain_door=bridge_config.door_accounts[1],
-        dst_chain_issue=_to_currency(bridge_config.xchain_currencies[1]),
-    )
+    sidechain = bridge_config.get_sidechain()
 
     # XChainSeqNumCreate
     seq_num_tx = XChainSeqNumCreate(
@@ -150,14 +142,29 @@ def send_transfer(
     _submit_tx(transfer_tx, src_client, from_wallet.seed, verbose)
 
     # retrieve proof from witness
-    proof_request = GenericRequest(
-        method="witness",
-        amount=amount,
-        xchain_sequence_number=xchain_seq,
-        dst_door=dst_door,
-        sidechain=sidechain,
-    )
-    print(proof_request.to_dict())
-    print(witness_client.request(proof_request))
+    witness_url = f"http://{witness_config.ip}:{witness_config.rpc_port}"
+    proof_request = {
+        "method": "witness",
+        "params": [
+            {
+                "amount": amount,
+                "xchain_sequence_number": xchain_seq,
+                "dst_door": src_door,
+                "sidechain": sidechain.to_dict(),
+            }
+        ],
+    }
+
+    proof_result = requests.post(witness_url, json=proof_request).json()
+    if verbose:
+        print(proof_result)
+    proof = proof_result["result"]["proof"]
+    # TODO: add support for multiple witnesses
 
     # XChainClaim
+    claim_tx = XChainClaim(
+        account=to_wallet.classic_address,
+        destination=to_wallet.classic_address,
+        xchain_claim_proof=cast(XChainClaimProof, XChainClaimProof.from_dict(proof)),
+    )
+    _submit_tx(claim_tx, dst_client, to_wallet.seed, verbose)
