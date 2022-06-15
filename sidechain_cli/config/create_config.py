@@ -205,7 +205,7 @@ def generate_all_configs(data_dir: str, num_witnesses: int = 5) -> None:
         num_witnesses: The number of witnesses configs to generate.
     """
     mc_port, sc_port = _generate_rippled_configs(data_dir)
-    src_door = Wallet.create()
+    src_door = Wallet.create(CryptoAlgorithm.SECP256K1)
     for i in range(num_witnesses):
         _generate_witness_config(
             data_dir, mc_port, sc_port, i, src_door.classic_address
