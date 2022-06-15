@@ -8,6 +8,7 @@ from typing import Any, Dict, Optional, Tuple, Type
 
 import click
 from jinja2 import Environment, FileSystemLoader
+from xrpl import CryptoAlgorithm
 from xrpl.wallet import Wallet
 
 JINJA_ENV = Environment(
@@ -165,7 +166,7 @@ def _generate_witness_config(
         "sidechain_port": sidechain_port,
         "witness_port": 6010 + witness_number,
         "db_dir": f"{sub_dir}/db",
-        "seed": Wallet.create().seed,
+        "seed": Wallet.create(CryptoAlgorithm.SECP256K1).seed,
         "src_door": src_door,
         "src_issue": "XRP",
         "dst_door": "rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh",
