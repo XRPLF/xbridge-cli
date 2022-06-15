@@ -96,7 +96,6 @@ def send_transfer(
         verbose: Whether or not to print more verbose information.
     """
     # TODO: validate
-    print(bridge, src_chain, amount, from_account, to_account)
     from_wallet = Wallet(from_account, 0)
     to_wallet = Wallet(to_account, 0)
     bridge_config = get_config().get_bridge(bridge)
