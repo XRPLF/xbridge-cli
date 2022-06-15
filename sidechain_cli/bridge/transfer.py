@@ -1,7 +1,7 @@
 """CLI command for setting up a bridge."""
 
 from pprint import pprint
-from typing import cast
+from typing import Any, Dict, List, cast
 
 import click
 import requests
@@ -20,6 +20,14 @@ from xrpl.models.xchain_claim_proof import XChainClaimProof
 from xrpl.wallet import Wallet
 
 from sidechain_cli.utils import get_config
+
+
+def _combine_proofs(proofs: List[Dict[str, Any]]) -> XChainClaimProof:
+    proof = proofs[0]
+    for extra_proof in proofs[1:]:
+        signatures = proof["signatures"]
+        proof["signatures"].extend(signatures)
+    return cast(XChainClaimProof, XChainClaimProof.from_dict(proof))
 
 
 def _submit_tx(
@@ -107,7 +115,6 @@ def send_transfer(
     src_door = bridge_config.door_accounts[bridge_config.chains.index(src_chain)]
     src_chain_config = get_config().get_chain(src_chain)
     dst_chain_config = get_config().get_chain(dst_chain)
-    witness_config = get_config().get_witness(bridge_config.witnesses[0])
     src_client = src_chain_config.get_client()
     dst_client = dst_chain_config.get_client()
 
@@ -118,6 +125,8 @@ def send_transfer(
         account=to_wallet.classic_address, sidechain=sidechain
     )
     seq_num_result = _submit_tx(seq_num_tx, dst_client, to_wallet.seed, verbose)
+
+    # extract new sequence number from metadata
     nodes = seq_num_result.result["meta"]["AffectedNodes"]
     created_nodes = [
         node["CreatedNode"] for node in nodes if "CreatedNode" in node.keys()
@@ -137,30 +146,32 @@ def send_transfer(
     )
     _submit_tx(transfer_tx, src_client, from_wallet.seed, verbose)
 
-    # retrieve proof from witness
-    witness_url = f"http://{witness_config.ip}:{witness_config.rpc_port}"
-    proof_request = {
-        "method": "witness",
-        "params": [
-            {
-                "amount": amount,
-                "xchain_sequence_number": xchain_seq,
-                "dst_door": src_door,
-                "sidechain": sidechain.to_dict(),
-            }
-        ],
-    }
+    # Retrieve proof from witness
+    proofs = []
+    for witness in bridge_config.witnesses:
+        witness_config = get_config().get_witness(witness)
+        witness_url = f"http://{witness_config.ip}:{witness_config.rpc_port}"
+        proof_request = {
+            "method": "witness",
+            "params": [
+                {
+                    "amount": amount,
+                    "xchain_sequence_number": xchain_seq,
+                    "dst_door": src_door,
+                    "sidechain": sidechain.to_dict(),
+                }
+            ],
+        }
 
-    proof_result = requests.post(witness_url, json=proof_request).json()
-    if verbose:
-        pprint(proof_result)
-    proof = proof_result["result"]["proof"]
-    # TODO: add support for multiple witnesses
+        proof_result = requests.post(witness_url, json=proof_request).json()
+        if verbose:
+            pprint(proof_result)
+        proofs.append(proof_result["result"]["proof"])
 
     # XChainClaim
     claim_tx = XChainClaim(
         account=to_wallet.classic_address,
         destination=to_wallet.classic_address,
-        xchain_claim_proof=cast(XChainClaimProof, XChainClaimProof.from_dict(proof)),
+        xchain_claim_proof=_combine_proofs(proofs),
     )
     _submit_tx(claim_tx, dst_client, to_wallet.seed, verbose)
