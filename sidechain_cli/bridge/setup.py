@@ -8,7 +8,7 @@ import click
 from xrpl.models import (
     GenericRequest,
     IssuedCurrency,
-    Sign,
+    SignAndSubmit,
     SignerEntry,
     XChainDoorCreate,
 )
@@ -157,9 +157,13 @@ def setup_bridge(bridge: str, bootstrap: str, verbose: bool = False) -> None:
     if verbose:
         print(f"submitting tx to {client1.url}:")
         pprint(create_tx1.to_xrpl())
-    client1.request(
-        Sign(transaction=create_tx1, secret=bootstrap_config["mainchain_door"]["seed"])
+    result1 = client1.request(
+        SignAndSubmit(
+            transaction=create_tx1, secret=bootstrap_config["mainchain_door"]["seed"]
+        )
     )
+    if verbose:
+        pprint(result1.result)
     client1.request(GenericRequest(method="ledger_accept"))
 
     chain2 = get_config().get_chain(bridge_config.chains[1])
@@ -173,7 +177,11 @@ def setup_bridge(bridge: str, bootstrap: str, verbose: bool = False) -> None:
     if verbose:
         print(f"submitting tx to {client2.url}:")
         pprint(create_tx2.to_xrpl())
-    client2.request(
-        Sign(transaction=create_tx2, secret=bootstrap_config["sidechain_door"]["seed"])
+    result2 = client2.request(
+        SignAndSubmit(
+            transaction=create_tx2, secret=bootstrap_config["sidechain_door"]["seed"]
+        )
     )
+    if verbose:
+        pprint(result2.result)
     client2.request(GenericRequest(method="ledger_accept"))
