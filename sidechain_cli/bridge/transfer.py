@@ -38,12 +38,12 @@ def _submit_tx(
         pprint(tx.to_xrpl())
     result = client.request(SignAndSubmit(transaction=tx, secret=secret))
     if verbose:
-        pprint(result.result)
+        print(f"Result: {result.result['engine_result']}")
+    if result.result["engine_result"] != "tesSUCCESS":
+        raise Exception(result.result["engine_result_message"])
     client.request(GenericRequest(method="ledger_accept"))
     tx_hash = result.result["tx_json"]["hash"]
     tx_result = client.request(Tx(transaction=tx_hash))
-    if verbose:
-        pprint(tx_result.result)
     return tx_result
 
 
@@ -84,6 +84,11 @@ def _submit_tx(
 @click.option(
     "--verbose", is_flag=True, help="Whether or not to print more verbose information."
 )
+@click.option(
+    "--tutorial",
+    is_flag=True,
+    help="Turn this flag on if you want to slow down and really understand each step.",
+)
 def send_transfer(
     bridge: str,
     src_chain: str,
@@ -91,6 +96,7 @@ def send_transfer(
     from_account: str,
     to_account: str,
     verbose: bool = False,
+    tutorial: bool = False,
 ) -> None:
     """
     Set up a bridge between a mainchain and sidechain.
@@ -102,6 +108,7 @@ def send_transfer(
         from_account: The seed of the account to transfer from.
         to_account: The seed of the account to transfer to.
         verbose: Whether or not to print more verbose information.
+        tutorial: Whether to slow down and explain each step.
     """
     bridge_config = get_config().get_bridge(bridge)
     if src_chain not in bridge_config.chains:
@@ -129,10 +136,15 @@ def send_transfer(
     sidechain = bridge_config.get_sidechain()
 
     # XChainSeqNumCreate
+    if tutorial:
+        input("\nCreating a cross-sequence number on the destination chain...")
+
     seq_num_tx = XChainSeqNumCreate(
         account=to_wallet.classic_address, sidechain=sidechain
     )
-    seq_num_result = _submit_tx(seq_num_tx, dst_client, to_wallet.seed, verbose)
+    seq_num_result = _submit_tx(
+        seq_num_tx, dst_client, to_wallet.seed, verbose or tutorial
+    )
 
     # extract new sequence number from metadata
     nodes = seq_num_result.result["meta"]["AffectedNodes"]
@@ -146,15 +158,21 @@ def send_transfer(
     xchain_seq = seqnum_ledger_entries[0]["NewFields"]["XChainSequence"]
 
     # XChainTransfer
+    if tutorial:
+        input("\nLocking the funds on the source chain...")
+
     transfer_tx = XChainTransfer(
         account=from_wallet.classic_address,
         amount=amount,
         sidechain=sidechain,
         xchain_sequence=xchain_seq,
     )
-    _submit_tx(transfer_tx, src_client, from_wallet.seed, verbose)
+    _submit_tx(transfer_tx, src_client, from_wallet.seed, verbose or tutorial)
 
     # Retrieve proof from witness
+    if tutorial:
+        input("\nRetrieving the proofs from the witness servers...")
+
     proofs = []
     for witness in bridge_config.witnesses:
         witness_config = get_config().get_witness(witness)
@@ -177,6 +195,11 @@ def send_transfer(
         proofs.append(proof_result["result"]["proof"])
 
     # XChainClaim
+    if tutorial:
+        input(
+            "\nClaiming the funds on the destination chain with the witness proofs..."
+        )
+
     claim_tx = XChainClaim(
         account=to_wallet.classic_address,
         destination=to_wallet.classic_address,
