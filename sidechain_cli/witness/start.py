@@ -137,6 +137,7 @@ def stop_witness(
 
     # fout = open(os.devnull, "w")
     for witness in witnesses:
+        # TODO: stop the server with a CLI command
         # name = witness["name"]
         # witnessd = witness["witnessd"]
         # config = witness["config"]
