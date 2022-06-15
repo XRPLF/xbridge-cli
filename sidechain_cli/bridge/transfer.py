@@ -103,14 +103,22 @@ def send_transfer(
         to_account: The seed of the account to transfer to.
         verbose: Whether or not to print more verbose information.
     """
-    # TODO: validate
-    from_wallet = Wallet(from_account, 0)
-    to_wallet = Wallet(to_account, 0)
     bridge_config = get_config().get_bridge(bridge)
-
     if src_chain not in bridge_config.chains:
         print(f"Error: {src_chain} not one of the chains in {bridge}.")
         return
+
+    try:
+        from_wallet = Wallet(from_account, 0)
+    except ValueError:
+        print(f"Invalid seed: {from_account}")
+        return
+    try:
+        to_wallet = Wallet(to_account, 0)
+    except ValueError:
+        print(f"Invalid seed: {to_account}")
+        return
+
     dst_chain = [chain for chain in bridge_config.chains if chain != src_chain][0]
     src_door = bridge_config.door_accounts[bridge_config.chains.index(src_chain)]
     src_chain_config = get_config().get_chain(src_chain)
