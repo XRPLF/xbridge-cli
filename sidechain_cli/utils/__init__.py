@@ -10,6 +10,7 @@ from sidechain_cli.utils.config_utils import (
     remove_chain,
     remove_witness,
 )
+from sidechain_cli.utils.rippled_config import RippledConfig
 from sidechain_cli.utils.types import ChainData, WitnessData
 
 __all__ = [
@@ -23,4 +24,5 @@ __all__ = [
     "ChainData",
     "WitnessData",
     "CONFIG_FOLDER",
+    "RippledConfig",
 ]
