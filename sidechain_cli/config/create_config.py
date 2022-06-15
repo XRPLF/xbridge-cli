@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
+from sys import platform
 from typing import Any, Dict, Optional, Tuple, Type
 
 import click
@@ -171,6 +172,7 @@ def _generate_witness_config(
         "src_issue": "XRP",
         "dst_door": "rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh",
         "dst_issue": "XRP",
+        "is_linux": platform == "linux" or platform == "linux2",
     }
     # add the witness.json file
     _generate_template(

@@ -4,11 +4,19 @@
     "port": {{ mainchain_port }}
   },
   "sidechain_endpoint": {
+    {% if is_linux -%}
     "ip": "127.0.0.2",
+    {% else -%}
+    "ip": "127.0.0.1",
+    {%- endif %}
     "port": {{ sidechain_port }}
   },
   "rpc_endpoint": {
+    {% if is_linux -%}
     "ip": "127.0.0.3",
+    {% else -%}
+    "ip": "127.0.0.1",
+    {%- endif %}
     "port": {{ witness_port }}
   },
   "db_dir": "{{ db_dir }}",
