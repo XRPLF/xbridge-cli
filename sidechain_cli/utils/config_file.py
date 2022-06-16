@@ -27,7 +27,7 @@ if not os.path.exists(_CONFIG_FILE):
         json.dump(data, f, indent=4)
 
 # TODO: consider having separate JSONs for each node type
-# (e.g. chains.json, witnesses.json)
+# (e.g. chains.json, witnesses.json, bridges.json)
 
 T = TypeVar("T", bound="ConfigItem")
 
