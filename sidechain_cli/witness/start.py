@@ -130,20 +130,20 @@ def stop_witness(
     if stop_all:
         witnesses = config.witnesses
     else:
-        witnesses = [witness for witness in config.witnesses if witness["name"] == name]
+        witnesses = [witness for witness in config.witnesses if witness.name == name]
     if verbose:
-        witness_names = ",".join([witness["name"] for witness in witnesses])
+        witness_names = ",".join([witness.name for witness in witnesses])
         print(f"Shutting down: {witness_names}")
 
     # fout = open(os.devnull, "w")
     for witness in witnesses:
         # TODO: stop the server with a CLI command
-        # name = witness["name"]
-        # witnessd = witness["witnessd"]
-        # config = witness["config"]
+        # name = witness.name
+        # witnessd = witness.witnessd
+        # config = witness.config
         # to_run = [witnessd, "--config", config, "stop"]
         # subprocess.call(to_run, stdout=fout, stderr=subprocess.STDOUT)
-        pid = witness["pid"]
+        pid = witness.pid
         os.kill(pid, signal.SIGINT)
         if verbose:
             print(f"Stopped {name}")
@@ -187,14 +187,14 @@ def restart_witness(
     if restart_all:
         witnesses = config.witnesses
     else:
-        witnesses = [witness for witness in config.witnesses if witness["name"] == name]
+        witnesses = [witness for witness in config.witnesses if witness.name == name]
 
     ctx.invoke(stop_witness, name=name, stop_all=restart_all, verbose=verbose)
     for witness in witnesses:
         ctx.invoke(
             start_witness,
-            name=witness["name"],
-            witnessd=witness["witnessd"],
-            config=witness["config"],
+            name=witness.name,
+            witnessd=witness.witnessd,
+            config=witness.config,
             verbose=verbose,
         )

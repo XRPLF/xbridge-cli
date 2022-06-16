@@ -2,7 +2,7 @@
 
 from typing import Optional
 
-from sidechain_cli.utils.config_file import ChainConfig, ConfigFile
+from sidechain_cli.utils.config_file import ChainConfig, ConfigFile, WitnessConfig
 from sidechain_cli.utils.types import BridgeData, ChainData, WitnessData
 
 
@@ -51,9 +51,9 @@ def check_witness_exists(
     """
     conf = get_config()
     for witness in conf.witnesses:
-        if witness["name"] == witness_name:
+        if witness.name == witness_name:
             return True
-        if witness["config"] == witness_config:
+        if witness.config == witness_config:
             return True
     return False
 
@@ -118,7 +118,7 @@ def add_witness(witness_data: WitnessData) -> None:
         witness_data: The data of the witness to add.
     """
     conf = get_config()
-    conf.witnesses.append(witness_data)
+    conf.witnesses.append(WitnessConfig.from_dict(witness_data))
     conf.write_to_file()
 
 
@@ -141,9 +141,7 @@ def remove_witness(name: Optional[str] = None, remove_all: bool = False) -> None
     if remove_all:
         conf.witnesses = []
     else:
-        conf.witnesses = [
-            witness for witness in conf.witnesses if witness["name"] != name
-        ]
+        conf.witnesses = [witness for witness in conf.witnesses if witness.name != name]
     conf.write_to_file()
 
 

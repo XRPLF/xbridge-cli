@@ -5,7 +5,6 @@ from pprint import pprint
 from typing import Any, Dict, List, Literal, Tuple, Union, cast
 
 import click
-from xrpl.clients import JsonRpcClient
 from xrpl.models import (
     GenericRequest,
     IssuedCurrency,
@@ -16,7 +15,7 @@ from xrpl.models import (
 )
 from xrpl.wallet import Wallet
 
-from sidechain_cli.utils import BridgeData, ChainData
+from sidechain_cli.utils import BridgeData, ChainConfig
 from sidechain_cli.utils import Currency as CurrencyDict
 from sidechain_cli.utils import (
     add_bridge,
@@ -44,8 +43,8 @@ def _str_to_currency(token: str) -> CurrencyDict:
 def _get_witness_json(name: str) -> Dict[str, Any]:
     config = get_config()
     for witness in config.witnesses:
-        if witness["name"] == name:
-            witness_config = witness["config"]
+        if witness.name == name:
+            witness_config = witness.config
             with open(witness_config) as f:
                 return cast(Dict[str, Any], json.load(f))
 
@@ -133,11 +132,11 @@ def _get_bridge(name: str) -> BridgeData:
     raise Exception(f"No bridge with name {name}.")
 
 
-def _get_chain(name: str) -> ChainData:
+def _get_chain(name: str) -> ChainConfig:
     config = get_config()
     for chain in config.chains:
         if chain.name == name:
-            return cast(ChainData, chain)
+            return chain
     raise Exception(f"No chain with name {name}.")
 
 
@@ -202,7 +201,7 @@ def setup_bridge(bridge: str, bootstrap: str, verbose: bool = False) -> None:
         signer_entries=signer_entries,
         signer_quorum=max(1, len(signer_entries)),
     )
-    client1 = JsonRpcClient(f"http://{chain1['http_ip']}:{chain1['http_port']}")
+    client1 = chain1.get_client()
     if verbose:
         print(f"submitting tx to {client1.url}:")
         pprint(create_tx1.to_xrpl())
@@ -223,7 +222,7 @@ def setup_bridge(bridge: str, bootstrap: str, verbose: bool = False) -> None:
         signer_entries=signer_entries,
         signer_quorum=max(1, len(signer_entries)),
     )
-    client2 = JsonRpcClient(f"http://{chain2['http_ip']}:{chain2['http_port']}")
+    client2 = chain2.get_client()
     if verbose:
         print(f"submitting tx to {client2.url}:")
         pprint(create_tx2.to_xrpl())

@@ -1,5 +1,7 @@
 """Config-related witness commands."""
 
+from dataclasses import asdict
+
 import click
 from tabulate import tabulate
 
@@ -15,7 +17,7 @@ def list_witnesses() -> None:
         return
     print(
         tabulate(
-            config.witnesses,
+            map(asdict, config.witnesses),
             headers="keys",
             tablefmt="presto",
         )

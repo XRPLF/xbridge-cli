@@ -10,7 +10,7 @@ from typing import Any, Dict, Type
 
 from xrpl.clients import JsonRpcClient
 
-from sidechain_cli.utils.types import ChainData
+from sidechain_cli.utils.types import ChainData, WitnessData
 
 _HOME = str(Path.home())
 
@@ -53,6 +53,20 @@ class ChainConfig(ConfigItem):
         return cls(**data)
 
 
+@dataclass
+class WitnessConfig(ConfigItem):
+    name: str
+    witnessd: str
+    config: str
+    pid: int
+    ip: str
+    rpc_port: int
+
+    @classmethod
+    def from_dict(cls: Type[WitnessConfig], data: WitnessData) -> WitnessConfig:
+        return cls(**data)
+
+
 class ConfigFile:
     """Helper class for working with the config file."""
 
@@ -64,7 +78,9 @@ class ConfigFile:
             data: The dictionary with the config data.
         """
         self.chains = [ChainConfig.from_dict(chain) for chain in data["chains"]]
-        self.witnesses = data["witnesses"]
+        self.witnesses = [
+            WitnessConfig.from_dict(witness) for witness in data["witnesses"]
+        ]
         self.bridges = data["bridges"]
 
     @classmethod

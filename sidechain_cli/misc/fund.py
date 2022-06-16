@@ -1,22 +1,20 @@
 """Fund an account from the genesis account."""
 
 from pprint import pprint
-from typing import cast
 
 import click
-from xrpl.clients import JsonRpcClient
 from xrpl.models import AccountInfo, GenericRequest, Payment, SignAndSubmit
 from xrpl.utils import xrp_to_drops
 from xrpl.wallet import Wallet
 
-from sidechain_cli.utils import ChainData, get_config
+from sidechain_cli.utils import ChainConfig, get_config
 
 
-def _get_chain(name: str) -> ChainData:
+def _get_chain(name: str) -> ChainConfig:
     config = get_config()
     for chain in config.chains:
         if chain.name == name:
-            return cast(ChainData, chain)
+            return chain
     raise Exception(f"No chain with name {name}.")
 
 
@@ -50,9 +48,7 @@ def fund_account(chain: str, account: str, verbose: bool = False) -> None:
         verbose: Whether or not to print more verbose information.
     """  # noqa: D301
     chain_config = _get_chain(chain)
-    client = JsonRpcClient(
-        f"http://{chain_config['http_ip']}:{chain_config['http_port']}"
-    )
+    client = chain_config.get_client()
 
     wallet = Wallet("snoPBrXtMeMyMHUVTgbuqAfg1SUTb", 0)
     payment = Payment(
