@@ -129,7 +129,8 @@ def stop_chain(
     if stop_all:
         chains = config.chains
     else:
-        chains = [chain for chain in config.chains if chain.name == name]
+        assert name is not None
+        chains = [config.get_chain(name)]
     if verbose:
         chain_names = ",".join([chain.name for chain in chains])
         print(f"Shutting down: {chain_names}")
@@ -177,7 +178,8 @@ def restart_chain(
     if restart_all:
         chains = config.chains
     else:
-        chains = [chain for chain in config.chains if chain.name == name]
+        assert name is not None
+        chains = [config.get_chain(name)]
 
     ctx.invoke(stop_chain, name=name, stop_all=restart_all, verbose=verbose)
     for chain in chains:
