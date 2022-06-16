@@ -4,8 +4,16 @@ from __future__ import annotations
 
 import json
 import os
+from abc import ABC
+from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Any, Dict, Type
+from typing import Any, Dict, List, Literal, Tuple, Type, TypeVar, Union, cast
+
+from xrpl.clients import JsonRpcClient
+from xrpl.models import IssuedCurrency, Sidechain
+
+from sidechain_cli.utils.rippled_config import RippledConfig
+from sidechain_cli.utils.types import Currency
 
 _HOME = str(Path.home())
 
@@ -22,7 +30,120 @@ if not os.path.exists(_CONFIG_FILE):
         json.dump(data, f, indent=4)
 
 # TODO: consider having separate JSONs for each node type
-# (e.g. chains.json, witnesses.json)
+# (e.g. chains.json, witnesses.json, bridges.json)
+
+T = TypeVar("T", bound="ConfigItem")
+
+
+class ConfigItem(ABC):
+    """Abstract class representing a config item."""
+
+    @classmethod
+    def from_dict(cls: Type[T], data: Dict[str, Any]) -> T:
+        """
+        Convert a dictionary to a given config object.
+
+        Args:
+            data: The dictionary to convert.
+
+        Returns:
+            The associated config object.
+        """
+        return cls(**data)
+
+
+@dataclass
+class ChainConfig(ConfigItem):
+    """Object representing the config for a chain."""
+
+    name: str
+    rippled: str
+    config: str
+    pid: int
+    ws_ip: str
+    ws_port: int
+    http_ip: str
+    http_port: int
+
+    def get_client(self: ChainConfig) -> JsonRpcClient:
+        """
+        Get a client connected to the chain. Requires that the chain be running.
+
+        Returns:
+            A JsonRpcClient that is connected to this chain.
+        """
+        return JsonRpcClient(f"http://{self.http_ip}:{self.http_port}")
+
+    def get_config(self: ChainConfig) -> RippledConfig:
+        """
+        Get the config file for this chain.
+
+        Returns:
+            The RippledConfig object for this config file.
+        """
+        return RippledConfig(file_name=self.config)
+
+
+@dataclass
+class WitnessConfig(ConfigItem):
+    """Object representing the config for a witness."""
+
+    name: str
+    witnessd: str
+    config: str
+    pid: int
+    ip: str
+    rpc_port: int
+
+    def get_config(self: WitnessConfig) -> Dict[str, Any]:
+        """
+        Get the config file for this witness.
+
+        Returns:
+            The JSON dictionary for this config file.
+        """
+        with open(self.config) as f:
+            return cast(Dict[str, Any], json.load(f))
+
+
+def _to_issued_currency(
+    xchain_currency: Union[Literal["XRP"], Currency]
+) -> Union[Literal["XRP"], IssuedCurrency]:
+    return (
+        cast(Literal["XRP"], "XRP")
+        if xchain_currency == "XRP"
+        else cast(
+            IssuedCurrency,
+            IssuedCurrency.from_dict(cast(Dict[str, Any], xchain_currency)),
+        )
+    )
+
+
+@dataclass
+class BridgeConfig(ConfigItem):
+    """Object representing the config for a bridge."""
+
+    name: str
+    chains: Tuple[str, str]
+    witnesses: List[str]
+    door_accounts: Tuple[str, str]
+    xchain_currencies: Tuple[Currency, Currency]
+
+    def get_sidechain(self: BridgeConfig) -> Sidechain:
+        """
+        Get the Sidechain object associated with the bridge.
+
+        Returns:
+            The Sidechain object.
+        """
+        src_chain_issue = _to_issued_currency(self.xchain_currencies[0])
+        dst_chain_issue = _to_issued_currency(self.xchain_currencies[1])
+        return Sidechain(
+            src_chain_door=self.door_accounts[0],
+            src_chain_issue=src_chain_issue,
+            dst_chain_door=self.door_accounts[1],
+            dst_chain_issue=dst_chain_issue,
+        )
 
 
 class ConfigFile:
@@ -35,9 +156,11 @@ class ConfigFile:
         Args:
             data: The dictionary with the config data.
         """
-        self.chains = data["chains"]
-        self.witnesses = data["witnesses"]
-        self.bridges = data["bridges"]
+        self.chains = [ChainConfig.from_dict(chain) for chain in data["chains"]]
+        self.witnesses = [
+            WitnessConfig.from_dict(witness) for witness in data["witnesses"]
+        ]
+        self.bridges = [BridgeConfig.from_dict(bridge) for bridge in data["bridges"]]
 
     @classmethod
     def from_file(cls: Type[ConfigFile]) -> ConfigFile:
@@ -51,7 +174,61 @@ class ConfigFile:
             data = json.load(f)
             return cls(data)
 
-    def to_dict(self: ConfigFile) -> Dict[str, Any]:
+    def get_chain(self: ConfigFile, name: str) -> ChainConfig:
+        """
+        Get the chain corresponding to the name.
+
+        Args:
+            name: The name of the chain.
+
+        Returns:
+            The ChainConfig object corresponding to that chain.
+
+        Raises:
+            Exception: if there is no chain with that name.
+        """
+        for chain in self.chains:
+            if chain.name == name:
+                return chain
+        raise Exception(f"No chain with name {name}.")
+
+    def get_witness(self: ConfigFile, name: str) -> WitnessConfig:
+        """
+        Get the witness corresponding to the name.
+
+        Args:
+            name: The name of the witness.
+
+        Returns:
+            The WitnessConfig object corresponding to that witness.
+
+        Raises:
+            Exception: if there is no witness with that name.
+        """
+        for witness in self.witnesses:
+            if witness.name == name:
+                return witness
+        raise Exception(f"No witness with name {name}.")
+
+    def get_bridge(self: ConfigFile, name: str) -> BridgeConfig:
+        """
+        Get the bridge corresponding to the name.
+
+        Args:
+            name: The name of the bridge.
+
+        Returns:
+            The BridgeConfig object corresponding to that bridge.
+
+        Raises:
+            Exception: if there is no bridge with that name.
+        """
+        for bridge in self.bridges:
+            if bridge.name == name:
+                return bridge
+        raise Exception(f"No bridge with name {name}.")
+
+    def to_dict(self: ConfigFile) -> Dict[str, List[Dict[str, Any]]]:
         """
         Convert a ConfigFile object back to a dictionary.
 
@@ -59,9 +236,9 @@ class ConfigFile:
             A dictionary representing the data in the object.
         """
         return {
-            "chains": self.chains,
-            "witnesses": self.witnesses,
-            "bridges": self.bridges,
+            "chains": [asdict(chain) for chain in self.chains],
+            "witnesses": [asdict(witness) for witness in self.witnesses],
+            "bridges": [asdict(bridge) for bridge in self.bridges],
         }
 
     def write_to_file(self: ConfigFile) -> None:

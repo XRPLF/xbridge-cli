@@ -1,8 +1,13 @@
 """Utils for working with the config file."""
 
-from typing import Optional
+from typing import Any, Dict, Optional, cast
 
-from sidechain_cli.utils.config_file import ConfigFile
+from sidechain_cli.utils.config_file import (
+    BridgeConfig,
+    ChainConfig,
+    ConfigFile,
+    WitnessConfig,
+)
 from sidechain_cli.utils.types import BridgeData, ChainData, WitnessData
 
 
@@ -29,9 +34,9 @@ def check_chain_exists(chain_name: str, chain_config: Optional[str] = None) -> b
     """
     conf = get_config()
     for chain in conf.chains:
-        if chain["name"] == chain_name:
+        if chain.name == chain_name:
             return True
-        if chain["config"] == chain_config:
+        if chain.config == chain_config:
             return True
     return False
 
@@ -51,9 +56,9 @@ def check_witness_exists(
     """
     conf = get_config()
     for witness in conf.witnesses:
-        if witness["name"] == witness_name:
+        if witness.name == witness_name:
             return True
-        if witness["config"] == witness_config:
+        if witness.config == witness_config:
             return True
     return False
 
@@ -70,7 +75,7 @@ def check_bridge_exists(bridge_name: str) -> bool:
     """
     conf = get_config()
     for bridge in conf.bridges:
-        if bridge["name"] == bridge_name:
+        if bridge.name == bridge_name:
             return True
     return False
 
@@ -83,7 +88,7 @@ def add_chain(chain_data: ChainData) -> None:
         chain_data: The data of the chain to add.
     """
     conf = get_config()
-    conf.chains.append(chain_data)
+    conf.chains.append(ChainConfig.from_dict(cast(Dict[str, Any], chain_data)))
     conf.write_to_file()
 
 
@@ -106,7 +111,7 @@ def remove_chain(name: Optional[str] = None, remove_all: bool = False) -> None:
     if remove_all:
         conf.chains = []
     else:
-        conf.chains = [chain for chain in conf.chains if chain["name"] != name]
+        conf.chains = [chain for chain in conf.chains if chain.name != name]
     conf.write_to_file()
 
 
@@ -118,7 +123,7 @@ def add_witness(witness_data: WitnessData) -> None:
         witness_data: The data of the witness to add.
     """
     conf = get_config()
-    conf.witnesses.append(witness_data)
+    conf.witnesses.append(WitnessConfig.from_dict(cast(Dict[str, Any], witness_data)))
     conf.write_to_file()
 
 
@@ -141,9 +146,7 @@ def remove_witness(name: Optional[str] = None, remove_all: bool = False) -> None
     if remove_all:
         conf.witnesses = []
     else:
-        conf.witnesses = [
-            witness for witness in conf.witnesses if witness["name"] != name
-        ]
+        conf.witnesses = [witness for witness in conf.witnesses if witness.name != name]
     conf.write_to_file()
 
 
@@ -155,7 +158,7 @@ def add_bridge(bridge_data: BridgeData) -> None:
         bridge_data: The data of the bridge to add.
     """
     conf = get_config()
-    conf.bridges.append(bridge_data)
+    conf.bridges.append(BridgeConfig.from_dict(cast(Dict[str, Any], bridge_data)))
     conf.write_to_file()
 
 
@@ -178,5 +181,5 @@ def remove_bridge(name: Optional[str] = None, remove_all: bool = False) -> None:
     if remove_all:
         conf.bridges = []
     else:
-        conf.bridges = [bridge for bridge in conf.bridges if bridge["name"] != name]
+        conf.bridges = [bridge for bridge in conf.bridges if bridge.name != name]
     conf.write_to_file()
