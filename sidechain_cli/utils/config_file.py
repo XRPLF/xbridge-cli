@@ -6,10 +6,11 @@ import json
 import os
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Tuple, Type, TypeVar
+from typing import Any, Dict, List, Tuple, Type, TypeVar, cast
 
 from xrpl.clients import JsonRpcClient
 
+from sidechain_cli.utils.rippled_config import RippledConfig
 from sidechain_cli.utils.types import Currency
 
 _HOME = str(Path.home())
@@ -52,6 +53,9 @@ class ChainConfig(ConfigItem):
     def get_client(self: ChainConfig) -> JsonRpcClient:
         return JsonRpcClient(f"http://{self.http_ip}:{self.http_port}")
 
+    def get_config(self: ChainConfig) -> RippledConfig:
+        return RippledConfig(file_name=self.config)
+
 
 @dataclass
 class WitnessConfig(ConfigItem):
@@ -61,6 +65,10 @@ class WitnessConfig(ConfigItem):
     pid: int
     ip: str
     rpc_port: int
+
+    def get_config(self: WitnessConfig) -> Dict[str, Any]:
+        with open(self.config) as f:
+            return cast(Dict[str, Any], json.load(f))
 
 
 @dataclass

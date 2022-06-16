@@ -40,14 +40,6 @@ def _str_to_currency(token: str) -> CurrencyDict:
     )
 
 
-def _get_witness_json(name: str) -> Dict[str, Any]:
-    witness = get_config().get_witness(name)
-    with open(witness.config) as f:
-        return cast(Dict[str, Any], json.load(f))
-
-    raise Exception("No witness with that name.")
-
-
 @click.command(name="create")
 @click.option(
     "--name",
@@ -100,7 +92,7 @@ def create_bridge(
             print(f"Witness {witness} is not running.")
             return
 
-    config = _get_witness_json(witnesses[0])
+    config = get_config().get_witness((witnesses[0])).get_config()
     doors = (
         config["sidechain"]["src_chain_door"],
         config["sidechain"]["dst_chain_door"],
@@ -163,7 +155,7 @@ def setup_bridge(bridge: str, bootstrap: str, verbose: bool = False) -> None:
 
     signer_entries = []
     for witness in bridge_config.witnesses:
-        witness_config = _get_witness_json(witness)
+        witness_config = get_config().get_witness((witness)).get_config()
         account = Wallet(witness_config["signing_key_seed"], 0).classic_address
         signer_entries.append(SignerEntry(account=account, signer_weight=1))
 
