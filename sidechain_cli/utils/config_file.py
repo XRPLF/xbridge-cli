@@ -6,11 +6,11 @@ import json
 import os
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Tuple, Type
+from typing import Any, Dict, List, Tuple, Type, TypeVar
 
 from xrpl.clients import JsonRpcClient
 
-from sidechain_cli.utils.types import BridgeData, ChainData, Currency, WitnessData
+from sidechain_cli.utils.types import Currency
 
 _HOME = str(Path.home())
 
@@ -29,9 +29,13 @@ if not os.path.exists(_CONFIG_FILE):
 # TODO: consider having separate JSONs for each node type
 # (e.g. chains.json, witnesses.json)
 
+T = TypeVar("T", bound="ConfigItem")
+
 
 class ConfigItem:
-    pass
+    @classmethod
+    def from_dict(cls: Type[T], data: Dict[str, Any]) -> T:
+        return cls(**data)
 
 
 @dataclass
@@ -48,10 +52,6 @@ class ChainConfig(ConfigItem):
     def get_client(self: ChainConfig) -> JsonRpcClient:
         return JsonRpcClient(f"http://{self.http_ip}:{self.http_port}")
 
-    @classmethod
-    def from_dict(cls: Type[ChainConfig], data: ChainData) -> ChainConfig:
-        return cls(**data)
-
 
 @dataclass
 class WitnessConfig(ConfigItem):
@@ -62,10 +62,6 @@ class WitnessConfig(ConfigItem):
     ip: str
     rpc_port: int
 
-    @classmethod
-    def from_dict(cls: Type[WitnessConfig], data: WitnessData) -> WitnessConfig:
-        return cls(**data)
-
 
 @dataclass
 class BridgeConfig(ConfigItem):
@@ -74,10 +70,6 @@ class BridgeConfig(ConfigItem):
     witnesses: List[str]
     door_accounts: Tuple[str, str]
     xchain_currencies: Tuple[Currency, Currency]
-
-    @classmethod
-    def from_dict(cls: Type[BridgeConfig], data: BridgeData) -> BridgeConfig:
-        return cls(**data)
 
 
 class ConfigFile:

@@ -1,6 +1,6 @@
 """Utils for working with the config file."""
 
-from typing import Optional
+from typing import Any, Dict, Optional, cast
 
 from sidechain_cli.utils.config_file import (
     BridgeConfig,
@@ -88,7 +88,7 @@ def add_chain(chain_data: ChainData) -> None:
         chain_data: The data of the chain to add.
     """
     conf = get_config()
-    conf.chains.append(ChainConfig.from_dict(chain_data))
+    conf.chains.append(ChainConfig.from_dict(cast(Dict[str, Any], chain_data)))
     conf.write_to_file()
 
 
@@ -123,7 +123,7 @@ def add_witness(witness_data: WitnessData) -> None:
         witness_data: The data of the witness to add.
     """
     conf = get_config()
-    conf.witnesses.append(WitnessConfig.from_dict(witness_data))
+    conf.witnesses.append(WitnessConfig.from_dict(cast(Dict[str, Any], witness_data)))
     conf.write_to_file()
 
 
@@ -158,7 +158,7 @@ def add_bridge(bridge_data: BridgeData) -> None:
         bridge_data: The data of the bridge to add.
     """
     conf = get_config()
-    conf.bridges.append(BridgeConfig.from_dict(bridge_data))
+    conf.bridges.append(BridgeConfig.from_dict(cast(Dict[str, Any], bridge_data)))
     conf.write_to_file()
 
 
