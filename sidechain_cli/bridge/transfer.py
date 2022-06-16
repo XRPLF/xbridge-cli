@@ -190,7 +190,7 @@ def send_transfer(
         }
 
         proof_result = requests.post(witness_url, json=proof_request).json()
-        if verbose:
+        if verbose or tutorial:
             pprint(proof_result)
         proofs.append(proof_result["result"]["proof"])
 
@@ -205,4 +205,4 @@ def send_transfer(
         destination=to_wallet.classic_address,
         xchain_claim_proof=_combine_proofs(proofs),
     )
-    _submit_tx(claim_tx, dst_client, to_wallet.seed, verbose)
+    _submit_tx(claim_tx, dst_client, to_wallet.seed, verbose or tutorial)
