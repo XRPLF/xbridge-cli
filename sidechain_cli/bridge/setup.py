@@ -15,7 +15,7 @@ from xrpl.models import (
 )
 from xrpl.wallet import Wallet
 
-from sidechain_cli.utils import BridgeConfig, BridgeData, ChainConfig
+from sidechain_cli.utils import BridgeData
 from sidechain_cli.utils import Currency as CurrencyDict
 from sidechain_cli.utils import (
     add_bridge,
@@ -41,12 +41,9 @@ def _str_to_currency(token: str) -> CurrencyDict:
 
 
 def _get_witness_json(name: str) -> Dict[str, Any]:
-    config = get_config()
-    for witness in config.witnesses:
-        if witness.name == name:
-            witness_config = witness.config
-            with open(witness_config) as f:
-                return cast(Dict[str, Any], json.load(f))
+    witness = get_config().get_witness(name)
+    with open(witness.config) as f:
+        return cast(Dict[str, Any], json.load(f))
 
     raise Exception("No witness with that name.")
 
@@ -124,22 +121,6 @@ def create_bridge(
     add_bridge(bridge_data)
 
 
-def _get_bridge(name: str) -> BridgeConfig:
-    config = get_config()
-    for bridge in config.bridges:
-        if bridge.name == name:
-            return bridge
-    raise Exception(f"No bridge with name {name}.")
-
-
-def _get_chain(name: str) -> ChainConfig:
-    config = get_config()
-    for chain in config.chains:
-        if chain.name == name:
-            return chain
-    raise Exception(f"No chain with name {name}.")
-
-
 def _to_issued_currency(
     xchain_currency: Union[Literal["XRP"], CurrencyDict]
 ) -> Union[Literal["XRP"], IssuedCurrency]:
@@ -176,7 +157,7 @@ def setup_bridge(bridge: str, bootstrap: str, verbose: bool = False) -> None:
         bootstrap: The filepath to the bootstrap config file.
         verbose: Whether or not to print more verbose information.
     """
-    bridge_config = _get_bridge(bridge)
+    bridge_config = get_config().get_bridge(bridge)
     with open(bootstrap) as f:
         bootstrap_config = json.load(f)
 
@@ -189,7 +170,7 @@ def setup_bridge(bridge: str, bootstrap: str, verbose: bool = False) -> None:
     src_chain_issue = _to_issued_currency(bridge_config.xchain_currencies[0])
     dst_chain_issue = _to_issued_currency(bridge_config.xchain_currencies[1])
 
-    chain1 = _get_chain(bridge_config.chains[0])
+    chain1 = get_config().get_chain(bridge_config.chains[0])
     create_tx1 = XChainDoorCreate(
         account=bridge_config.door_accounts[0],
         sidechain=Sidechain(
@@ -210,7 +191,7 @@ def setup_bridge(bridge: str, bootstrap: str, verbose: bool = False) -> None:
     )
     client1.request(GenericRequest(method="ledger_accept"))
 
-    chain2 = _get_chain(bridge_config.chains[1])
+    chain2 = get_config().get_chain(bridge_config.chains[1])
     create_tx2 = XChainDoorCreate(
         account=bridge_config.door_accounts[1],
         sidechain=Sidechain(

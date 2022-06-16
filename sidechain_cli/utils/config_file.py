@@ -100,6 +100,60 @@ class ConfigFile:
             data = json.load(f)
             return cls(data)
 
+    def get_chain(self: ConfigFile, name: str) -> ChainConfig:
+        """
+        Get the chain corresponding to the name.
+
+        Args:
+            name: The name of the chain.
+
+        Returns:
+            The ChainConfig object corresponding to that chain.
+
+        Raises:
+            Exception: if there is no chain with that name.
+        """
+        for chain in self.chains:
+            if chain.name == name:
+                return chain
+        raise Exception(f"No chain with name {name}.")
+
+    def get_witness(self: ConfigFile, name: str) -> WitnessConfig:
+        """
+        Get the witness corresponding to the name.
+
+        Args:
+            name: The name of the witness.
+
+        Returns:
+            The WitnessConfig object corresponding to that witness.
+
+        Raises:
+            Exception: if there is no witness with that name.
+        """
+        for witness in self.witnesses:
+            if witness.name == name:
+                return witness
+        raise Exception(f"No witness with name {name}.")
+
+    def get_bridge(self: ConfigFile, name: str) -> BridgeConfig:
+        """
+        Get the bridge corresponding to the name.
+
+        Args:
+            name: The name of the bridge.
+
+        Returns:
+            The BridgeConfig object corresponding to that bridge.
+
+        Raises:
+            Exception: if there is no bridge with that name.
+        """
+        for bridge in self.bridges:
+            if bridge.name == name:
+                return bridge
+        raise Exception(f"No bridge with name {name}.")
+
     def to_dict(self: ConfigFile) -> Dict[str, List[Dict[str, Any]]]:
         """
         Convert a ConfigFile object back to a dictionary.

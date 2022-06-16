@@ -7,15 +7,7 @@ from xrpl.models import AccountInfo, GenericRequest, Payment, SignAndSubmit
 from xrpl.utils import xrp_to_drops
 from xrpl.wallet import Wallet
 
-from sidechain_cli.utils import ChainConfig, get_config
-
-
-def _get_chain(name: str) -> ChainConfig:
-    config = get_config()
-    for chain in config.chains:
-        if chain.name == name:
-            return chain
-    raise Exception(f"No chain with name {name}.")
+from sidechain_cli.utils import get_config
 
 
 @click.command(name="fund")
@@ -47,7 +39,7 @@ def fund_account(chain: str, account: str, verbose: bool = False) -> None:
         account: The chain to fund an account on.
         verbose: Whether or not to print more verbose information.
     """  # noqa: D301
-    chain_config = _get_chain(chain)
+    chain_config = get_config().get_chain(chain)
     client = chain_config.get_client()
 
     wallet = Wallet("snoPBrXtMeMyMHUVTgbuqAfg1SUTb", 0)
