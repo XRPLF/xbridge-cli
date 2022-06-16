@@ -17,8 +17,6 @@ JINJA_ENV = Environment(
     loader=FileSystemLoader(searchpath="./sidechain_cli/create_config/templates")
 )
 
-NODE_SIZE = "medium"
-
 
 class Ports:
     """
@@ -101,24 +99,17 @@ def _generate_template(
 def _generate_standalone_config(
     *,
     ports: Ports,
-    with_shards: bool = False,
     cfg_type: str,
     data_dir: str,
-    full_history: bool = False,
 ) -> None:
     sub_dir = f"{data_dir}/{cfg_type}"
 
-    for path in ["", "/db", "/shards"]:
+    for path in ["", "/db"]:
         Path(sub_dir + path).mkdir(parents=True, exist_ok=True)
 
     template_data = {
         "sub_dir": sub_dir,
-        "full_history": full_history,
-        # ports stanza
         "ports": ports.to_dict(),
-        # other
-        "node_size": NODE_SIZE,
-        "with_shards": with_shards,
     }
 
     # add the rippled.cfg file

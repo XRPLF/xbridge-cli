@@ -10,7 +10,7 @@ port_ws_public
 port = {{ ports.http_admin_port }}
 ip = 127.0.0.1
 admin = 127.0.0.1
-protocol = http
+protocol = http, https
 
 [port_peer]
 port = {{ ports.peer_port }}
@@ -21,23 +21,18 @@ protocol = peer
 port = {{ ports.ws_admin_port }}
 ip = 127.0.0.1
 admin = 127.0.0.1
-protocol = ws
+protocol = ws, wss
 
 [port_ws_public]
 port = {{ ports.ws_public_port }}
 ip = 127.0.0.1
-protocol = ws
-{#- protocol = wss #}
+protocol = ws, wss
 
 [node_size]
-{{ node_size }}
+medium
 
 [ledger_history]
-{% if full_history -%}
-full
-{% else -%}
 256
-{%- endif %}
 
 [node_db]
 type=NuDB
@@ -47,10 +42,8 @@ filter_bits=12
 cache_mb=256
 file_size_mb=8
 file_size_mult=2
-{%- if not full_history %}
 online_delete=256
 advisory_delete=0
-{%- endif %}
 
 {#- TODO: remove this later #}
 [signing_support]
@@ -75,13 +68,6 @@ pool.ntp.org
 
 [ssl_verify]
 1
-
-{% if with_shards -%}
-[shard_db]
-type=NuDB
-path={{ sub_dir }}/shards
-max_historical_shards=6
-{% endif -%}
 
 [features]
 PayChan
