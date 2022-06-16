@@ -7,9 +7,10 @@ import os
 from abc import ABC
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Tuple, Type, TypeVar, cast
+from typing import Any, Dict, List, Literal, Tuple, Type, TypeVar, Union, cast
 
 from xrpl.clients import JsonRpcClient
+from xrpl.models import IssuedCurrency, Sidechain
 
 from sidechain_cli.utils.rippled_config import RippledConfig
 from sidechain_cli.utils.types import Currency
@@ -105,6 +106,19 @@ class WitnessConfig(ConfigItem):
             return cast(Dict[str, Any], json.load(f))
 
 
+def _to_issued_currency(
+    xchain_currency: Union[Literal["XRP"], Currency]
+) -> Union[Literal["XRP"], IssuedCurrency]:
+    return (
+        cast(Literal["XRP"], "XRP")
+        if xchain_currency == "XRP"
+        else cast(
+            IssuedCurrency,
+            IssuedCurrency.from_dict(cast(Dict[str, Any], xchain_currency)),
+        )
+    )
+
+
 @dataclass
 class BridgeConfig(ConfigItem):
     """Object representing the config for a bridge."""
@@ -114,6 +128,22 @@ class BridgeConfig(ConfigItem):
     witnesses: List[str]
     door_accounts: Tuple[str, str]
     xchain_currencies: Tuple[Currency, Currency]
+
+    def get_sidechain(self: BridgeConfig) -> Sidechain:
+        """
+        Get the Sidechain object associated with the bridge.
+
+        Returns:
+            The Sidechain object.
+        """
+        src_chain_issue = _to_issued_currency(self.xchain_currencies[0])
+        dst_chain_issue = _to_issued_currency(self.xchain_currencies[1])
+        return Sidechain(
+            src_chain_door=self.door_accounts[0],
+            src_chain_issue=src_chain_issue,
+            dst_chain_door=self.door_accounts[1],
+            dst_chain_issue=dst_chain_issue,
+        )
 
 
 class ConfigFile:

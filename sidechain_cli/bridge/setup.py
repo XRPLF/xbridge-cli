@@ -2,13 +2,12 @@
 
 import json
 from pprint import pprint
-from typing import Any, Dict, List, Literal, Tuple, Union, cast
+from typing import List, Tuple, cast
 
 import click
 from xrpl.models import (
     GenericRequest,
     IssuedCurrency,
-    Sidechain,
     Sign,
     SignerEntry,
     XChainDoorCreate,
@@ -113,19 +112,6 @@ def create_bridge(
     add_bridge(bridge_data)
 
 
-def _to_issued_currency(
-    xchain_currency: Union[Literal["XRP"], CurrencyDict]
-) -> Union[Literal["XRP"], IssuedCurrency]:
-    return (
-        cast(Literal["XRP"], "XRP")
-        if xchain_currency == "XRP"
-        else cast(
-            IssuedCurrency,
-            IssuedCurrency.from_dict(cast(Dict[str, Any], xchain_currency)),
-        )
-    )
-
-
 @click.command(name="build")
 @click.option(
     "--bridge", required=True, prompt=True, type=str, help="The bridge to build."
@@ -158,19 +144,12 @@ def setup_bridge(bridge: str, bootstrap: str, verbose: bool = False) -> None:
         witness_config = get_config().get_witness((witness)).get_config()
         account = Wallet(witness_config["signing_key_seed"], 0).classic_address
         signer_entries.append(SignerEntry(account=account, signer_weight=1))
-
-    src_chain_issue = _to_issued_currency(bridge_config.xchain_currencies[0])
-    dst_chain_issue = _to_issued_currency(bridge_config.xchain_currencies[1])
+    sidechain = bridge_config.get_sidechain()
 
     chain1 = get_config().get_chain(bridge_config.chains[0])
     create_tx1 = XChainDoorCreate(
         account=bridge_config.door_accounts[0],
-        sidechain=Sidechain(
-            src_chain_door=bridge_config.door_accounts[0],
-            src_chain_issue=src_chain_issue,
-            dst_chain_door=bridge_config.door_accounts[1],
-            dst_chain_issue=dst_chain_issue,
-        ),
+        sidechain=sidechain,
         signer_entries=signer_entries,
         signer_quorum=max(1, len(signer_entries)),
     )
@@ -186,12 +165,7 @@ def setup_bridge(bridge: str, bootstrap: str, verbose: bool = False) -> None:
     chain2 = get_config().get_chain(bridge_config.chains[1])
     create_tx2 = XChainDoorCreate(
         account=bridge_config.door_accounts[1],
-        sidechain=Sidechain(
-            src_chain_door=bridge_config.door_accounts[0],
-            src_chain_issue=src_chain_issue,
-            dst_chain_door=bridge_config.door_accounts[1],
-            dst_chain_issue=dst_chain_issue,
-        ),
+        sidechain=sidechain,
         signer_entries=signer_entries,
         signer_quorum=max(1, len(signer_entries)),
     )
