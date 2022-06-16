@@ -129,20 +129,17 @@ def stop_chain(
     if stop_all:
         chains = config.chains
     else:
-        chains = [chain for chain in config.chains if chain["name"] == name]
+        chains = [chain for chain in config.chains if chain.name == name]
     if verbose:
-        chain_names = ",".join([chain["name"] for chain in chains])
+        chain_names = ",".join([chain.name for chain in chains])
         print(f"Shutting down: {chain_names}")
 
     fout = open(os.devnull, "w")
     for chain in chains:
-        name = chain["name"]
-        rippled = chain["rippled"]
-        config = chain["config"]
-        to_run = [rippled, "--conf", config, "stop"]
+        to_run = [chain.rippled, "--conf", chain.config, "stop"]
         subprocess.call(to_run, stdout=fout, stderr=subprocess.STDOUT)
         if verbose:
-            print(f"Stopped {name}")
+            print(f"Stopped {chain.name}")
 
     remove_chain(name, stop_all)
 
@@ -180,14 +177,14 @@ def restart_chain(
     if restart_all:
         chains = config.chains
     else:
-        chains = [chain for chain in config.chains if chain["name"] == name]
+        chains = [chain for chain in config.chains if chain.name == name]
 
     ctx.invoke(stop_chain, name=name, stop_all=restart_all, verbose=verbose)
     for chain in chains:
         ctx.invoke(
             start_chain,
-            name=chain["name"],
-            rippled=chain["rippled"],
-            config=chain["config"],
+            name=chain.name,
+            rippled=chain.rippled,
+            config=chain.config,
             verbose=verbose,
         )

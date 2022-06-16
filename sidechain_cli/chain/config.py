@@ -1,5 +1,7 @@
 """Config-related rippled commands."""
 
+from dataclasses import asdict
+
 import click
 from tabulate import tabulate
 
@@ -15,7 +17,7 @@ def list_chains() -> None:
         return
     print(
         tabulate(
-            config.chains,
+            map(asdict, config.chains),
             headers="keys",
             tablefmt="presto",
         )

@@ -15,7 +15,7 @@ from sidechain_cli.utils import ChainData, get_config
 def _get_chain(name: str) -> ChainData:
     config = get_config()
     for chain in config.chains:
-        if chain["name"] == name:
+        if chain.name == name:
             return cast(ChainData, chain)
     raise Exception(f"No chain with name {name}.")
 

@@ -2,7 +2,7 @@
 
 from typing import Optional
 
-from sidechain_cli.utils.config_file import ConfigFile
+from sidechain_cli.utils.config_file import ChainConfig, ConfigFile
 from sidechain_cli.utils.types import BridgeData, ChainData, WitnessData
 
 
@@ -29,9 +29,9 @@ def check_chain_exists(chain_name: str, chain_config: Optional[str] = None) -> b
     """
     conf = get_config()
     for chain in conf.chains:
-        if chain["name"] == chain_name:
+        if chain.name == chain_name:
             return True
-        if chain["config"] == chain_config:
+        if chain.config == chain_config:
             return True
     return False
 
@@ -83,7 +83,7 @@ def add_chain(chain_data: ChainData) -> None:
         chain_data: The data of the chain to add.
     """
     conf = get_config()
-    conf.chains.append(chain_data)
+    conf.chains.append(ChainConfig.from_dict(chain_data))
     conf.write_to_file()
 
 
@@ -106,7 +106,7 @@ def remove_chain(name: Optional[str] = None, remove_all: bool = False) -> None:
     if remove_all:
         conf.chains = []
     else:
-        conf.chains = [chain for chain in conf.chains if chain["name"] != name]
+        conf.chains = [chain for chain in conf.chains if chain.name != name]
     conf.write_to_file()
 
 

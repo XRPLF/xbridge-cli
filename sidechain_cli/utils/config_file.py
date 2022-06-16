@@ -4,8 +4,13 @@ from __future__ import annotations
 
 import json
 import os
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, Type
+
+from xrpl.clients import JsonRpcClient
+
+from sidechain_cli.utils.types import ChainData
 
 _HOME = str(Path.home())
 
@@ -25,6 +30,29 @@ if not os.path.exists(_CONFIG_FILE):
 # (e.g. chains.json, witnesses.json)
 
 
+class ConfigItem:
+    pass
+
+
+@dataclass
+class ChainConfig(ConfigItem):
+    name: str
+    rippled: str
+    config: str
+    pid: int
+    ws_ip: str
+    ws_port: int
+    http_ip: str
+    http_port: int
+
+    def get_client(self: ChainConfig) -> JsonRpcClient:
+        return JsonRpcClient(f"http://{self.http_ip}:{self.http_port}")
+
+    @classmethod
+    def from_dict(cls: Type[ChainConfig], data: ChainData) -> ChainConfig:
+        return cls(**data)
+
+
 class ConfigFile:
     """Helper class for working with the config file."""
 
@@ -35,7 +63,7 @@ class ConfigFile:
         Args:
             data: The dictionary with the config data.
         """
-        self.chains = data["chains"]
+        self.chains = [ChainConfig.from_dict(chain) for chain in data["chains"]]
         self.witnesses = data["witnesses"]
         self.bridges = data["bridges"]
 
