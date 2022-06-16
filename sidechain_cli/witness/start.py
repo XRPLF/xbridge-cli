@@ -60,7 +60,7 @@ def start_witness(name: str, witnessd: str, config: str, verbose: bool = False) 
     if check_witness_exists(name, config):
         print("Error: Witness already running with that name or config.")
         return
-    to_run = [witnessd, "--config", config]
+    to_run = [witnessd, "--config", config, "--verbose"]
     if verbose:
         print(f"Starting server {name}...")
 
