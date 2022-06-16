@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
+from pprint import pprint
 from sys import platform
 from typing import Any, Dict, Tuple, Type
 
@@ -202,7 +203,12 @@ def _generate_witness_config(
     default="snoPBrXtMeMyMHUVTgbuqAfg1SUTb",
     help="The seed of the sidechain door account. Defaults to the genesis account.",
 )
-def generate_bootstrap(data_dir: str, mainchain_seed: str, sidechain_seed: str) -> None:
+@click.option(
+    "--verbose", is_flag=True, help="Whether or not to print more verbose information."
+)
+def generate_bootstrap(
+    data_dir: str, mainchain_seed: str, sidechain_seed: str, verbose: bool = False
+) -> None:
     """
     Generate a bootstrap config file. Used by the scripts to initialize the bridge.
 
@@ -211,6 +217,7 @@ def generate_bootstrap(data_dir: str, mainchain_seed: str, sidechain_seed: str) 
         mainchain_seed: The seed of the mainchain door account.
         sidechain_seed: The seed of the sidechain door account. Defaults to the genesis
             account.
+        verbose: Whether or not to print more verbose information.
     """
     mainchain_door = Wallet(mainchain_seed, 0)
     sidechain_door = Wallet(sidechain_seed, 0)
@@ -221,6 +228,8 @@ def generate_bootstrap(data_dir: str, mainchain_seed: str, sidechain_seed: str) 
         "sidechain_id": sidechain_door.classic_address,
         "sidechain_seed": sidechain_door.seed,
     }
+    if verbose:
+        pprint(template_data)
 
     _generate_template(
         "bootstrap.jinja",
@@ -239,9 +248,12 @@ def generate_bootstrap(data_dir: str, mainchain_seed: str, sidechain_seed: str) 
 @click.option(
     "--num_witnesses", type=int, help="The number of witness configs to generate."
 )
+@click.option(
+    "--verbose", is_flag=True, help="Whether or not to print more verbose information."
+)
 @click.pass_context
 def generate_all_configs(
-    ctx: click.Context, data_dir: str, num_witnesses: int = 5
+    ctx: click.Context, data_dir: str, num_witnesses: int = 5, verbose: bool = False
 ) -> None:
     """
     Generate the rippled and witness configs.
@@ -250,6 +262,7 @@ def generate_all_configs(
         ctx: The click context.
         data_dir: The directory to use for the config files.
         num_witnesses: The number of witnesses configs to generate.
+        verbose: Whether or not to print more verbose information.
     """
     mc_port, sc_port = _generate_rippled_configs(data_dir)
     src_door = Wallet.create(CryptoAlgorithm.SECP256K1)
@@ -257,4 +270,9 @@ def generate_all_configs(
         _generate_witness_config(
             data_dir, mc_port, sc_port, i, src_door.classic_address
         )
-    ctx.invoke(generate_bootstrap, data_dir=data_dir, mainchain_seed=src_door.seed)
+    ctx.invoke(
+        generate_bootstrap,
+        data_dir=data_dir,
+        mainchain_seed=src_door.seed,
+        verbose=verbose,
+    )
