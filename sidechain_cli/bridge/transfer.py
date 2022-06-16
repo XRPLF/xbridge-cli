@@ -7,9 +7,7 @@ import click
 import requests
 from xrpl.clients import JsonRpcClient
 from xrpl.models import (
-    GenericRequest,
     Response,
-    SignAndSubmit,
     Transaction,
     Tx,
     XChainClaim,
@@ -19,7 +17,7 @@ from xrpl.models import (
 from xrpl.models.xchain_claim_proof import XChainClaimProof
 from xrpl.wallet import Wallet
 
-from sidechain_cli.utils import get_config
+from sidechain_cli.utils import get_config, submit_tx
 
 
 def _combine_proofs(proofs: List[Dict[str, Any]]) -> XChainClaimProof:
@@ -36,12 +34,11 @@ def _submit_tx(
     if verbose:
         print(f"submitting tx to {client.url}:")
         pprint(tx.to_xrpl())
-    result = client.request(SignAndSubmit(transaction=tx, secret=secret))
+    result = submit_tx(tx, client, secret)
     if verbose:
         print(f"Result: {result.result['engine_result']}")
     if result.result["engine_result"] != "tesSUCCESS":
         raise Exception(result.result["engine_result_message"])
-    client.request(GenericRequest(method="ledger_accept"))
     tx_hash = result.result["tx_json"]["hash"]
     tx_result = client.request(Tx(transaction=tx_hash))
     return tx_result

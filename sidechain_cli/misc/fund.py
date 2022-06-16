@@ -3,11 +3,11 @@
 from pprint import pprint
 
 import click
-from xrpl.models import AccountInfo, GenericRequest, Payment, SignAndSubmit
+from xrpl.models import AccountInfo, Payment
 from xrpl.utils import xrp_to_drops
 from xrpl.wallet import Wallet
 
-from sidechain_cli.utils import get_config
+from sidechain_cli.utils import get_config, submit_tx
 
 
 @click.command(name="fund")
@@ -46,7 +46,6 @@ def fund_account(chain: str, account: str, verbose: bool = False) -> None:
     payment = Payment(
         account=wallet.classic_address, destination=account, amount=xrp_to_drops(1000)
     )
-    client.request(SignAndSubmit(transaction=payment, secret=wallet.seed))
-    client.request(GenericRequest(method="ledger_accept"))
+    submit_tx(payment, client, wallet.seed)
     if verbose:
         pprint(client.request(AccountInfo(account=account)).result)

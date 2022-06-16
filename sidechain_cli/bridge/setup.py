@@ -5,13 +5,7 @@ from pprint import pprint
 from typing import List, Tuple, cast
 
 import click
-from xrpl.models import (
-    GenericRequest,
-    IssuedCurrency,
-    SignAndSubmit,
-    SignerEntry,
-    XChainDoorCreate,
-)
+from xrpl.models import GenericRequest, IssuedCurrency, SignerEntry, XChainDoorCreate
 
 from sidechain_cli.utils import BridgeData
 from sidechain_cli.utils import Currency as CurrencyDict
@@ -21,6 +15,7 @@ from sidechain_cli.utils import (
     check_chain_exists,
     check_witness_exists,
     get_config,
+    submit_tx,
 )
 
 
@@ -165,14 +160,9 @@ def setup_bridge(bridge: str, bootstrap: str, verbose: bool = False) -> None:
     if verbose:
         print(f"submitting tx to {client1.url}:")
         pprint(create_tx1.to_xrpl())
-    result1 = client1.request(
-        SignAndSubmit(
-            transaction=create_tx1, secret=bootstrap_config["mainchain_door"]["seed"]
-        )
-    )
+    result1 = submit_tx(create_tx1, client1, bootstrap_config["mainchain_door"]["seed"])
     if verbose:
         pprint(result1.result)
-    client1.request(GenericRequest(method="ledger_accept"))
 
     create_tx2 = XChainDoorCreate(
         account=bridge_config.door_accounts[1],
@@ -183,11 +173,6 @@ def setup_bridge(bridge: str, bootstrap: str, verbose: bool = False) -> None:
     if verbose:
         print(f"submitting tx to {client2.url}:")
         pprint(create_tx2.to_xrpl())
-    result2 = client2.request(
-        SignAndSubmit(
-            transaction=create_tx2, secret=bootstrap_config["sidechain_door"]["seed"]
-        )
-    )
+    result2 = submit_tx(create_tx2, client2, bootstrap_config["sidechain_door"]["seed"])
     if verbose:
         pprint(result2.result)
-    client2.request(GenericRequest(method="ledger_accept"))
