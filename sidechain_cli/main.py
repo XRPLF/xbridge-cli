@@ -3,6 +3,7 @@
 import click
 
 from sidechain_cli.bridge import bridge
+from sidechain_cli.create_config import create_config
 from sidechain_cli.misc.fund import fund_account
 from sidechain_cli.server import server
 
@@ -16,6 +17,7 @@ def main() -> None:
 main.add_command(server)
 main.add_command(bridge)
 main.add_command(fund_account)
+main.add_command(create_config)
 
 
 if __name__ == "__main__":
