@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+from abc import ABC
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Tuple, Type, TypeVar, cast
@@ -33,14 +34,27 @@ if not os.path.exists(_CONFIG_FILE):
 T = TypeVar("T", bound="ConfigItem")
 
 
-class ConfigItem:
+class ConfigItem(ABC):
+    """Abstract class representing a config item."""
+
     @classmethod
     def from_dict(cls: Type[T], data: Dict[str, Any]) -> T:
+        """
+        Convert a dictionary to a given config object.
+
+        Args:
+            data: The dictionary to convert.
+
+        Returns:
+            The associated config object.
+        """
         return cls(**data)
 
 
 @dataclass
 class ChainConfig(ConfigItem):
+    """Object representing the config for a chain."""
+
     name: str
     rippled: str
     config: str
@@ -51,14 +65,28 @@ class ChainConfig(ConfigItem):
     http_port: int
 
     def get_client(self: ChainConfig) -> JsonRpcClient:
+        """
+        Get a client connected to the chain. Requires that the chain be running.
+
+        Returns:
+            A JsonRpcClient that is connected to this chain.
+        """
         return JsonRpcClient(f"http://{self.http_ip}:{self.http_port}")
 
     def get_config(self: ChainConfig) -> RippledConfig:
+        """
+        Get the config file for this chain.
+
+        Returns:
+            The RippledConfig object for this config file.
+        """
         return RippledConfig(file_name=self.config)
 
 
 @dataclass
 class WitnessConfig(ConfigItem):
+    """Object representing the config for a witness."""
+
     name: str
     witnessd: str
     config: str
@@ -67,12 +95,20 @@ class WitnessConfig(ConfigItem):
     rpc_port: int
 
     def get_config(self: WitnessConfig) -> Dict[str, Any]:
+        """
+        Get the config file for this witness.
+
+        Returns:
+            The JSON dictionary for this config file.
+        """
         with open(self.config) as f:
             return cast(Dict[str, Any], json.load(f))
 
 
 @dataclass
 class BridgeConfig(ConfigItem):
+    """Object representing the config for a bridge."""
+
     name: str
     chains: Tuple[str, str]
     witnesses: List[str]
