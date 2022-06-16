@@ -4,7 +4,7 @@ from pprint import pprint
 from typing import Any, Dict, List, cast
 
 import click
-import requests
+import httpx
 from xrpl.clients import JsonRpcClient
 from xrpl.models import (
     Response,
@@ -186,7 +186,7 @@ def send_transfer(
             ],
         }
 
-        proof_result = requests.post(witness_url, json=proof_request).json()
+        proof_result = httpx.post(witness_url, json=proof_request).json()
         if verbose or tutorial:
             pprint(proof_result)
         proofs.append(proof_result["result"]["proof"])
