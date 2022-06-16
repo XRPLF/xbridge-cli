@@ -2,7 +2,12 @@
 
 from typing import Optional
 
-from sidechain_cli.utils.config_file import ChainConfig, ConfigFile, WitnessConfig
+from sidechain_cli.utils.config_file import (
+    BridgeConfig,
+    ChainConfig,
+    ConfigFile,
+    WitnessConfig,
+)
 from sidechain_cli.utils.types import BridgeData, ChainData, WitnessData
 
 
@@ -70,7 +75,7 @@ def check_bridge_exists(bridge_name: str) -> bool:
     """
     conf = get_config()
     for bridge in conf.bridges:
-        if bridge["name"] == bridge_name:
+        if bridge.name == bridge_name:
             return True
     return False
 
@@ -153,7 +158,7 @@ def add_bridge(bridge_data: BridgeData) -> None:
         bridge_data: The data of the bridge to add.
     """
     conf = get_config()
-    conf.bridges.append(bridge_data)
+    conf.bridges.append(BridgeConfig.from_dict(bridge_data))
     conf.write_to_file()
 
 
@@ -176,5 +181,5 @@ def remove_bridge(name: Optional[str] = None, remove_all: bool = False) -> None:
     if remove_all:
         conf.bridges = []
     else:
-        conf.bridges = [bridge for bridge in conf.bridges if bridge["name"] != name]
+        conf.bridges = [bridge for bridge in conf.bridges if bridge.name != name]
     conf.write_to_file()

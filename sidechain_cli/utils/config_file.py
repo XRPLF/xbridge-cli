@@ -4,13 +4,13 @@ from __future__ import annotations
 
 import json
 import os
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Any, Dict, Type
+from typing import Any, Dict, List, Tuple, Type
 
 from xrpl.clients import JsonRpcClient
 
-from sidechain_cli.utils.types import ChainData, WitnessData
+from sidechain_cli.utils.types import BridgeData, ChainData, Currency, WitnessData
 
 _HOME = str(Path.home())
 
@@ -67,6 +67,19 @@ class WitnessConfig(ConfigItem):
         return cls(**data)
 
 
+@dataclass
+class BridgeConfig(ConfigItem):
+    name: str
+    chains: Tuple[str, str]
+    witnesses: List[str]
+    door_accounts: Tuple[str, str]
+    xchain_currencies: Tuple[Currency, Currency]
+
+    @classmethod
+    def from_dict(cls: Type[BridgeConfig], data: BridgeData) -> BridgeConfig:
+        return cls(**data)
+
+
 class ConfigFile:
     """Helper class for working with the config file."""
 
@@ -81,7 +94,7 @@ class ConfigFile:
         self.witnesses = [
             WitnessConfig.from_dict(witness) for witness in data["witnesses"]
         ]
-        self.bridges = data["bridges"]
+        self.bridges = [BridgeConfig.from_dict(bridge) for bridge in data["bridges"]]
 
     @classmethod
     def from_file(cls: Type[ConfigFile]) -> ConfigFile:
@@ -95,7 +108,7 @@ class ConfigFile:
             data = json.load(f)
             return cls(data)
 
-    def to_dict(self: ConfigFile) -> Dict[str, Any]:
+    def to_dict(self: ConfigFile) -> Dict[str, List[Dict[str, Any]]]:
         """
         Convert a ConfigFile object back to a dictionary.
 
@@ -103,9 +116,9 @@ class ConfigFile:
             A dictionary representing the data in the object.
         """
         return {
-            "chains": self.chains,
-            "witnesses": self.witnesses,
-            "bridges": self.bridges,
+            "chains": [asdict(chain) for chain in self.chains],
+            "witnesses": [asdict(witness) for witness in self.witnesses],
+            "bridges": [asdict(bridge) for bridge in self.bridges],
         }
 
     def write_to_file(self: ConfigFile) -> None:
