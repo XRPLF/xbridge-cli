@@ -26,40 +26,40 @@ from sidechain_cli.utils import (
     help="The name of the chain (used for differentiation purposes).",
 )
 @click.option(
-    "--rippled",
+    "--exe",
     required=True,
     prompt=True,
     type=click.Path(exists=True),
-    help="The filepath to the rippled executable.",
+    help="The filepath to the executable.",
 )
 @click.option(
     "--config",
     required=True,
     prompt=True,
     type=click.Path(exists=True),
-    help="The filepath to the rippled config file.",
+    help="The filepath to the exe config file.",
 )
 @click.option(
     "--verbose", is_flag=True, help="Whether or not to print more verbose information."
 )
-def start_chain(name: str, rippled: str, config: str, verbose: bool = False) -> None:
+def start_server(name: str, exe: str, config: str, verbose: bool = False) -> None:
     """
-    Start a standalone node of rippled.
+    Start a standalone node of rippled or a witness node.
     \f
 
     Args:
         name: The name of the chain (used for differentiation purposes).
-        rippled: The filepath to the rippled executable.
-        config: The filepath to the rippled config file.
+        exe: The filepath to the executable.
+        config: The filepath to the config file.
         verbose: Whether or not to print more verbose information.
     """  # noqa: D301
-    rippled = os.path.abspath(rippled)
+    exe = os.path.abspath(exe)
     config = os.path.abspath(config)
     config_object = RippledConfig(file_name=config)
     if check_chain_exists(name, config):
         print("Error: Chain already running with that name or config.")
         return
-    to_run = [rippled, "--conf", config, "-a", "--silent"]
+    to_run = [exe, "--conf", config, "-a", "--silent"]
     if verbose:
         print(f"Starting server {name}...")
 
@@ -78,7 +78,7 @@ def start_chain(name: str, rippled: str, config: str, verbose: bool = False) -> 
 
     chain_data: ChainData = {
         "name": name,
-        "rippled": rippled,
+        "rippled": exe,
         "config": config,
         "pid": pid,
         "ws_ip": config_object.port_ws_admin_local.ip,
@@ -98,19 +98,19 @@ def start_chain(name: str, rippled: str, config: str, verbose: bool = False) -> 
     # add chain to config file
     add_chain(chain_data)
     if verbose:
-        print(f"started rippled at `{rippled}` with config `{config}`", flush=True)
+        print(f"started rippled at `{exe}` with config `{config}`", flush=True)
         print(f"PID: {pid}", flush=True)
 
 
 @click.command(name="stop")
-@click.option("--name", help="The name of the chain to stop.")
+@click.option("--name", help="The name of the server to stop.")
 @click.option(
-    "--all", "stop_all", is_flag=True, help="Whether to stop all of the chains."
+    "--all", "stop_all", is_flag=True, help="Whether to stop all of the servers."
 )
 @click.option(
     "--verbose", is_flag=True, help="Whether or not to print more verbose information."
 )
-def stop_chain(
+def stop_server(
     name: Optional[str] = None, stop_all: bool = False, verbose: bool = False
 ) -> None:
     """
@@ -118,8 +118,8 @@ def stop_chain(
     \f
 
     Args:
-        name: The name of the chain to stop.
-        stop_all: Whether to stop all of the chains.
+        name: The name of the server to stop.
+        stop_all: Whether to stop all of the servers.
         verbose: Whether or not to print more verbose information.
     """  # noqa: D301
     if name is None and stop_all is False:
@@ -146,28 +146,28 @@ def stop_chain(
 
 
 @click.command(name="restart")
-@click.option("--name", help="The name of the chain to restart.")
+@click.option("--name", help="The name of the server to restart.")
 @click.option(
-    "--all", "restart_all", is_flag=True, help="Whether to stop all of the chains."
+    "--all", "restart_all", is_flag=True, help="Whether to stop all of the servers."
 )
 @click.option(
     "--verbose", is_flag=True, help="Whether or not to print more verbose information."
 )
 @click.pass_context
-def restart_chain(
+def restart_server(
     ctx: click.Context,
     name: Optional[str] = None,
     restart_all: bool = False,
     verbose: bool = False,
 ) -> None:
     """
-    Restart a rippled node(s).
+    Restart a rippled or witness node(s).
     \f
 
     Args:
         ctx: The click context.
-        name: The name of the chain to restart.
-        restart_all: Whether to restart all of the chains.
+        name: The name of the server to restart.
+        restart_all: Whether to restart all of the servers.
         verbose: Whether or not to print more verbose information.
     """  # noqa: D301
     if name is None and restart_all is False:
@@ -181,10 +181,10 @@ def restart_chain(
         assert name is not None
         chains = [config.get_chain(name)]
 
-    ctx.invoke(stop_chain, name=name, stop_all=restart_all, verbose=verbose)
+    ctx.invoke(stop_server, name=name, stop_all=restart_all, verbose=verbose)
     for chain in chains:
         ctx.invoke(
-            start_chain,
+            start_server,
             name=chain.name,
             rippled=chain.rippled,
             config=chain.config,

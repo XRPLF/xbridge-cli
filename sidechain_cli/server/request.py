@@ -11,9 +11,9 @@ import click
 )
 @click.argument("command", required=True)
 @click.argument("args", nargs=-1)
-def request_chain(name: str, command: str, args: Tuple[str]) -> None:
+def request_server(name: str, command: str, args: Tuple[str]) -> None:
     """
-    Send a command-line request to a rippled node.
+    Send a command-line request to a rippled or witness node.
     \f
 
     Args:
@@ -27,9 +27,9 @@ def request_chain(name: str, command: str, args: Tuple[str]) -> None:
 @click.command(name="status")
 @click.option("--name", help="The name of the chain to query.")
 @click.option("--all", is_flag=True, help="Whether to query all of the chains.")
-def get_chain_status(name: Optional[str] = None, query_all: bool = False) -> None:
+def get_server_status(name: Optional[str] = None, query_all: bool = False) -> None:
     """
-    Get the status of a rippled node(s).
+    Get the status of a rippled or witness node(s).
     \f
 
     Args:
