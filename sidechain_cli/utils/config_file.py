@@ -53,13 +53,20 @@ class ConfigItem(ABC):
 
 
 @dataclass
-class ChainConfig(ConfigItem):
-    """Object representing the config for a chain."""
+class ServerConfig(ConfigItem):
+    """Object representing the config for a server (chain/witness)."""
 
     name: str
+    type: Union[Literal["rippled"], Literal["witness"]]
+    pid: int
+
+
+@dataclass
+class ChainConfig(ServerConfig):
+    """Object representing the config for a chain."""
+
     rippled: str
     config: str
-    pid: int
     ws_ip: str
     ws_port: int
     http_ip: str
@@ -85,13 +92,11 @@ class ChainConfig(ConfigItem):
 
 
 @dataclass
-class WitnessConfig(ConfigItem):
+class WitnessConfig(ServerConfig):
     """Object representing the config for a witness."""
 
-    name: str
     witnessd: str
     config: str
-    pid: int
     ip: str
     rpc_port: int
 
@@ -112,10 +117,7 @@ def _to_issued_currency(
     return (
         cast(Literal["XRP"], "XRP")
         if xchain_currency == "XRP"
-        else cast(
-            IssuedCurrency,
-            IssuedCurrency.from_dict(cast(Dict[str, Any], xchain_currency)),
-        )
+        else IssuedCurrency.from_dict(cast(Dict[str, Any], xchain_currency))
     )
 
 
@@ -209,6 +211,27 @@ class ConfigFile:
             if witness.name == name:
                 return witness
         raise Exception(f"No witness with name {name}.")
+
+    def get_server(self: ConfigFile, name: str) -> ServerConfig:
+        """
+        Get the server corresponding to the name.
+
+        Args:
+            name: The name of the server.
+
+        Returns:
+            The ServerConfig object corresponding to that server.
+
+        Raises:
+            Exception: if there is no server with that name.
+        """
+        for chain in self.chains:
+            if chain.name == name:
+                return chain
+        for witness in self.witnesses:
+            if witness.name == name:
+                return witness
+        raise Exception(f"No server with name {name}.")
 
     def get_bridge(self: ConfigFile, name: str) -> BridgeConfig:
         """

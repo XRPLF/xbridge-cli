@@ -80,6 +80,20 @@ def check_bridge_exists(bridge_name: str) -> bool:
     return False
 
 
+def check_server_exists(name: str, config: Optional[str] = None) -> bool:
+    """
+    Check if a server with a given name or config is already running.
+
+    Args:
+        name: The name of the server to check.
+        config: The name of the config to check. Optional.
+
+    Returns:
+        Whether there is already a server running with that name or config.
+    """
+    return check_chain_exists(name, config) or check_witness_exists(name, config)
+
+
 def add_chain(chain_data: ChainData) -> None:
     """
     Add a chain's data to the config file.
@@ -147,6 +161,37 @@ def remove_witness(name: Optional[str] = None, remove_all: bool = False) -> None
         conf.witnesses = []
     else:
         conf.witnesses = [witness for witness in conf.witnesses if witness.name != name]
+    conf.write_to_file()
+
+
+def remove_server(name: Optional[str] = None, remove_all: bool = False) -> None:
+    """
+    Remove a server's data to the config file.
+
+    Args:
+        name: The data of the server to remove.
+        remove_all: Whether to remove all of the servers.
+
+    Raises:
+        Exception: If `name` is `None` and `remove_all` is `False`.
+    """
+    if name is None and remove_all is False:
+        raise Exception(
+            "Cannot remove server if name is `None` and remove_all is `False`."
+        )
+    conf = get_config()
+    if remove_all:
+        conf.chains = []
+        conf.witnesses = []
+    else:
+        assert name is not None
+        try:
+            conf.get_witness(name)
+            conf.witnesses = [
+                witness for witness in conf.witnesses if witness.name != name
+            ]
+        except Exception:
+            conf.chains = [chain for chain in conf.chains if chain.name != name]
     conf.write_to_file()
 
 

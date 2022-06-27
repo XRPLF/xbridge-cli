@@ -3,26 +3,30 @@
 from typing import List, Literal, Tuple, TypedDict, Union
 
 
-class ChainData(TypedDict):
-    """Helper type for chain data stored in the config file."""
+class ServerData(TypedDict):
+    """Helper type for server data stored in the config file."""
 
     name: str
+    type: Union[Literal["rippled"], Literal["witness"]]
+    pid: int
+
+
+class ChainData(ServerData):
+    """Helper type for chain data stored in the config file."""
+
     rippled: str
     config: str
-    pid: int
     ws_ip: str
     ws_port: int
     http_ip: str
     http_port: int
 
 
-class WitnessData(TypedDict):
+class WitnessData(ServerData):
     """Helper type for witness data stored in the config file."""
 
-    name: str
     witnessd: str
     config: str
-    pid: int
     ip: str
     rpc_port: int
 

@@ -1,0 +1,25 @@
+"""Subcommand for all commands dealing with rippled nodes."""
+
+import click
+
+from sidechain_cli.server.config import list_servers
+from sidechain_cli.server.request import get_server_status, request_server
+from sidechain_cli.server.start import restart_server, start_server, stop_server
+
+
+@click.group()
+def server() -> None:
+    """Subcommand for all commands dealing with rippled and witness servers."""
+    pass
+
+
+server.add_command(start_server, name="start")
+server.add_command(stop_server, name="stop")
+server.add_command(restart_server, name="restart")
+
+server.add_command(list_servers, name="list")
+
+server.add_command(get_server_status, name="status")
+server.add_command(request_server, name="request")
+
+__all__ = ["server"]

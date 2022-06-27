@@ -1,7 +1,7 @@
 """CLI command for setting up a bridge."""
 
 from pprint import pprint
-from typing import Any, Dict, List, cast
+from typing import Any, Dict, List
 
 import click
 import httpx
@@ -25,7 +25,7 @@ def _combine_proofs(proofs: List[Dict[str, Any]]) -> XChainClaimProof:
     for extra_proof in proofs[1:]:
         signatures = proof["signatures"]
         proof["signatures"].extend(signatures)
-    return cast(XChainClaimProof, XChainClaimProof.from_dict(proof))
+    return XChainClaimProof.from_dict(proof)
 
 
 def _submit_tx(
