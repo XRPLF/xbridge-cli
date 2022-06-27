@@ -181,6 +181,7 @@ def remove_server(name: Optional[str] = None, remove_all: bool = False) -> None:
         )
     conf = get_config()
     if remove_all:
+        conf.chains = []
         conf.witnesses = []
     else:
         assert name is not None
