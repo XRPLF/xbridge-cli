@@ -1,20 +1,26 @@
 """CLI functions for starting/stopping a rippled node."""
 
+import json
 import os
+import signal
 import subprocess
 import time
-from typing import Optional
+from typing import List, Optional, cast
 
 import click
 
 from sidechain_cli.utils import (
     CONFIG_FOLDER,
+    ChainConfig,
     ChainData,
     RippledConfig,
+    ServerConfig,
+    WitnessData,
     add_chain,
-    check_chain_exists,
+    add_witness,
+    check_server_exists,
     get_config,
-    remove_chain,
+    remove_server,
 )
 
 
@@ -55,13 +61,25 @@ def start_server(name: str, exe: str, config: str, verbose: bool = False) -> Non
     """  # noqa: D301
     exe = os.path.abspath(exe)
     config = os.path.abspath(config)
-    config_object = RippledConfig(file_name=config)
-    if check_chain_exists(name, config):
-        print("Error: Chain already running with that name or config.")
+    try:
+        config_object = RippledConfig(file_name=config)
+        is_rippled = True
+    except ValueError:
+        with open(config) as f:
+            config_json = json.load(f)
+        is_rippled = False
+    if check_server_exists(name, config):
+        print("Error: Server already running with that name or config.")
         return
-    to_run = [exe, "--conf", config, "-a", "--silent"]
+
+    server_type = "rippled" if is_rippled else "witness"
     if verbose:
-        print(f"Starting server {name}...")
+        print(f"Starting {server_type} server {name}...")
+
+    if is_rippled:
+        to_run = [exe, "--conf", config, "-a"]
+    else:
+        to_run = [exe, "--config", config, "--verbose"]
 
     # create output file for easier debug purposes
     output_file = f"{CONFIG_FOLDER}/{name}.out"
@@ -76,18 +94,7 @@ def start_server(name: str, exe: str, config: str, verbose: bool = False) -> Non
     )
     pid = process.pid
 
-    chain_data: ChainData = {
-        "name": name,
-        "rippled": exe,
-        "config": config,
-        "pid": pid,
-        "ws_ip": config_object.port_ws_admin_local.ip,
-        "ws_port": int(config_object.port_ws_admin_local.port),
-        "http_ip": config_object.port_rpc_admin_local.ip,
-        "http_port": int(config_object.port_rpc_admin_local.port),
-    }
-
-    # check if rippled actually started up correctly
+    # check if server actually started up correctly
     time.sleep(0.3)
     if process.poll() is not None:
         print("ERROR")
@@ -95,10 +102,35 @@ def start_server(name: str, exe: str, config: str, verbose: bool = False) -> Non
             print(f.read())
         return
 
-    # add chain to config file
-    add_chain(chain_data)
+    if is_rippled:
+        chain_data: ChainData = {
+            "name": name,
+            "type": "rippled",
+            "rippled": exe,
+            "config": config,
+            "pid": pid,
+            "ws_ip": config_object.port_ws_admin_local.ip,
+            "ws_port": int(config_object.port_ws_admin_local.port),
+            "http_ip": config_object.port_rpc_admin_local.ip,
+            "http_port": int(config_object.port_rpc_admin_local.port),
+        }
+        # add chain to config file
+        add_chain(chain_data)
+    else:
+        witness_data: WitnessData = {
+            "name": name,
+            "type": "witness",
+            "witnessd": exe,
+            "config": config,
+            "pid": pid,
+            "ip": config_json["rpc_endpoint"]["ip"],
+            "rpc_port": config_json["rpc_endpoint"]["port"],
+        }
+        # add witness to config file
+        add_witness(witness_data)
+
     if verbose:
-        print(f"started rippled at `{exe}` with config `{config}`", flush=True)
+        print(f"started {server_type} at `{exe}` with config `{config}`", flush=True)
         print(f"PID: {pid}", flush=True)
 
 
@@ -127,22 +159,34 @@ def stop_server(
         return
     config = get_config()
     if stop_all:
-        chains = config.chains
+        servers = cast(List[ServerConfig], config.chains) + cast(
+            List[ServerConfig], config.witnesses
+        )
     else:
         assert name is not None
-        chains = [config.get_chain(name)]
+        servers = [config.get_server(name)]
     if verbose:
-        chain_names = ",".join([chain.name for chain in chains])
-        print(f"Shutting down: {chain_names}")
+        server_names = ",".join([server.name for server in servers])
+        print(f"Shutting down: {server_names}")
 
-    fout = open(os.devnull, "w")
-    for chain in chains:
-        to_run = [chain.rippled, "--conf", chain.config, "stop"]
-        subprocess.call(to_run, stdout=fout, stderr=subprocess.STDOUT)
+    # fout = open(os.devnull, "w")
+    for server in servers:
+        if isinstance(server, ChainConfig):
+            # TODO: stop the server with a CLI command
+            # to_run = [server.rippled, "--conf", server.config, "stop"]
+            # subprocess.call(to_run, stdout=fout, stderr=subprocess.STDOUT)
+            pid = server.pid
+            os.kill(pid, signal.SIGINT)
+        else:
+            # TODO: stop the server with a CLI command
+            # to_run = [server.witnessd, "--config", server.config, "stop"]
+            # subprocess.call(to_run, stdout=fout, stderr=subprocess.STDOUT)
+            pid = server.pid
+            os.kill(pid, signal.SIGINT)
         if verbose:
-            print(f"Stopped {chain.name}")
+            print(f"Stopped {server.name}")
 
-    remove_chain(name, stop_all)
+    remove_server(name, stop_all)
 
 
 @click.command(name="restart")

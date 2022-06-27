@@ -4,6 +4,7 @@ from sidechain_cli.utils.config_file import (
     CONFIG_FOLDER,
     BridgeConfig,
     ChainConfig,
+    ServerConfig,
     WitnessConfig,
 )
 from sidechain_cli.utils.config_utils import (
@@ -12,10 +13,12 @@ from sidechain_cli.utils.config_utils import (
     add_witness,
     check_bridge_exists,
     check_chain_exists,
+    check_server_exists,
     check_witness_exists,
     get_config,
     remove_bridge,
     remove_chain,
+    remove_server,
     remove_witness,
 )
 from sidechain_cli.utils.rippled_config import RippledConfig
@@ -34,10 +37,12 @@ __all__ = [
     "add_witness",
     "check_bridge_exists",
     "check_chain_exists",
+    "check_server_exists",
     "check_witness_exists",
     "get_config",
     "remove_bridge",
     "remove_chain",
+    "remove_server",
     "remove_witness",
     "submit_tx",
     "BridgeData",
@@ -50,4 +55,5 @@ __all__ = [
     "BridgeConfig",
     "ChainConfig",
     "WitnessConfig",
+    "ServerConfig",
 ]

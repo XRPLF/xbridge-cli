@@ -5,7 +5,6 @@ import click
 from sidechain_cli.bridge import bridge
 from sidechain_cli.misc.fund import fund_account
 from sidechain_cli.server import server
-from sidechain_cli.witness import witness
 
 
 @click.group()
@@ -15,7 +14,6 @@ def main() -> None:
 
 
 main.add_command(server)
-main.add_command(witness)
 main.add_command(bridge)
 main.add_command(fund_account)
 
