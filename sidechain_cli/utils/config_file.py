@@ -117,10 +117,7 @@ def _to_issued_currency(
     return (
         cast(Literal["XRP"], "XRP")
         if xchain_currency == "XRP"
-        else cast(
-            IssuedCurrency,
-            IssuedCurrency.from_dict(cast(Dict[str, Any], xchain_currency)),
-        )
+        else IssuedCurrency.from_dict(cast(Dict[str, Any], xchain_currency))
     )
 
 
