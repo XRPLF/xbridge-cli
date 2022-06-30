@@ -1,8 +1,11 @@
 """CLI functions involving sending RPC requests to a rippled node."""
 
+import subprocess
 from typing import Optional, Tuple
 
 import click
+
+from sidechain_cli.utils import ChainConfig, get_config
 
 
 @click.command(name="request")
@@ -11,7 +14,12 @@ import click
 )
 @click.argument("command", required=True)
 @click.argument("args", nargs=-1)
-def request_server(name: str, command: str, args: Tuple[str]) -> None:
+@click.option(
+    "--verbose", is_flag=True, help="Whether or not to print more verbose information."
+)
+def request_server(
+    name: str, command: str, args: Tuple[str], verbose: bool = False
+) -> None:
     """
     Send a command-line request to a rippled or witness node.
     \f
@@ -20,8 +28,18 @@ def request_server(name: str, command: str, args: Tuple[str]) -> None:
         name: The name of the server to query.
         command: The rippled RPC command.
         args: The arguments for the RPC command.
+        verbose: Whether or not to print more verbose information.
     """  # noqa: D301
-    print(f"{name}:", command, *args)
+    if verbose:
+        print(f"{name}:", command, *args)
+    config = get_config()
+    server = config.get_server(name)
+
+    if isinstance(server, ChainConfig):  # is a rippled node
+        to_run = [server.rippled, "--conf", server.config, command, *args]
+        subprocess.call(to_run)
+    else:  # is a witness node
+        print("Cannot query witness nodes from the command line right now.")
 
 
 @click.command(name="status")
