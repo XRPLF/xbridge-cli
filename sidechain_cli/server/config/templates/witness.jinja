@@ -1,0 +1,30 @@
+{
+  "mainchain_endpoint": {
+    "ip": "127.0.0.1",
+    "port": {{ mainchain_port }}
+  },
+  "sidechain_endpoint": {
+    {% if is_linux -%}
+    "ip": "127.0.0.2",
+    {% else -%}
+    "ip": "127.0.0.1",
+    {%- endif %}
+    "port": {{ sidechain_port }}
+  },
+  "rpc_endpoint": {
+    {% if is_linux -%}
+    "ip": "127.0.0.3",
+    {% else -%}
+    "ip": "127.0.0.1",
+    {%- endif %}
+    "port": {{ witness_port }}
+  },
+  "db_dir": "{{ db_dir }}",
+  "signing_key_seed": "{{ seed }}",
+  "sidechain": {
+    "src_chain_door": "{{ src_door }}",
+    "src_chain_issue": "{{ src_issue }}",
+    "dst_chain_door": "{{ dst_door }}",
+    "dst_chain_issue": "{{ dst_issue }}"
+  }
+}
