@@ -85,12 +85,12 @@ class Ports:
         }
 
 
+# render a Jinja template and dump it into a file
 def _generate_template(
     template_name: str, template_data: Dict[str, Any], filename: str
 ) -> None:
     template = JINJA_ENV.get_template(template_name)
 
-    # add the rippled.cfg file
     with open(filename, "w") as f:
         f.write(template.render(template_data))
 
