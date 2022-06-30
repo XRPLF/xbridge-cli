@@ -143,26 +143,93 @@ def _generate_rippled_configs(data_dir: str) -> Tuple[int, int]:
     return mainchain_ports.ws_public_port, sidechain_ports.ws_public_port
 
 
-def _generate_witness_config(
+@click.command(name="witness")
+@click.option(
+    "--data_dir",
+    required=True,
+    prompt=True,
+    help="The folder in which to store config files.",
+)
+@click.option(
+    "--name",
+    required=True,
+    prompt=True,
+    help="The name of the witness server.",
+)
+@click.option(
+    "--mc_port",
+    "mainchain_port",
+    required=True,
+    prompt=True,
+    type=int,
+    help="The port used by the mainchain.",
+)
+@click.option(
+    "--sc_port",
+    "sidechain_port",
+    required=True,
+    prompt=True,
+    type=int,
+    help="The port used by the sidechain.",
+)
+@click.option(
+    "--witness_port",
+    required=True,
+    prompt=True,
+    type=int,
+    help="The port that will be used by the witness server.",
+)
+@click.option(
+    "--src_door",
+    required=True,
+    prompt=True,
+    help="The door account on the source chain.",
+)
+@click.option(
+    "--dst_door",
+    default="rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh",
+    help="The door account on the destination chain. Defaults to the genesis account.",
+)
+@click.option(
+    "--verbose", is_flag=True, help="Whether or not to print more verbose information."
+)
+def generate_witness_config(
     data_dir: str,
+    name: str,
     mainchain_port: int,
     sidechain_port: int,
-    witness_number: int,
+    witness_port: int,
     src_door: str,
+    dst_door: str = "rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh",
+    verbose: bool = False,
 ) -> None:
-    sub_dir = f"{data_dir}/witness{witness_number}"
+    """
+    Generate a witness config file.
+
+    Args:
+        data_dir: The folder in which to store config files.
+        name: The name of the witness server.
+        mainchain_port: The port used by the mainchain.
+        sidechain_port: The port used by the sidechain.
+        witness_port: The port that will be used by the witness server.
+        src_door: The door account on the source chain.
+        dst_door: The door account on the destination chain. Defaults to the genesis
+            account.
+        verbose: Whether or not to print more verbose information.
+    """
+    sub_dir = f"{data_dir}/{name}"
     for path in ["", "/db"]:
         Path(sub_dir + path).mkdir(parents=True, exist_ok=True)
 
     template_data = {
         "mainchain_port": mainchain_port,
         "sidechain_port": sidechain_port,
-        "witness_port": 6010 + witness_number,
+        "witness_port": witness_port,
         "db_dir": f"{sub_dir}/db",
         "seed": Wallet.create(CryptoAlgorithm.SECP256K1).seed,
         "src_door": src_door,
         "src_issue": "XRP",
-        "dst_door": "rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh",
+        "dst_door": dst_door,
         "dst_issue": "XRP",
         "is_linux": platform == "linux" or platform == "linux2",
     }
@@ -255,11 +322,18 @@ def generate_all_configs(
         num_witnesses: The number of witnesses configs to generate.
         verbose: Whether or not to print more verbose information.
     """
+    # TODO: add support for external networks
     mc_port, sc_port = _generate_rippled_configs(data_dir)
     src_door = Wallet.create(CryptoAlgorithm.SECP256K1)
     for i in range(num_witnesses):
-        _generate_witness_config(
-            data_dir, mc_port, sc_port, i, src_door.classic_address
+        ctx.invoke(
+            generate_witness_config,
+            data_dir=data_dir,
+            name=f"witness{i}",
+            mc_port=mc_port,
+            sc_port=sc_port,
+            witness_port=6010 + i,
+            src_door=src_door.classic_address,
         )
     ctx.invoke(
         generate_bootstrap,
