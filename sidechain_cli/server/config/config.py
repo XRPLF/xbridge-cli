@@ -14,7 +14,7 @@ from xrpl import CryptoAlgorithm
 from xrpl.wallet import Wallet
 
 JINJA_ENV = Environment(
-    loader=FileSystemLoader(searchpath="./sidechain_cli/create_config/templates")
+    loader=FileSystemLoader(searchpath="./sidechain_cli/server/config/templates")
 )
 
 
@@ -304,7 +304,10 @@ def generate_bootstrap(
     help="The folder in which to store config files.",
 )
 @click.option(
-    "--num_witnesses", type=int, help="The number of witness configs to generate."
+    "--num_witnesses",
+    default=5,
+    type=int,
+    help="The number of witness configs to generate.",
 )
 @click.option(
     "--verbose", is_flag=True, help="Whether or not to print more verbose information."
@@ -330,8 +333,8 @@ def generate_all_configs(
             generate_witness_config,
             data_dir=data_dir,
             name=f"witness{i}",
-            mc_port=mc_port,
-            sc_port=sc_port,
+            mainchain_port=mc_port,
+            sidechain_port=sc_port,
             witness_port=6010 + i,
             src_door=src_door.classic_address,
         )
