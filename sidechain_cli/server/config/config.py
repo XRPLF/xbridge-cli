@@ -25,6 +25,8 @@ class Ports:
     at the same time without interfering with each other.
     """
 
+    # TODO: somehow keep track of ports in the CLI config file
+
     peer_port_base = 51235
     http_admin_port_base = 5005
     ws_public_port_base = 6005
