@@ -1,4 +1,4 @@
-rm ~/.config/sidechain-cli/config.json
+rm ~/.config/sidechain-cli/config.json  # TODO: remove once cleanup is better
 sidechain-cli server start-all
 sidechain-cli server list
 sidechain-cli bridge create --name=bridge --chains mainchain sidechain --witness witness0 --witness witness1 --verbose
