@@ -172,7 +172,8 @@ def start_all_servers(
 ) -> None:
     """
     Start all the servers (both rippled and witnesses) that have config files in the
-    config directory.
+    config directory. If there is a rippled.cfg file in the folder, it will start
+    rippled. If there is a witness.json file in the folder, it will start a witness.
     \f
 
     Args:
