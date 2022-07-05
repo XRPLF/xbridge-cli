@@ -14,7 +14,7 @@ Install rippled and the xbridge witness.
 export XCHAIN_CONFIG_DIR={filepath where you want your config files stored}
 export RIPPLED_EXE={rippled exe filepath}
 export WITNESSD_EXE={witnessd exe filepath}
-./scripts/start.sh
+./scripts/tutorial.sh
 ```
 
 To stop the servers:
