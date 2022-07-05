@@ -134,6 +134,83 @@ def start_server(name: str, exe: str, config: str, verbose: bool = False) -> Non
         print(f"PID: {pid}", flush=True)
 
 
+@click.command(name="start-all")
+@click.option(
+    "--config_dir",
+    envvar="XCHAIN_CONFIG_DIR",
+    required=True,
+    prompt=True,
+    type=click.Path(exists=True),
+    help="The folder in which to store config files.",
+)
+@click.option(
+    "--rippled_exe",
+    envvar="RIPPLED_EXE",
+    required=True,
+    prompt=True,
+    type=click.Path(exists=True),
+    help="The filepath to the rippled executable.",
+)
+@click.option(
+    "--witnessd_exe",
+    envvar="WITNESSD_EXE",
+    required=True,
+    prompt=True,
+    type=click.Path(exists=True),
+    help="The filepath to the witnessd executable.",
+)
+@click.option(
+    "--verbose", is_flag=True, help="Whether or not to print more verbose information."
+)
+@click.pass_context
+def start_all_servers(
+    ctx: click.Context,
+    config_dir: str,
+    rippled_exe: str,
+    witnessd_exe: str,
+    verbose: bool = False,
+) -> None:
+    """
+    Start all the servers (both rippled and witnesses) that have config files in the
+    config directory.
+    \f
+
+    Args:
+        ctx: The click context.
+        config_dir: The filepath to the config folder.
+        rippled_exe: The filepath to the rippled executable.
+        witnessd_exe: The filepath to the witnessd executable.
+        verbose: Whether or not to print more verbose information.
+    """  # noqa: D301
+    if not os.path.isdir(config_dir):
+        print(f"Error: {config_dir} is not a directory.")
+        return
+    chains = []
+    witnesses = []
+    for name in os.listdir(config_dir):
+        filepath = os.path.join(config_dir, name)
+        if os.path.isdir(filepath):
+            if "rippled.cfg" in os.listdir(filepath):
+                config = os.path.join(filepath, "rippled.cfg")
+                chains.append((name, config))
+            elif "witness.json" in os.listdir(filepath):
+                config = os.path.join(filepath, "witness.json")
+                witnesses.append((name, config))
+            else:
+                continue
+
+    # TODO: simplify this logic once the witness can start up without the chains
+    for name, config in chains:
+        ctx.invoke(
+            start_server, name=name, exe=rippled_exe, config=config, verbose=verbose
+        )
+    time.sleep(3)
+    for name, config in witnesses:
+        ctx.invoke(
+            start_server, name=name, exe=witnessd_exe, config=config, verbose=verbose
+        )
+
+
 @click.command(name="stop")
 @click.option("--name", help="The name of the server to stop.")
 @click.option(

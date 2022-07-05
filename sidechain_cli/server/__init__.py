@@ -5,7 +5,12 @@ import click
 from sidechain_cli.server.config import create_server_configs
 from sidechain_cli.server.list import list_servers
 from sidechain_cli.server.request import get_server_status, request_server
-from sidechain_cli.server.start import restart_server, start_server, stop_server
+from sidechain_cli.server.start import (
+    restart_server,
+    start_all_servers,
+    start_server,
+    stop_server,
+)
 
 
 @click.group()
@@ -15,6 +20,7 @@ def server() -> None:
 
 
 server.add_command(start_server, name="start")
+server.add_command(start_all_servers, name="start-all")
 server.add_command(stop_server, name="stop")
 server.add_command(restart_server, name="restart")
 

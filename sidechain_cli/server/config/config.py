@@ -239,6 +239,7 @@ def generate_bootstrap(
     envvar="XCHAIN_CONFIG_DIR",
     required=True,
     prompt=True,
+    type=click.Path(),
     help="The folder in which to store config files.",
 )
 @click.option(
