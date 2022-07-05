@@ -37,9 +37,9 @@ def _generate_standalone_config(
     *,
     ports: Ports,
     cfg_type: str,
-    data_dir: str,
+    config_dir: str,
 ) -> None:
-    sub_dir = f"{data_dir}/{cfg_type}"
+    sub_dir = f"{config_dir}/{cfg_type}"
 
     for path in ["", "/db"]:
         Path(sub_dir + path).mkdir(parents=True, exist_ok=True)
@@ -57,24 +57,24 @@ def _generate_standalone_config(
     )
 
 
-def _generate_rippled_configs(data_dir: str) -> Tuple[int, int]:
+def _generate_rippled_configs(config_dir: str) -> Tuple[int, int]:
     """
     Generate the rippled config files.
 
     Args:
-        data_dir: The directory to use for the config files.
+        config_dir: The directory to use for the config files.
 
     Returns:
         The mainchain and sidechain WS ports.
     """
     mainchain_ports = Ports.generate(0)
     _generate_standalone_config(
-        ports=mainchain_ports, cfg_type="mainchain", data_dir=data_dir
+        ports=mainchain_ports, cfg_type="mainchain", config_dir=config_dir
     )
 
     sidechain_ports = Ports.generate(1)
     _generate_standalone_config(
-        ports=sidechain_ports, cfg_type="sidechain", data_dir=data_dir
+        ports=sidechain_ports, cfg_type="sidechain", config_dir=config_dir
     )
 
     return mainchain_ports.ws_public_port, sidechain_ports.ws_public_port
@@ -82,7 +82,7 @@ def _generate_rippled_configs(data_dir: str) -> Tuple[int, int]:
 
 @click.command(name="witness")
 @click.option(
-    "--data_dir",
+    "--config_dir",
     required=True,
     prompt=True,
     help="The folder in which to store config files.",
@@ -131,7 +131,7 @@ def _generate_rippled_configs(data_dir: str) -> Tuple[int, int]:
     "--verbose", is_flag=True, help="Whether or not to print more verbose information."
 )
 def generate_witness_config(
-    data_dir: str,
+    config_dir: str,
     name: str,
     mainchain_port: int,
     sidechain_port: int,
@@ -144,7 +144,7 @@ def generate_witness_config(
     Generate a witness config file.
 
     Args:
-        data_dir: The folder in which to store config files.
+        config_dir: The folder in which to store config files.
         name: The name of the witness server.
         mainchain_port: The port used by the mainchain.
         sidechain_port: The port used by the sidechain.
@@ -154,7 +154,7 @@ def generate_witness_config(
             account.
         verbose: Whether or not to print more verbose information.
     """
-    sub_dir = f"{data_dir}/{name}"
+    sub_dir = f"{config_dir}/{name}"
     for path in ["", "/db"]:
         Path(sub_dir + path).mkdir(parents=True, exist_ok=True)
 
@@ -180,7 +180,7 @@ def generate_witness_config(
 
 @click.command(name="bootstrap")
 @click.option(
-    "--data_dir",
+    "--config_dir",
     required=True,
     prompt=True,
     help="The folder in which to store config files.",
@@ -202,13 +202,13 @@ def generate_witness_config(
     "--verbose", is_flag=True, help="Whether or not to print more verbose information."
 )
 def generate_bootstrap(
-    data_dir: str, mainchain_seed: str, sidechain_seed: str, verbose: bool = False
+    config_dir: str, mainchain_seed: str, sidechain_seed: str, verbose: bool = False
 ) -> None:
     """
     Generate a bootstrap config file. Used by the scripts to initialize the bridge.
 
     Args:
-        data_dir: The folder in which to store config files.
+        config_dir: The folder in which to store config files.
         mainchain_seed: The seed of the mainchain door account.
         sidechain_seed: The seed of the sidechain door account. Defaults to the genesis
             account.
@@ -229,13 +229,14 @@ def generate_bootstrap(
     _generate_template(
         "bootstrap.jinja",
         template_data,
-        os.path.join(data_dir, "bridge_bootstrap.json"),
+        os.path.join(config_dir, "bridge_bootstrap.json"),
     )
 
 
 @click.command(name="all")
 @click.option(
-    "--data_dir",
+    "--config_dir",
+    envvar="XCHAIN_CONFIG_DIR",
     required=True,
     prompt=True,
     help="The folder in which to store config files.",
@@ -251,24 +252,24 @@ def generate_bootstrap(
 )
 @click.pass_context
 def generate_all_configs(
-    ctx: click.Context, data_dir: str, num_witnesses: int = 5, verbose: bool = False
+    ctx: click.Context, config_dir: str, num_witnesses: int = 5, verbose: bool = False
 ) -> None:
     """
     Generate the rippled and witness configs.
 
     Args:
         ctx: The click context.
-        data_dir: The directory to use for the config files.
+        config_dir: The directory to use for the config files.
         num_witnesses: The number of witnesses configs to generate.
         verbose: Whether or not to print more verbose information.
     """
     # TODO: add support for external networks
-    mc_port, sc_port = _generate_rippled_configs(data_dir)
+    mc_port, sc_port = _generate_rippled_configs(config_dir)
     src_door = Wallet.create(CryptoAlgorithm.SECP256K1)
     for i in range(num_witnesses):
         ctx.invoke(
             generate_witness_config,
-            data_dir=data_dir,
+            config_dir=config_dir,
             name=f"witness{i}",
             mainchain_port=mc_port,
             sidechain_port=sc_port,
@@ -277,7 +278,7 @@ def generate_all_configs(
         )
     ctx.invoke(
         generate_bootstrap,
-        data_dir=data_dir,
+        config_dir=config_dir,
         mainchain_seed=src_door.seed,
         verbose=verbose,
     )
