@@ -10,7 +10,7 @@ port_ws_public
 port = {{ ports.http_admin_port }}
 ip = 127.0.0.1
 admin = 127.0.0.1
-protocol = http, https
+protocol = http
 
 [port_peer]
 port = {{ ports.peer_port }}
@@ -21,12 +21,12 @@ protocol = peer
 port = {{ ports.ws_admin_port }}
 ip = 127.0.0.1
 admin = 127.0.0.1
-protocol = ws, wss
+protocol = ws
 
 [port_ws_public]
 port = {{ ports.ws_public_port }}
 ip = 127.0.0.1
-protocol = ws, wss
+protocol = ws
 
 [node_size]
 medium
