@@ -61,10 +61,19 @@ def _str_to_currency(token: str) -> CurrencyDict:
     help="The witness servers that monitor the bridge.",
 )
 @click.option(
+    "--signature_reward",
+    default="100",
+    help="The reward for witnesses providing a signature.",
+)
+@click.option(
     "--verbose", is_flag=True, help="Whether or not to print more verbose information."
 )
 def create_bridge(
-    name: str, chains: Tuple[str, str], witnesses: List[str], verbose: bool = True
+    name: str,
+    chains: Tuple[str, str],
+    witnesses: List[str],
+    signature_reward: str,
+    verbose: bool = True,
 ) -> None:
     """
     Keep track of a bridge between a mainchain and sidechain.
@@ -73,6 +82,7 @@ def create_bridge(
         name: The name of the bridge (used for differentiation purposes).
         chains: The two chains that the bridge goes between.
         witnesses: The witness server(s) that monitor the bridge.
+        signature_reward: The reward for witnesses providing a signature.
         verbose: Whether or not to print more verbose information.
     """
     # check name
@@ -106,6 +116,7 @@ def create_bridge(
         "witnesses": witnesses,
         "door_accounts": doors,
         "xchain_currencies": tokens,
+        "signature_reward": signature_reward,
     }
 
     add_bridge(bridge_data)
@@ -123,23 +134,15 @@ def create_bridge(
     help="The filepath to the bootstrap config file.",
 )
 @click.option(
-    "--signature_reward",
-    default="100",
-    help="The reward for witnesses providing a signature.",
-)
-@click.option(
     "--verbose", is_flag=True, help="Whether or not to print more verbose information."
 )
-def setup_bridge(
-    bridge: str, bootstrap: str, signature_reward: str, verbose: bool = False
-) -> None:
+def setup_bridge(bridge: str, bootstrap: str, verbose: bool = False) -> None:
     """
     Set up a bridge between a mainchain and sidechain.
 
     Args:
         bridge: The bridge to build.
         bootstrap: The filepath to the bootstrap config file.
-        signature_reward: The reward for witnesses providing a signature.
         verbose: Whether or not to print more verbose information.
     """
     bridge_config = get_config().get_bridge(bridge)
@@ -163,6 +166,7 @@ def setup_bridge(
         account = client1.request(wallet_propose).result["account_id"]
         signer_entries.append(SignerEntry(account=account, signer_weight=1))
     bridge_obj = bridge_config.get_bridge()
+    signature_reward = bridge_config.signature_reward
 
     create_tx1 = XChainCreateBridge(
         account=bridge_config.door_accounts[0],

@@ -130,6 +130,7 @@ class BridgeConfig(ConfigItem):
     witnesses: List[str]
     door_accounts: Tuple[str, str]
     xchain_currencies: Tuple[Currency, Currency]
+    signature_reward: str
 
     def get_bridge(self: BridgeConfig) -> XChainBridge:
         """

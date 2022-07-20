@@ -49,3 +49,4 @@ class BridgeData(TypedDict):
     witnesses: List[str]
     door_accounts: Tuple[str, str]
     xchain_currencies: Tuple[Currency, Currency]
+    signature_reward: str

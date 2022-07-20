@@ -1,31 +1,13 @@
 """CLI command for setting up a bridge."""
 
 from pprint import pprint
-from typing import Any, Dict, List
 
 import click
-import httpx
 from xrpl.clients import JsonRpcClient
-from xrpl.models import (
-    Response,
-    Transaction,
-    Tx,
-    XChainClaim,
-    XChainSeqNumCreate,
-    XChainTransfer,
-)
-from xrpl.models.xchain_claim_proof import XChainClaimProof
+from xrpl.models import Response, Transaction, Tx, XChainCommit, XChainCreateClaimID
 from xrpl.wallet import Wallet
 
 from sidechain_cli.utils import get_config, submit_tx
-
-
-def _combine_proofs(proofs: List[Dict[str, Any]]) -> XChainClaimProof:
-    proof = proofs[0]
-    for extra_proof in proofs[1:]:
-        signatures = proof["signatures"]
-        proof["signatures"].extend(signatures)
-    return XChainClaimProof.from_dict(proof)
 
 
 def _submit_tx(
@@ -124,20 +106,22 @@ def send_transfer(
         return
 
     dst_chain = [chain for chain in bridge_config.chains if chain != src_chain][0]
-    src_door = bridge_config.door_accounts[bridge_config.chains.index(src_chain)]
     src_chain_config = get_config().get_chain(src_chain)
     dst_chain_config = get_config().get_chain(dst_chain)
     src_client = src_chain_config.get_client()
     dst_client = dst_chain_config.get_client()
 
-    sidechain = bridge_config.get_sidechain()
+    bridge_obj = bridge_config.get_bridge()
 
     # XChainSeqNumCreate
     if tutorial:
-        input("\nCreating a cross-sequence number on the destination chain...")
+        input("\nCreating a cross-chain claim ID on the destination chain...")
 
-    seq_num_tx = XChainSeqNumCreate(
-        account=to_wallet.classic_address, sidechain=sidechain
+    seq_num_tx = XChainCreateClaimID(
+        account=to_wallet.classic_address,
+        xchain_bridge=bridge_obj,
+        signature_reward=bridge_config.signature_reward,
+        other_chain_account=from_wallet.classic_address,
     )
     seq_num_result = _submit_tx(
         seq_num_tx, dst_client, to_wallet.seed, verbose or tutorial
@@ -148,58 +132,36 @@ def send_transfer(
     created_nodes = [
         node["CreatedNode"] for node in nodes if "CreatedNode" in node.keys()
     ]
-    seqnum_ledger_entries = [
-        node for node in created_nodes if node["LedgerEntryType"] == "CrosschainSeqNum"
+    print(created_nodes)
+    claim_ids_ledger_entries = [
+        node for node in created_nodes if node["LedgerEntryType"] == "XChainClaimID"
     ]
-    assert len(seqnum_ledger_entries) == 1
-    xchain_seq = seqnum_ledger_entries[0]["NewFields"]["XChainSequence"]
+    assert len(claim_ids_ledger_entries) == 1
+    xchain_seq = claim_ids_ledger_entries[0]["NewFields"]["XChainClaimID"]
 
     # XChainTransfer
     if tutorial:
         input("\nLocking the funds on the source chain...")
 
-    transfer_tx = XChainTransfer(
+    commit_tx = XChainCommit(
         account=from_wallet.classic_address,
         amount=amount,
-        sidechain=sidechain,
-        xchain_sequence=xchain_seq,
+        xchain_bridge=bridge_obj,
+        xchain_claim_id=xchain_seq,
     )
-    _submit_tx(transfer_tx, src_client, from_wallet.seed, verbose or tutorial)
+    _submit_tx(commit_tx, src_client, from_wallet.seed, verbose or tutorial)
 
-    # Retrieve proof from witness
-    if tutorial:
-        input("\nRetrieving the proofs from the witness servers...")
+    # TODO: wait for the witnesses to send their attestations
 
-    proofs = []
-    for witness in bridge_config.witnesses:
-        witness_config = get_config().get_witness(witness)
-        witness_url = f"http://{witness_config.ip}:{witness_config.rpc_port}"
-        proof_request = {
-            "method": "witness",
-            "params": [
-                {
-                    "amount": amount,
-                    "xchain_sequence_number": xchain_seq,
-                    "dst_door": src_door,
-                    "sidechain": sidechain.to_dict(),
-                }
-            ],
-        }
+    # # XChainClaim
+    # if tutorial:
+    #     input(
+    #         "\nClaiming the funds on the destination chain with the witness proofs..."
+    #     )
 
-        proof_result = httpx.post(witness_url, json=proof_request).json()
-        if verbose or tutorial:
-            pprint(proof_result)
-        proofs.append(proof_result["result"]["proof"])
-
-    # XChainClaim
-    if tutorial:
-        input(
-            "\nClaiming the funds on the destination chain with the witness proofs..."
-        )
-
-    claim_tx = XChainClaim(
-        account=to_wallet.classic_address,
-        destination=to_wallet.classic_address,
-        xchain_claim_proof=_combine_proofs(proofs),
-    )
-    _submit_tx(claim_tx, dst_client, to_wallet.seed, verbose or tutorial)
+    # claim_tx = XChainClaim(
+    #     account=to_wallet.classic_address,
+    #     destination=to_wallet.classic_address,
+    #     xchain_claim_proof=_combine_proofs(proofs),
+    # )
+    # _submit_tx(claim_tx, dst_client, to_wallet.seed, verbose or tutorial)
