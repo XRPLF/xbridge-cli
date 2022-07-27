@@ -39,7 +39,8 @@ def _generate_standalone_config(
     cfg_type: str,
     config_dir: str,
 ) -> None:
-    sub_dir = f"{config_dir}/{cfg_type}"
+    abs_config_dir = os.path.abspath(config_dir)
+    sub_dir = f"{abs_config_dir}/{cfg_type}"
 
     for path in ["", "/db"]:
         Path(sub_dir + path).mkdir(parents=True, exist_ok=True)
@@ -154,7 +155,8 @@ def generate_witness_config(
             account.
         verbose: Whether or not to print more verbose information.
     """
-    sub_dir = f"{config_dir}/{name}"
+    abs_config_dir = os.path.abspath(config_dir)
+    sub_dir = f"{abs_config_dir}/{name}"
     for path in ["", "/db"]:
         Path(sub_dir + path).mkdir(parents=True, exist_ok=True)
 
@@ -265,12 +267,13 @@ def generate_all_configs(
         verbose: Whether or not to print more verbose information.
     """
     # TODO: add support for external networks
-    mc_port, sc_port = _generate_rippled_configs(config_dir)
+    abs_config_dir = os.path.abspath(config_dir)
+    mc_port, sc_port = _generate_rippled_configs(abs_config_dir)
     src_door = Wallet.create(CryptoAlgorithm.SECP256K1)
     for i in range(num_witnesses):
         ctx.invoke(
             generate_witness_config,
-            config_dir=config_dir,
+            config_dir=abs_config_dir,
             name=f"witness{i}",
             mainchain_port=mc_port,
             sidechain_port=sc_port,
@@ -279,7 +282,7 @@ def generate_all_configs(
         )
     ctx.invoke(
         generate_bootstrap,
-        config_dir=config_dir,
+        config_dir=abs_config_dir,
         mainchain_seed=src_door.seed,
         verbose=verbose,
     )
