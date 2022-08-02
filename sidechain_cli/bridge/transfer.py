@@ -3,8 +3,20 @@
 from pprint import pprint
 
 import click
+import httpx
 from xrpl.clients import JsonRpcClient
-from xrpl.models import Response, Transaction, Tx, XChainCommit, XChainCreateClaimID
+from xrpl.models import (
+    Response,
+    Transaction,
+    Tx,
+    XChainAddAttestation,
+    XChainCommit,
+    XChainCreateClaimID,
+)
+from xrpl.models.transactions.xchain_add_attestation import (
+    XChainAttestationBatch,
+    XChainClaimAttestationBatchElement,
+)
 from xrpl.wallet import Wallet
 
 from sidechain_cli.utils import get_config, submit_tx
@@ -17,13 +29,16 @@ def _submit_tx(
         print(f"submitting tx to {client.url}:")
         pprint(tx.to_xrpl())
     result = submit_tx(tx, client, secret)
+    tx_result = result.result.get("error") or result.result.get("engine_result")
     if verbose:
-        print(f"Result: {result.result['engine_result']}")
-    if result.result["engine_result"] != "tesSUCCESS":
-        raise Exception(result.result["engine_result_message"])
+        print(f"Result: {tx_result}")
+    if tx_result != "tesSUCCESS":
+        raise Exception(
+            result.result.get("error_message")
+            or result.result.get("engine_result_message")
+        )
     tx_hash = result.result["tx_json"]["hash"]
-    tx_result = client.request(Tx(transaction=tx_hash))
-    return tx_result
+    return client.request(Tx(transaction=tx_hash))
 
 
 @click.command(name="transfer")
@@ -110,6 +125,7 @@ def send_transfer(
     dst_chain_config = get_config().get_chain(dst_chain)
     src_client = src_chain_config.get_client()
     dst_client = dst_chain_config.get_client()
+    src_door = bridge_config.door_accounts[bridge_config.chains.index(src_chain)]
 
     bridge_obj = bridge_config.get_bridge()
 
@@ -137,7 +153,7 @@ def send_transfer(
         node for node in created_nodes if node["LedgerEntryType"] == "XChainClaimID"
     ]
     assert len(claim_ids_ledger_entries) == 1
-    xchain_seq = claim_ids_ledger_entries[0]["NewFields"]["XChainClaimID"]
+    xchain_claim_id = claim_ids_ledger_entries[0]["NewFields"]["XChainClaimID"]
 
     # XChainTransfer
     if tutorial:
@@ -147,11 +163,69 @@ def send_transfer(
         account=from_wallet.classic_address,
         amount=amount,
         xchain_bridge=bridge_obj,
-        xchain_claim_id=xchain_seq,
+        xchain_claim_id=xchain_claim_id,
+        # other_chain_destination=to_wallet.classic_address
     )
     _submit_tx(commit_tx, src_client, from_wallet.seed, verbose or tutorial)
 
     # TODO: wait for the witnesses to send their attestations
+    if tutorial:
+        input("\nRetrieving the proofs from the witness servers...")
+
+    for witness in bridge_config.witnesses:
+        witness_config = get_config().get_witness(witness)
+        witness_url = f"http://{witness_config.ip}:{witness_config.rpc_port}"
+        proof_request = {
+            "method": "witness",
+            "params": [
+                {
+                    "sending_account": from_wallet.classic_address,
+                    "reward_account": "rGzx83BVoqTYbGn7tiVAnFw7cbxjin13jL",
+                    "sending_amount": amount,
+                    "claim_id": int(xchain_claim_id, 16),
+                    "door": src_door,
+                    "bridge": bridge_config.to_xrpl(),
+                    "signature_reward": bridge_config.signature_reward,
+                    "destination": to_wallet.classic_address,
+                }
+            ],
+        }
+
+        if verbose or tutorial:
+            print(proof_request)
+
+        # TODO: better error handling
+
+        proof_result = httpx.post(witness_url, json=proof_request).json()
+        if verbose or tutorial:
+            pprint(proof_result)
+        proof = proof_result["result"]["XChainAttestationBatch"][
+            "XChainClaimAttestationBatch"
+        ][0]
+        # TODO: remove when this bug is fixed in rippled
+        proof["XChainClaimAttestationBatchElement"]["XChainClaimID"] = str(
+            int(proof["XChainClaimAttestationBatchElement"]["XChainClaimID"], 16)
+        )
+
+        attestation_tx = XChainAddAttestation(
+            account="rGzx83BVoqTYbGn7tiVAnFw7cbxjin13jL",
+            xchain_attestation_batch=XChainAttestationBatch(
+                xchain_bridge=bridge_config.get_bridge(),
+                xchain_claim_attestation_batch=[
+                    XChainClaimAttestationBatchElement.from_xrpl(proof)
+                ],
+                xchain_create_account_attestation_batch=[],
+            ),
+        )
+        if tutorial:
+            input(f"Submitting attestation tx for witness {witness_config.name}...")
+
+        _submit_tx(
+            attestation_tx,
+            dst_client,
+            "snLsJNbh3qQVJuB2FmoGu3SGBENLB",
+            verbose or tutorial,
+        )
 
     # # XChainClaim
     # if tutorial:

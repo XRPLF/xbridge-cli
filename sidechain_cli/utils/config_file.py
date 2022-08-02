@@ -148,6 +148,22 @@ class BridgeConfig(ConfigItem):
             issuing_chain_issue=issuing_chain_issue,
         )
 
+    def to_xrpl(self: BridgeConfig) -> Dict[str, Any]:
+        """
+        Get the XRPL-formatted dictionary for the XChainBridge object.
+
+        Returns:
+            The XRPL-formatted dictionary for the XChainBridge object.
+        """
+        locking_chain_issue = _to_issued_currency(self.xchain_currencies[0])
+        issuing_chain_issue = _to_issued_currency(self.xchain_currencies[1])
+        return {
+            "LockingChainDoor": self.door_accounts[0],
+            "LockingChainIssue": locking_chain_issue,
+            "IssuingChainDoor": self.door_accounts[1],
+            "IssuingChainIssue": issuing_chain_issue,
+        }
+
 
 class ConfigFile:
     """Helper class for working with the config file."""
