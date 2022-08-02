@@ -201,9 +201,11 @@ def send_transfer(
         proof_result = httpx.post(witness_url, json=proof_request).json()
         if verbose or tutorial:
             pprint(proof_result)
+
         if "error" in proof_result:
             error_message = proof_result["error"]["error"]
             raise Exception(f"Request for proof failed: {error_message}")
+
         proof = proof_result["result"]["XChainAttestationBatch"][
             "XChainClaimAttestationBatch"
         ][0]
