@@ -103,6 +103,9 @@ def send_transfer(
         to_account: The seed of the account to transfer to.
         verbose: Whether or not to print more verbose information.
         tutorial: Whether to slow down and explain each step.
+
+    Raises:
+        Exception: If there is an error with a transaction somewhere along the way.
     """
     bridge_config = get_config().get_bridge(bridge)
     if src_chain not in bridge_config.chains:
@@ -148,7 +151,6 @@ def send_transfer(
     created_nodes = [
         node["CreatedNode"] for node in nodes if "CreatedNode" in node.keys()
     ]
-    print(created_nodes)
     claim_ids_ledger_entries = [
         node for node in created_nodes if node["LedgerEntryType"] == "XChainClaimID"
     ]
@@ -168,12 +170,17 @@ def send_transfer(
     )
     _submit_tx(commit_tx, src_client, from_wallet.seed, verbose or tutorial)
 
-    # TODO: wait for the witnesses to send their attestations
+    # TODO: wait for the witnesses to send their attestations (once witnesses send
+    # their own)
     if tutorial:
         input("\nRetrieving the proofs from the witness servers...")
 
     for witness in bridge_config.witnesses:
         witness_config = get_config().get_witness(witness)
+
+        if tutorial:
+            input(f"\nRetrieving the proofs from witness {witness_config.name}...")
+
         witness_url = f"http://{witness_config.ip}:{witness_config.rpc_port}"
         proof_request = {
             "method": "witness",
@@ -191,14 +198,12 @@ def send_transfer(
             ],
         }
 
-        if verbose or tutorial:
-            print(proof_request)
-
-        # TODO: better error handling
-
         proof_result = httpx.post(witness_url, json=proof_request).json()
         if verbose or tutorial:
             pprint(proof_result)
+        if "error" in proof_result:
+            error_message = proof_result["error"]["error"]
+            raise Exception(f"Request for proof failed: {error_message}")
         proof = proof_result["result"]["XChainAttestationBatch"][
             "XChainClaimAttestationBatch"
         ][0]
@@ -218,7 +223,7 @@ def send_transfer(
             ),
         )
         if tutorial:
-            input(f"Submitting attestation tx for witness {witness_config.name}...")
+            input(f"\nSubmitting attestation tx for witness {witness_config.name}...")
 
         _submit_tx(
             attestation_tx,
@@ -227,15 +232,4 @@ def send_transfer(
             verbose or tutorial,
         )
 
-    # # XChainClaim
-    # if tutorial:
-    #     input(
-    #         "\nClaiming the funds on the destination chain with the witness proofs..."
-    #     )
-
-    # claim_tx = XChainClaim(
-    #     account=to_wallet.classic_address,
-    #     destination=to_wallet.classic_address,
-    #     xchain_claim_proof=_combine_proofs(proofs),
-    # )
-    # _submit_tx(claim_tx, dst_client, to_wallet.seed, verbose or tutorial)
+    # TODO: add support for XChainClaim if something goes wrong
