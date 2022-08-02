@@ -102,12 +102,12 @@ def create_bridge(
 
     config = get_config().get_witness((witnesses[0])).get_config()
     doors = (
-        config["sidechain"]["src_chain_door"],
-        config["sidechain"]["dst_chain_door"],
+        config["sidechain"]["LockingChainDoor"],
+        config["sidechain"]["IssuingChainDoor"],
     )
     tokens = (
-        config["sidechain"]["src_chain_issue"],
-        config["sidechain"]["dst_chain_issue"],
+        config["sidechain"]["LockingChainIssue"],
+        config["sidechain"]["IssuingChainIssue"],
     )
 
     bridge_data: BridgeData = {
