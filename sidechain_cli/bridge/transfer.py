@@ -209,10 +209,6 @@ def send_transfer(
         proof = proof_result["result"]["XChainAttestationBatch"][
             "XChainClaimAttestationBatch"
         ][0]
-        # TODO: remove when this bug is fixed in rippled
-        proof["XChainClaimAttestationBatchElement"]["XChainClaimID"] = str(
-            int(proof["XChainClaimAttestationBatchElement"]["XChainClaimID"], 16)
-        )
 
         attestation_tx = XChainAddAttestation(
             account="rGzx83BVoqTYbGn7tiVAnFw7cbxjin13jL",
