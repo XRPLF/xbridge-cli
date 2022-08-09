@@ -166,7 +166,7 @@ def send_transfer(
         amount=amount,
         xchain_bridge=bridge_obj,
         xchain_claim_id=xchain_claim_id,
-        # other_chain_destination=to_wallet.classic_address
+        other_chain_account=to_wallet.classic_address,
     )
     _submit_tx(commit_tx, src_client, from_wallet.seed, verbose or tutorial)
 
