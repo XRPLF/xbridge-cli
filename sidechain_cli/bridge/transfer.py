@@ -115,12 +115,12 @@ def send_transfer(
     try:
         from_wallet = Wallet(from_account, 0)
     except ValueError:
-        print(f"Invalid seed: {from_account}")
+        print(f"Invalid from seed: {from_account}")
         return
     try:
         to_wallet = Wallet(to_account, 0)
     except ValueError:
-        print(f"Invalid seed: {to_account}")
+        print(f"Invalid to seed: {to_account}")
         return
 
     dst_chain = [chain for chain in bridge_config.chains if chain != src_chain][0]
