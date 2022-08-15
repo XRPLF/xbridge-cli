@@ -1,7 +1,7 @@
 rm ~/.config/sidechain-cli/config.json  # TODO: remove once cleanup is better
 sidechain-cli server start-all
 sidechain-cli server list
-sidechain-cli bridge create --name=bridge --chains mainchain sidechain --witness witness0
+sidechain-cli bridge create --name=bridge --chains mainchain sidechain --witness witness0 --witness witness1 --witness witness2 --witness witness3 --witness witness4
 cat ../sidechain-config/bridge_bootstrap.json | jq .mainchain_door.id | tr -d '"' | sidechain-cli fund --chain mainchain
 sidechain-cli bridge build --bridge bridge --bootstrap ../sidechain-config/bridge_bootstrap.json
 sidechain-cli fund --chain mainchain --account raFcdz1g8LWJDJWJE2ZKLRGdmUmsTyxaym

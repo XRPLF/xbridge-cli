@@ -223,11 +223,20 @@ def send_transfer(
         if tutorial:
             input(f"\nSubmitting attestation tx for witness {witness_config.name}...")
 
-        _submit_tx(
-            attestation_tx,
-            dst_client,
-            "snLsJNbh3qQVJuB2FmoGu3SGBENLB",
-            verbose or tutorial,
-        )
+        try:
+            _submit_tx(
+                attestation_tx,
+                dst_client,
+                "snLsJNbh3qQVJuB2FmoGu3SGBENLB",
+                verbose or tutorial,
+            )
+        except Exception as e:
+            if "No such xchain claim id" not in e.args[0]:
+                raise e
+            if verbose or tutorial:
+                print(
+                    "  This means that quorum has already been reached and the funds "
+                    "have already been transferred."
+                )
 
     # TODO: add support for XChainClaim if something goes wrong
