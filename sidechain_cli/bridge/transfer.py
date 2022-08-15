@@ -174,6 +174,7 @@ def send_transfer(
     # their own)
     if tutorial:
         input("\nRetrieving the proofs from the witness servers...")
+    proofs = []
 
     for witness in bridge_config.witnesses:
         witness_config = get_config().get_witness(witness)
@@ -209,34 +210,33 @@ def send_transfer(
         proof = proof_result["result"]["XChainAttestationBatch"][
             "XChainClaimAttestationBatch"
         ][0]
+        proofs.append(XChainClaimAttestationBatchElement.from_xrpl(proof))
 
-        attestation_tx = XChainAddAttestation(
-            account="rGzx83BVoqTYbGn7tiVAnFw7cbxjin13jL",
-            xchain_attestation_batch=XChainAttestationBatch(
-                xchain_bridge=bridge_config.get_bridge(),
-                xchain_claim_attestation_batch=[
-                    XChainClaimAttestationBatchElement.from_xrpl(proof)
-                ],
-                xchain_create_account_attestation_batch=[],
-            ),
+    attestation_tx = XChainAddAttestation(
+        account="rGzx83BVoqTYbGn7tiVAnFw7cbxjin13jL",
+        xchain_attestation_batch=XChainAttestationBatch(
+            xchain_bridge=bridge_config.get_bridge(),
+            xchain_claim_attestation_batch=proofs,
+            xchain_create_account_attestation_batch=[],
+        ),
+    )
+    if tutorial:
+        input("\nSubmitting attestation tx for witnesses...")
+
+    try:
+        _submit_tx(
+            attestation_tx,
+            dst_client,
+            "snLsJNbh3qQVJuB2FmoGu3SGBENLB",
+            verbose or tutorial,
         )
-        if tutorial:
-            input(f"\nSubmitting attestation tx for witness {witness_config.name}...")
-
-        try:
-            _submit_tx(
-                attestation_tx,
-                dst_client,
-                "snLsJNbh3qQVJuB2FmoGu3SGBENLB",
-                verbose or tutorial,
+    except Exception as e:
+        if "No such xchain claim id" not in e.args[0]:
+            raise e
+        if verbose or tutorial:
+            print(
+                "  This means that quorum has already been reached and the funds "
+                "have already been transferred."
             )
-        except Exception as e:
-            if "No such xchain claim id" not in e.args[0]:
-                raise e
-            if verbose or tutorial:
-                print(
-                    "  This means that quorum has already been reached and the funds "
-                    "have already been transferred."
-                )
 
     # TODO: add support for XChainClaim if something goes wrong
