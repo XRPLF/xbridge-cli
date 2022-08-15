@@ -66,19 +66,19 @@ def _generate_rippled_configs(config_dir: str) -> Tuple[int, int]:
         config_dir: The directory to use for the config files.
 
     Returns:
-        The mainchain and sidechain WS ports.
+        The locking chain and issuing chain WS ports.
     """
-    mainchain_ports = Ports.generate(0)
+    locking_ports = Ports.generate(0)
     _generate_standalone_config(
-        ports=mainchain_ports, cfg_type="mainchain", config_dir=config_dir
+        ports=locking_ports, cfg_type="mainchain", config_dir=config_dir
     )
 
-    sidechain_ports = Ports.generate(1)
+    issuing_ports = Ports.generate(1)
     _generate_standalone_config(
-        ports=sidechain_ports, cfg_type="sidechain", config_dir=config_dir
+        ports=issuing_ports, cfg_type="sidechain", config_dir=config_dir
     )
 
-    return mainchain_ports.ws_public_port, sidechain_ports.ws_public_port
+    return locking_ports.ws_public_port, issuing_ports.ws_public_port
 
 
 @click.command(name="witness")

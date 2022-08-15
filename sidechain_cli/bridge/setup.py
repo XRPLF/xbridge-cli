@@ -76,7 +76,7 @@ def create_bridge(
     verbose: bool = True,
 ) -> None:
     """
-    Keep track of a bridge between a mainchain and sidechain.
+    Keep track of a bridge between a locking chain and issuing chain.
 
     Args:
         name: The name of the bridge (used for differentiation purposes).
@@ -102,12 +102,12 @@ def create_bridge(
 
     config = get_config().get_witness((witnesses[0])).get_config()
     doors = (
-        config["sidechain"]["LockingChainDoor"],
-        config["sidechain"]["IssuingChainDoor"],
+        config["XChainBridge"]["LockingChainDoor"],
+        config["XChainBridge"]["IssuingChainDoor"],
     )
     tokens = (
-        config["sidechain"]["LockingChainIssue"],
-        config["sidechain"]["IssuingChainIssue"],
+        config["XChainBridge"]["LockingChainIssue"],
+        config["XChainBridge"]["IssuingChainIssue"],
     )
 
     bridge_data: BridgeData = {
@@ -138,7 +138,7 @@ def create_bridge(
 )
 def setup_bridge(bridge: str, bootstrap: str, verbose: bool = False) -> None:
     """
-    Set up a bridge between a mainchain and sidechain.
+    Set up a bridge between a locking chain and issuing chain.
 
     Args:
         bridge: The bridge to build.
@@ -160,7 +160,7 @@ def setup_bridge(bridge: str, bootstrap: str, verbose: bool = False) -> None:
         # TODO: refactor to avoid using wallet_propose
         wallet_propose = GenericRequest(
             method="wallet_propose",
-            seed=witness_config["signing_key_seed"],
+            seed=witness_config["SigningKeySeed"],
             key_type="ed25519",
         )
         account = client1.request(wallet_propose).result["account_id"]
