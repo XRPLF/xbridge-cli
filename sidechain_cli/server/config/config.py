@@ -129,6 +129,18 @@ def _generate_rippled_configs(config_dir: str) -> Tuple[int, int]:
     help="The door account on the destination chain. Defaults to the genesis account.",
 )
 @click.option(
+    "--locking_reward_account",
+    required=True,
+    prompt=True,
+    help="The reward account for the witness on the locking chain.",
+)
+@click.option(
+    "--issuing_reward_account",
+    required=True,
+    prompt=True,
+    help="The reward account for the witness on the issuing chain.",
+)
+@click.option(
     "--verbose", is_flag=True, help="Whether or not to print more verbose information."
 )
 def generate_witness_config(
@@ -137,6 +149,8 @@ def generate_witness_config(
     mainchain_port: int,
     sidechain_port: int,
     witness_port: int,
+    locking_reward_account: str,
+    issuing_reward_account: str,
     src_door: str,
     dst_door: str = "rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh",
     verbose: bool = False,
@@ -153,6 +167,8 @@ def generate_witness_config(
         src_door: The door account on the source chain.
         dst_door: The door account on the destination chain. Defaults to the genesis
             account.
+        locking_reward_account: The reward account for the witness on the locking chain.
+        issuing_reward_account: The reward account for the witness on the issuing chain.
         verbose: Whether or not to print more verbose information.
     """
     abs_config_dir = os.path.abspath(config_dir)
@@ -166,6 +182,8 @@ def generate_witness_config(
         "witness_port": witness_port,
         "db_dir": f"{sub_dir}/db",
         "seed": Wallet.create(CryptoAlgorithm.SECP256K1).seed,
+        "locking_reward_account": locking_reward_account,
+        "issuing_reward_account": issuing_reward_account,
         "src_door": src_door,
         "src_issue": "XRP",
         "dst_door": dst_door,
@@ -201,10 +219,20 @@ def generate_witness_config(
     help="The seed of the sidechain door account. Defaults to the genesis account.",
 )
 @click.option(
+    "--witness_reward_seed",
+    required=True,
+    prompt=True,
+    help="The seed of the witness reward account.",
+)
+@click.option(
     "--verbose", is_flag=True, help="Whether or not to print more verbose information."
 )
 def generate_bootstrap(
-    config_dir: str, mainchain_seed: str, sidechain_seed: str, verbose: bool = False
+    config_dir: str,
+    mainchain_seed: str,
+    sidechain_seed: str,
+    witness_reward_seed: str,
+    verbose: bool = False,
 ) -> None:
     """
     Generate a bootstrap config file. Used by the scripts to initialize the bridge.
@@ -214,6 +242,7 @@ def generate_bootstrap(
         mainchain_seed: The seed of the mainchain door account.
         sidechain_seed: The seed of the sidechain door account. Defaults to the genesis
             account.
+        witness_reward_seed: The seed of the witness reward account.
         verbose: Whether or not to print more verbose information.
     """
     mainchain_door = Wallet(mainchain_seed, 0)
@@ -224,6 +253,7 @@ def generate_bootstrap(
         "mainchain_seed": mainchain_door.seed,
         "sidechain_id": sidechain_door.classic_address,
         "sidechain_seed": sidechain_door.seed,
+        "witness_reward_seed": witness_reward_seed,
     }
     if verbose:
         pprint(template_data)
@@ -270,6 +300,7 @@ def generate_all_configs(
     abs_config_dir = os.path.abspath(config_dir)
     mc_port, sc_port = _generate_rippled_configs(abs_config_dir)
     src_door = Wallet.create(CryptoAlgorithm.SECP256K1)
+    witness_reward_wallet = Wallet.create()
     for i in range(num_witnesses):
         ctx.invoke(
             generate_witness_config,
@@ -279,10 +310,13 @@ def generate_all_configs(
             sidechain_port=sc_port,
             witness_port=6010 + i,
             src_door=src_door.classic_address,
+            locking_reward_account=witness_reward_wallet.classic_address,
+            issuing_reward_account=witness_reward_wallet.classic_address,
         )
     ctx.invoke(
         generate_bootstrap,
         config_dir=abs_config_dir,
         mainchain_seed=src_door.seed,
         verbose=verbose,
+        witness_reward_seed=witness_reward_wallet.seed,
     )
