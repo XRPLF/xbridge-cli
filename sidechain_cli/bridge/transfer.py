@@ -133,7 +133,12 @@ def send_transfer(
 
     # XChainSeqNumCreate
     if tutorial:
-        input("\nCreating a cross-chain claim ID on the destination chain...")
+        click.pause(
+            info=click.style(
+                "\nCreating a cross-chain claim ID on the destination chain...",
+                fg="blue",
+            )
+        )
 
     seq_num_tx = XChainCreateClaimID(
         account=to_wallet.classic_address,
@@ -156,7 +161,9 @@ def send_transfer(
 
     # XChainTransfer
     if tutorial:
-        input("\nLocking the funds on the source chain...")
+        click.pause(
+            info=click.style("\nLocking the funds on the source chain...", fg="blue")
+        )
 
     commit_tx = XChainCommit(
         account=from_wallet.classic_address,
@@ -170,14 +177,23 @@ def send_transfer(
     # TODO: wait for the witnesses to send their attestations (once witnesses send
     # their own)
     if tutorial:
-        input("\nRetrieving the proofs from the witness servers...")
+        click.pause(
+            info=click.style(
+                "\nRetrieving the proofs from the witness servers...", fg="blue"
+            )
+        )
     proofs = []
 
     for witness in bridge_config.witnesses:
         witness_config = get_config().get_witness(witness)
 
         if tutorial:
-            input(f"\nRetrieving the proofs from witness {witness_config.name}...")
+            click.pause(
+                info=click.style(
+                    f"\nRetrieving the proofs from witness {witness_config.name}...",
+                    fg="blue",
+                )
+            )
 
         witness_url = f"http://{witness_config.ip}:{witness_config.rpc_port}"
         proof_request = {
@@ -220,7 +236,9 @@ def send_transfer(
         ),
     )
     if tutorial:
-        input("\nSubmitting attestation tx for witnesses...")
+        click.pause(
+            info=click.style("\nSubmitting attestation tx for witnesses...", fg="blue")
+        )
 
     try:
         _submit_tx(
