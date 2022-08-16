@@ -202,7 +202,6 @@ def send_transfer(
             "params": [
                 {
                     "sending_account": from_wallet.classic_address,
-                    "reward_account": "rGzx83BVoqTYbGn7tiVAnFw7cbxjin13jL",
                     "sending_amount": amount,
                     "claim_id": int(xchain_claim_id, 16),
                     "door": src_door,
@@ -229,7 +228,7 @@ def send_transfer(
         proofs.append(XChainClaimAttestationBatchElement.from_xrpl(proof))
 
     attestation_tx = XChainAddAttestation(
-        account="rGzx83BVoqTYbGn7tiVAnFw7cbxjin13jL",
+        account=to_wallet.classic_address,
         xchain_attestation_batch=XChainAttestationBatch(
             xchain_bridge=bridge_config.get_bridge(),
             xchain_claim_attestation_batch=proofs,
@@ -245,7 +244,7 @@ def send_transfer(
         _submit_tx(
             attestation_tx,
             dst_client,
-            "snLsJNbh3qQVJuB2FmoGu3SGBENLB",
+            to_wallet.seed,
             print_level,
         )
     except Exception as e:
@@ -266,4 +265,9 @@ def send_transfer(
         destination=to_wallet.classic_address,
         amount=amount,
     )
-    _submit_tx(claim_tx, dst_client, to_wallet.seed, print_level)
+    try:
+        _submit_tx(claim_tx, dst_client, to_wallet.seed, print_level)
+    except Exception as e:
+        message = e.args[0]
+        click.secho(f"Error: {message}", fg="red")
+        return
