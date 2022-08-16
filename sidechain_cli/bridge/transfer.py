@@ -10,6 +10,7 @@ from xrpl.models import (
     Transaction,
     Tx,
     XChainAddAttestation,
+    XChainClaim,
     XChainCommit,
     XChainCreateClaimID,
 )
@@ -170,7 +171,7 @@ def send_transfer(
         amount=amount,
         xchain_bridge=bridge_obj,
         xchain_claim_id=xchain_claim_id,
-        other_chain_account=to_wallet.classic_address,
+        # other_chain_account=to_wallet.classic_address,
     )
     _submit_tx(commit_tx, src_client, from_wallet.seed, print_level)
 
@@ -207,7 +208,7 @@ def send_transfer(
                     "door": src_door,
                     "bridge": bridge_config.to_xrpl(),
                     "signature_reward": bridge_config.signature_reward,
-                    "destination": to_wallet.classic_address,
+                    # "destination": to_wallet.classic_address,
                 }
             ],
         }
@@ -256,4 +257,13 @@ def send_transfer(
                 "have already been transferred."
             )
 
+    # TODO: check if the transfer already happened
     # TODO: add support for XChainClaim if something goes wrong
+    claim_tx = XChainClaim(
+        account=to_wallet.classic_address,
+        xchain_bridge=bridge_config.get_bridge(),
+        xchain_claim_id=xchain_claim_id,
+        destination=to_wallet.classic_address,
+        amount=amount,
+    )
+    _submit_tx(claim_tx, dst_client, to_wallet.seed, print_level)
