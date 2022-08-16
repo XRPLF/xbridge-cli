@@ -173,14 +173,14 @@ pydocstyle = ">=2.1"
 
 [[package]]
 name = "flake8-isort"
-version = "4.1.2.post0"
+version = "4.2.0"
 description = "flake8 plugin that integrates isort ."
 category = "dev"
 optional = false
 python-versions = "*"
 
 [package.dependencies]
-flake8 = ">=3.2.1,<5"
+flake8 = ">=3.2.1,<6"
 isort = ">=4.3.5,<6"
 
 [package.extras]
@@ -482,7 +482,7 @@ websockets = {version = "^10.0", markers = "python_version >= \"3.10\" and pytho
 type = "git"
 url = "https://github.com/XRPLF/xrpl-py.git"
 reference = "sidechain-2.5"
-resolved_reference = "dadfa5662d0242155662eebea3f6b204dd483e86"
+resolved_reference = "dc032fa41f3b30f15e371d5090a7210b3324bdcf"
 
 [[package]]
 name = "zipp"

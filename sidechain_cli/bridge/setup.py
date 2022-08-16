@@ -1,6 +1,7 @@
 """CLI command for setting up a bridge."""
 
 import json
+from pprint import pprint
 from typing import List, Tuple, cast
 
 import click
@@ -66,7 +67,10 @@ def _str_to_currency(token: str) -> CurrencyDict:
     help="The reward for witnesses providing a signature.",
 )
 @click.option(
-    "--verbose", is_flag=True, help="Whether or not to print more verbose information."
+    "-v",
+    "--verbose",
+    is_flag=True,
+    help="Whether or not to print more verbose information.",
 )
 def create_bridge(
     name: str,
@@ -119,6 +123,8 @@ def create_bridge(
         "signature_reward": signature_reward,
     }
 
+    if verbose:
+        pprint(bridge_data)
     add_bridge(bridge_data)
 
 
@@ -134,16 +140,20 @@ def create_bridge(
     help="The filepath to the bootstrap config file.",
 )
 @click.option(
-    "--verbose", is_flag=True, help="Whether or not to print more verbose information."
+    "-v",
+    "--verbose",
+    help="Whether or not to print more verbose information. Also supports `-vv`.",
+    count=True,
 )
-def setup_bridge(bridge: str, bootstrap: str, verbose: bool = False) -> None:
+def setup_bridge(bridge: str, bootstrap: str, verbose: int = 0) -> None:
     """
     Set up a bridge between a locking chain and issuing chain.
 
     Args:
         bridge: The bridge to build.
         bootstrap: The filepath to the bootstrap config file.
-        verbose: Whether or not to print more verbose information.
+        verbose: Whether or not to print more verbose information. Add more v's for
+            more verbosity.
     """
     bridge_config = get_config().get_bridge(bridge)
     with open(bootstrap) as f:

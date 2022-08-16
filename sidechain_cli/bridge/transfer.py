@@ -23,15 +23,10 @@ from sidechain_cli.utils import get_config, submit_tx
 
 
 def _submit_tx(
-    tx: Transaction, client: JsonRpcClient, secret: str, verbose: bool
+    tx: Transaction, client: JsonRpcClient, secret: str, verbose: int
 ) -> Response:
-    if verbose:
-        print(f"submitting tx to {client.url}:")
-        pprint(tx.to_xrpl())
-    result = submit_tx(tx, client, secret)
+    result = submit_tx(tx, client, secret, verbose)
     tx_result = result.result.get("error") or result.result.get("engine_result")
-    if verbose:
-        print(f"Result: {tx_result}")
     if tx_result != "tesSUCCESS":
         raise Exception(
             result.result.get("error_message")
@@ -76,7 +71,10 @@ def _submit_tx(
     help="The seed of the account to transfer to.",
 )
 @click.option(
-    "--verbose", is_flag=True, help="Whether or not to print more verbose information."
+    "-v",
+    "--verbose",
+    count=True,
+    help="Whether or not to print more verbose information. Supports `-vv`.",
 )
 @click.option(
     "--tutorial",
@@ -89,7 +87,7 @@ def send_transfer(
     amount: str,
     from_account: str,
     to_account: str,
-    verbose: bool = False,
+    verbose: int = 0,
     tutorial: bool = False,
 ) -> None:
     """
@@ -101,12 +99,13 @@ def send_transfer(
         amount: The amount to transfer.
         from_account: The seed of the account to transfer from.
         to_account: The seed of the account to transfer to.
-        verbose: Whether or not to print more verbose information.
+        verbose: Whether or not to print more verbose information. Supports `-vv`.
         tutorial: Whether to slow down and explain each step.
 
     Raises:
         Exception: If there is an error with a transaction somewhere along the way.
     """
+    print_level = max(verbose, 2 if tutorial else 0)
     bridge_config = get_config().get_bridge(bridge)
     if src_chain not in bridge_config.chains:
         print(f"Error: {src_chain} not one of the chains in {bridge}.")
@@ -142,9 +141,7 @@ def send_transfer(
         signature_reward=bridge_config.signature_reward,
         other_chain_account=from_wallet.classic_address,
     )
-    seq_num_result = _submit_tx(
-        seq_num_tx, dst_client, to_wallet.seed, verbose or tutorial
-    )
+    seq_num_result = _submit_tx(seq_num_tx, dst_client, to_wallet.seed, print_level)
 
     # extract new sequence number from metadata
     nodes = seq_num_result.result["meta"]["AffectedNodes"]
@@ -168,7 +165,7 @@ def send_transfer(
         xchain_claim_id=xchain_claim_id,
         other_chain_account=to_wallet.classic_address,
     )
-    _submit_tx(commit_tx, src_client, from_wallet.seed, verbose or tutorial)
+    _submit_tx(commit_tx, src_client, from_wallet.seed, print_level)
 
     # TODO: wait for the witnesses to send their attestations (once witnesses send
     # their own)
@@ -200,8 +197,10 @@ def send_transfer(
         }
 
         proof_result = httpx.post(witness_url, json=proof_request).json()
-        if verbose or tutorial:
+        if print_level > 1:
             pprint(proof_result)
+        elif print_level > 0:
+            print(f"Proof from {witness_config.name} successfully received.")
 
         if "error" in proof_result:
             error_message = proof_result["error"]["error"]
@@ -228,12 +227,12 @@ def send_transfer(
             attestation_tx,
             dst_client,
             "snLsJNbh3qQVJuB2FmoGu3SGBENLB",
-            verbose or tutorial,
+            print_level,
         )
     except Exception as e:
         if "No such xchain claim id" not in e.args[0]:
             raise e
-        if verbose or tutorial:
+        if print_level > 0:
             print(
                 "  This means that quorum has already been reached and the funds "
                 "have already been transferred."
