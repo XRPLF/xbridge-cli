@@ -17,6 +17,10 @@ poetry shell
 
 Install rippled and the xbridge witness.
 
+rippled: https://xrpl.org/install-rippled.html
+
+witness: https://github.com/seelabs/xbridge_witness
+
 ## Get started
 
 ```bash
