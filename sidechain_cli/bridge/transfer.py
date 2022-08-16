@@ -105,7 +105,7 @@ def send_transfer(
     Raises:
         Exception: If there is an error with a transaction somewhere along the way.
     """
-    print_level = max(verbose, 1 if tutorial else 0)
+    print_level = max(verbose, 2 if tutorial else 0)
     bridge_config = get_config().get_bridge(bridge)
     if src_chain not in bridge_config.chains:
         print(f"Error: {src_chain} not one of the chains in {bridge}.")
