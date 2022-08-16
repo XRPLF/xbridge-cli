@@ -1,6 +1,6 @@
 """Fund an account from the genesis account."""
 
-from pprint import pprint
+from pprint import pformat
 
 import click
 from xrpl.models import AccountInfo, Payment
@@ -48,4 +48,4 @@ def fund_account(chain: str, account: str, verbose: bool = False) -> None:
     )
     submit_tx(payment, client, wallet.seed)
     if verbose:
-        pprint(client.request(AccountInfo(account=account)).result)
+        click.echo(pformat(client.request(AccountInfo(account=account)).result))

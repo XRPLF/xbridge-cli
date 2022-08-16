@@ -31,7 +31,8 @@ def request_server(
         verbose: Whether or not to print more verbose information.
     """  # noqa: D301
     if verbose:
-        print(f"{name}:", command, *args)
+        arg_string = " ".join(args)
+        click.echo(f"{name}: {command} {arg_string}")
     config = get_config()
     server = config.get_server(name)
 
@@ -39,7 +40,7 @@ def request_server(
         to_run = [server.rippled, "--conf", server.config, command, *args]
         subprocess.call(to_run)
     else:  # is a witness node
-        print("Cannot query witness nodes from the command line right now.")
+        click.echo("Cannot query witness nodes from the command line right now.")
 
 
 @click.command(name="status")
@@ -55,6 +56,6 @@ def get_server_status(name: Optional[str] = None, query_all: bool = False) -> No
         query_all: Whether to stop all of the servers.
     """  # noqa: D301
     if name is None and query_all is False:
-        print("Error: Must specify a name or `--all`.")
+        click.echo("Error: Must specify a name or `--all`.")
         return
-    print(name, query_all)
+    click.echo(f"{name} {query_all}")

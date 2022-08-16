@@ -1,7 +1,7 @@
 """CLI command for setting up a bridge."""
 
 import json
-from pprint import pprint
+from pprint import pformat
 from typing import List, Tuple, cast
 
 import click
@@ -91,17 +91,17 @@ def create_bridge(
     """
     # check name
     if check_bridge_exists(name):
-        print(f"Bridge named {name} already exists.")
+        click.echo(f"Bridge named {name} already exists.")
         return
     # validate chains
     for chain in chains:
         if not check_chain_exists(chain):
-            print(f"Chain {chain} is not running.")
+            click.echo(f"Chain {chain} is not running.")
             return
     # validate witnesses
     for witness in witnesses:
         if not check_witness_exists(witness):
-            print(f"Witness {witness} is not running.")
+            click.echo(f"Witness {witness} is not running.")
             return
 
     config = get_config().get_witness((witnesses[0])).get_config()
@@ -124,7 +124,7 @@ def create_bridge(
     }
 
     if verbose:
-        pprint(bridge_data)
+        click.echo(pformat(bridge_data))
     add_bridge(bridge_data)
 
 

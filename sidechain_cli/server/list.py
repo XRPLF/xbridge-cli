@@ -13,11 +13,15 @@ from sidechain_cli.utils import get_config
 def _list_chains() -> None:
     config = get_config()
     if len(config.chains) == 0:
-        print("No chains running.")
+        click.echo("No chains running.")
         return
-    print(
+    chains = list(map(asdict, config.chains))
+    for chain in chains:
+        del chain["type"]
+    click.echo("Chains:")
+    click.echo(
         tabulate(
-            map(asdict, config.chains),
+            chains,
             headers="keys",
             tablefmt="presto",
         )
@@ -28,11 +32,17 @@ def _list_witnesses() -> None:
     """Get a list of running witness nodes."""
     config = get_config()
     if len(config.witnesses) == 0:
-        print("No witnesses running.")
+        click.echo("No witnesses running.")
         return
-    print(
+
+    witnesses = list(map(asdict, config.witnesses))
+    for witness in witnesses:
+        del witness["type"]
+
+    click.echo("Witnesses:")
+    click.echo(
         tabulate(
-            map(asdict, config.witnesses),
+            witnesses,
             headers="keys",
             tablefmt="presto",
         )
@@ -43,4 +53,5 @@ def _list_witnesses() -> None:
 def list_servers() -> None:
     """Get a list of running rippled nodes."""
     _list_chains()
+    click.echo("\n")
     _list_witnesses()

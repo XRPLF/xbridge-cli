@@ -1,6 +1,6 @@
 """CLI command for setting up a bridge."""
 
-from pprint import pprint
+from pprint import pformat
 
 import click
 import httpx
@@ -108,18 +108,18 @@ def send_transfer(
     print_level = max(verbose, 2 if tutorial else 0)
     bridge_config = get_config().get_bridge(bridge)
     if src_chain not in bridge_config.chains:
-        print(f"Error: {src_chain} not one of the chains in {bridge}.")
+        click.echo(f"Error: {src_chain} not one of the chains in {bridge}.")
         return
 
     try:
         from_wallet = Wallet(from_account, 0)
     except ValueError:
-        print(f"Invalid `from` seed: {from_account}")
+        click.echo(f"Invalid `from` seed: {from_account}")
         return
     try:
         to_wallet = Wallet(to_account, 0)
     except ValueError:
-        print(f"Invalid `to` seed: {to_account}")
+        click.echo(f"Invalid `to` seed: {to_account}")
         return
 
     dst_chain = [chain for chain in bridge_config.chains if chain != src_chain][0]
@@ -133,7 +133,12 @@ def send_transfer(
 
     # XChainSeqNumCreate
     if tutorial:
-        input("\nCreating a cross-chain claim ID on the destination chain...")
+        click.pause(
+            info=click.style(
+                "\nCreating a cross-chain claim ID on the destination chain...",
+                fg="blue",
+            )
+        )
 
     seq_num_tx = XChainCreateClaimID(
         account=to_wallet.classic_address,
@@ -156,7 +161,9 @@ def send_transfer(
 
     # XChainTransfer
     if tutorial:
-        input("\nLocking the funds on the source chain...")
+        click.pause(
+            info=click.style("\nLocking the funds on the source chain...", fg="blue")
+        )
 
     commit_tx = XChainCommit(
         account=from_wallet.classic_address,
@@ -170,14 +177,23 @@ def send_transfer(
     # TODO: wait for the witnesses to send their attestations (once witnesses send
     # their own)
     if tutorial:
-        input("\nRetrieving the proofs from the witness servers...")
+        click.pause(
+            info=click.style(
+                "\nRetrieving the proofs from the witness servers...", fg="blue"
+            )
+        )
     proofs = []
 
     for witness in bridge_config.witnesses:
         witness_config = get_config().get_witness(witness)
 
         if tutorial:
-            input(f"\nRetrieving the proofs from witness {witness_config.name}...")
+            click.pause(
+                info=click.style(
+                    f"\nRetrieving the proofs from witness {witness_config.name}...",
+                    fg="blue",
+                )
+            )
 
         witness_url = f"http://{witness_config.ip}:{witness_config.rpc_port}"
         proof_request = {
@@ -198,9 +214,9 @@ def send_transfer(
 
         proof_result = httpx.post(witness_url, json=proof_request).json()
         if print_level > 1:
-            pprint(proof_result)
+            click.echo(pformat(proof_result))
         elif print_level > 0:
-            print(f"Proof from {witness_config.name} successfully received.")
+            click.echo(f"Proof from {witness_config.name} successfully received.")
 
         if "error" in proof_result:
             error_message = proof_result["error"]["error"]
@@ -220,7 +236,9 @@ def send_transfer(
         ),
     )
     if tutorial:
-        input("\nSubmitting attestation tx for witnesses...")
+        click.pause(
+            info=click.style("\nSubmitting attestation tx for witnesses...", fg="blue")
+        )
 
     try:
         _submit_tx(
@@ -233,7 +251,7 @@ def send_transfer(
         if "No such xchain claim id" not in e.args[0]:
             raise e
         if print_level > 0:
-            print(
+            click.echo(
                 "  This means that quorum has already been reached and the funds "
                 "have already been transferred."
             )
