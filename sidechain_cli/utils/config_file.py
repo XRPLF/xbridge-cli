@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Literal, Tuple, Type, TypeVar, Union, cast
 
 from xrpl.clients import JsonRpcClient
-from xrpl.models import IssuedCurrency, Sidechain
+from xrpl.models import IssuedCurrency, XChainBridge
 
 from sidechain_cli.utils.rippled_config import RippledConfig
 from sidechain_cli.utils.types import Currency
@@ -130,22 +130,39 @@ class BridgeConfig(ConfigItem):
     witnesses: List[str]
     door_accounts: Tuple[str, str]
     xchain_currencies: Tuple[Currency, Currency]
+    signature_reward: str
 
-    def get_sidechain(self: BridgeConfig) -> Sidechain:
+    def get_bridge(self: BridgeConfig) -> XChainBridge:
         """
-        Get the Sidechain object associated with the bridge.
+        Get the XChainBridge object associated with the bridge.
 
         Returns:
-            The Sidechain object.
+            The XChainBridge object.
         """
-        src_chain_issue = _to_issued_currency(self.xchain_currencies[0])
-        dst_chain_issue = _to_issued_currency(self.xchain_currencies[1])
-        return Sidechain(
-            src_chain_door=self.door_accounts[0],
-            src_chain_issue=src_chain_issue,
-            dst_chain_door=self.door_accounts[1],
-            dst_chain_issue=dst_chain_issue,
+        locking_chain_issue = _to_issued_currency(self.xchain_currencies[0])
+        issuing_chain_issue = _to_issued_currency(self.xchain_currencies[1])
+        return XChainBridge(
+            locking_chain_door=self.door_accounts[0],
+            locking_chain_issue=locking_chain_issue,
+            issuing_chain_door=self.door_accounts[1],
+            issuing_chain_issue=issuing_chain_issue,
         )
+
+    def to_xrpl(self: BridgeConfig) -> Dict[str, Any]:
+        """
+        Get the XRPL-formatted dictionary for the XChainBridge object.
+
+        Returns:
+            The XRPL-formatted dictionary for the XChainBridge object.
+        """
+        locking_chain_issue = _to_issued_currency(self.xchain_currencies[0])
+        issuing_chain_issue = _to_issued_currency(self.xchain_currencies[1])
+        return {
+            "LockingChainDoor": self.door_accounts[0],
+            "LockingChainIssue": locking_chain_issue,
+            "IssuingChainDoor": self.door_accounts[1],
+            "IssuingChainIssue": issuing_chain_issue,
+        }
 
 
 class ConfigFile:

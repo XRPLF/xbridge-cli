@@ -1,30 +1,33 @@
 {
-  "mainchain_endpoint": {
-    "ip": "127.0.0.1",
-    "port": {{ mainchain_port }}
+  "LockingChainEndpoint": {
+    "IP": "127.0.0.1",
+    "Port": {{ mainchain_port }}
   },
-  "sidechain_endpoint": {
+  "IssuingChainEndpoint": {
     {% if is_linux -%}
-    "ip": "127.0.0.2",
+    "IP": "127.0.0.2",
     {% else -%}
-    "ip": "127.0.0.1",
+    "IP": "127.0.0.1",
     {%- endif %}
-    "port": {{ sidechain_port }}
+    "Port": {{ sidechain_port }}
   },
-  "rpc_endpoint": {
+  "RPCEndpoint": {
     {% if is_linux -%}
-    "ip": "127.0.0.3",
+    "IP": "127.0.0.3",
     {% else -%}
-    "ip": "127.0.0.1",
+    "IP": "127.0.0.1",
     {%- endif %}
-    "port": {{ witness_port }}
+    "Port": {{ witness_port }}
   },
-  "db_dir": "{{ db_dir }}",
-  "signing_key_seed": "{{ seed }}",
-  "sidechain": {
-    "src_chain_door": "{{ src_door }}",
-    "src_chain_issue": "{{ src_issue }}",
-    "dst_chain_door": "{{ dst_door }}",
-    "dst_chain_issue": "{{ dst_issue }}"
+  "DBDir": "{{ db_dir }}",
+  "SigningKeySeed": "{{ seed }}",
+  "SigningKeyKeyType": "ed25519",
+  "LockingChainRewardAccount": "{{ locking_reward_account }}",
+  "IssuingChainRewardAccount": "{{ issuing_reward_account }}",
+  "XChainBridge": {
+    "LockingChainDoor": "{{ src_door }}",
+    "LockingChainIssue": "{{ src_issue }}",
+    "IssuingChainDoor": "{{ dst_door }}",
+    "IssuingChainIssue": "{{ dst_issue }}"
   }
 }

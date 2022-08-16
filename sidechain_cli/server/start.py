@@ -123,8 +123,8 @@ def start_server(name: str, exe: str, config: str, verbose: bool = False) -> Non
             "witnessd": exe,
             "config": config,
             "pid": pid,
-            "ip": config_json["rpc_endpoint"]["ip"],
-            "rpc_port": config_json["rpc_endpoint"]["port"],
+            "ip": config_json["RPCEndpoint"]["IP"],
+            "rpc_port": config_json["RPCEndpoint"]["Port"],
         }
         # add witness to config file
         add_witness(witness_data)

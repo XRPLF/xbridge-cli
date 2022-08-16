@@ -1,11 +1,16 @@
 """CLI command for setting up a bridge."""
 
 import json
-from pprint import pprint
 from typing import List, Tuple, cast
 
 import click
-from xrpl.models import GenericRequest, IssuedCurrency, SignerEntry, XChainDoorCreate
+from xrpl.models import (
+    GenericRequest,
+    IssuedCurrency,
+    SignerEntry,
+    SignerListSet,
+    XChainCreateBridge,
+)
 
 from sidechain_cli.utils import BridgeData
 from sidechain_cli.utils import Currency as CurrencyDict
@@ -56,18 +61,28 @@ def _str_to_currency(token: str) -> CurrencyDict:
     help="The witness servers that monitor the bridge.",
 )
 @click.option(
+    "--signature_reward",
+    default="100",
+    help="The reward for witnesses providing a signature.",
+)
+@click.option(
     "--verbose", is_flag=True, help="Whether or not to print more verbose information."
 )
 def create_bridge(
-    name: str, chains: Tuple[str, str], witnesses: List[str], verbose: bool = True
+    name: str,
+    chains: Tuple[str, str],
+    witnesses: List[str],
+    signature_reward: str,
+    verbose: bool = True,
 ) -> None:
     """
-    Keep track of a bridge between a mainchain and sidechain.
+    Keep track of a bridge between a locking chain and issuing chain.
 
     Args:
         name: The name of the bridge (used for differentiation purposes).
         chains: The two chains that the bridge goes between.
         witnesses: The witness server(s) that monitor the bridge.
+        signature_reward: The reward for witnesses providing a signature.
         verbose: Whether or not to print more verbose information.
     """
     # check name
@@ -87,12 +102,12 @@ def create_bridge(
 
     config = get_config().get_witness((witnesses[0])).get_config()
     doors = (
-        config["sidechain"]["src_chain_door"],
-        config["sidechain"]["dst_chain_door"],
+        config["XChainBridge"]["LockingChainDoor"],
+        config["XChainBridge"]["IssuingChainDoor"],
     )
     tokens = (
-        config["sidechain"]["src_chain_issue"],
-        config["sidechain"]["dst_chain_issue"],
+        config["XChainBridge"]["LockingChainIssue"],
+        config["XChainBridge"]["IssuingChainIssue"],
     )
 
     bridge_data: BridgeData = {
@@ -101,6 +116,7 @@ def create_bridge(
         "witnesses": witnesses,
         "door_accounts": doors,
         "xchain_currencies": tokens,
+        "signature_reward": signature_reward,
     }
 
     add_bridge(bridge_data)
@@ -122,7 +138,7 @@ def create_bridge(
 )
 def setup_bridge(bridge: str, bootstrap: str, verbose: bool = False) -> None:
     """
-    Set up a bridge between a mainchain and sidechain.
+    Set up a bridge between a locking chain and issuing chain.
 
     Args:
         bridge: The bridge to build.
@@ -144,35 +160,44 @@ def setup_bridge(bridge: str, bootstrap: str, verbose: bool = False) -> None:
         # TODO: refactor to avoid using wallet_propose
         wallet_propose = GenericRequest(
             method="wallet_propose",
-            seed=witness_config["signing_key_seed"],
+            seed=witness_config["SigningKeySeed"],
             key_type="ed25519",
         )
         account = client1.request(wallet_propose).result["account_id"]
         signer_entries.append(SignerEntry(account=account, signer_weight=1))
-    sidechain = bridge_config.get_sidechain()
+    bridge_obj = bridge_config.get_bridge()
+    signature_reward = bridge_config.signature_reward
 
-    create_tx1 = XChainDoorCreate(
+    create_tx1 = XChainCreateBridge(
         account=bridge_config.door_accounts[0],
-        sidechain=sidechain,
-        signer_entries=signer_entries,
-        signer_quorum=max(1, len(signer_entries)),
+        xchain_bridge=bridge_obj,
+        signature_reward=signature_reward
+        # TODO: add support for the create account amount
     )
-    if verbose:
-        print(f"submitting tx to {client1.url}:")
-        pprint(create_tx1.to_xrpl())
-    result1 = submit_tx(create_tx1, client1, bootstrap_config["mainchain_door"]["seed"])
-    if verbose:
-        pprint(result1.result)
+    submit_tx(create_tx1, client1, bootstrap_config["mainchain_door"]["seed"], verbose)
 
-    create_tx2 = XChainDoorCreate(
-        account=bridge_config.door_accounts[1],
-        sidechain=sidechain,
+    signer_tx1 = SignerListSet(
+        account=bridge_config.door_accounts[0],
+        signer_quorum=max(1, len(signer_entries) - 1),
         signer_entries=signer_entries,
-        signer_quorum=max(1, len(signer_entries)),
     )
-    if verbose:
-        print(f"submitting tx to {client2.url}:")
-        pprint(create_tx2.to_xrpl())
-    result2 = submit_tx(create_tx2, client2, bootstrap_config["sidechain_door"]["seed"])
-    if verbose:
-        pprint(result2.result)
+    submit_tx(signer_tx1, client1, bootstrap_config["mainchain_door"]["seed"], verbose)
+
+    # TODO: disable master key
+
+    create_tx2 = XChainCreateBridge(
+        account=bridge_config.door_accounts[1],
+        xchain_bridge=bridge_obj,
+        signature_reward=signature_reward
+        # TODO: add support for the create account amount
+    )
+    submit_tx(create_tx2, client2, bootstrap_config["sidechain_door"]["seed"], verbose)
+
+    signer_tx2 = SignerListSet(
+        account=bridge_config.door_accounts[1],
+        signer_quorum=max(1, len(signer_entries) - 1),
+        signer_entries=signer_entries,
+    )
+    submit_tx(signer_tx2, client2, bootstrap_config["sidechain_door"]["seed"], verbose)
+
+    # TODO: disable master key
