@@ -15,9 +15,13 @@ def _list_chains() -> None:
     if len(config.chains) == 0:
         click.echo("No chains running.")
         return
+    chains = list(map(asdict, config.chains))
+    for chain in chains:
+        del chain["type"]
+    click.echo("Chains:")
     click.echo(
         tabulate(
-            map(asdict, config.chains),
+            chains,
             headers="keys",
             tablefmt="presto",
         )
@@ -30,9 +34,15 @@ def _list_witnesses() -> None:
     if len(config.witnesses) == 0:
         click.echo("No witnesses running.")
         return
+
+    witnesses = list(map(asdict, config.witnesses))
+    for witness in witnesses:
+        del witness["type"]
+
+    click.echo("Witnesses:")
     click.echo(
         tabulate(
-            map(asdict, config.witnesses),
+            witnesses,
             headers="keys",
             tablefmt="presto",
         )
@@ -43,4 +53,5 @@ def _list_witnesses() -> None:
 def list_servers() -> None:
     """Get a list of running rippled nodes."""
     _list_chains()
+    click.echo("\n")
     _list_witnesses()
