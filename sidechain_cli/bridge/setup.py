@@ -1,7 +1,7 @@
 """CLI command for setting up a bridge."""
 
 import json
-from pprint import pprint
+from pprint import pformat
 from typing import List, Tuple, cast
 
 import click
@@ -124,7 +124,7 @@ def create_bridge(
     }
 
     if verbose:
-        pprint(bridge_data)
+        click.echo(pformat(bridge_data))
     add_bridge(bridge_data)
 
 

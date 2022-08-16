@@ -1,6 +1,6 @@
 """CLI command for setting up a bridge."""
 
-from pprint import pprint
+from pprint import pformat
 
 import click
 import httpx
@@ -214,7 +214,7 @@ def send_transfer(
 
         proof_result = httpx.post(witness_url, json=proof_request).json()
         if print_level > 1:
-            pprint(proof_result)
+            click.echo(pformat(proof_result))
         elif print_level > 0:
             click.echo(f"Proof from {witness_config.name} successfully received.")
 

@@ -1,6 +1,6 @@
 """Utils related to transactions."""
 
-from pprint import pprint
+from pprint import pformat
 
 import click
 from xrpl.clients.sync_client import SyncClient
@@ -27,7 +27,7 @@ def submit_tx(
             f"submitting {tx.transaction_type.value} tx to {client.url}...", fg="blue"
         )
         if verbose > 1:
-            pprint(tx.to_xrpl())
+            click.echo(pformat(tx.to_xrpl()))
     result = client.request(SignAndSubmit(transaction=tx, secret=seed))
     client.request(GenericRequest(method="ledger_accept"))
     tx_result = result.result.get("error") or result.result.get("engine_result")
@@ -35,5 +35,5 @@ def submit_tx(
         text_color = "bright_green" if tx_result == "tesSUCCESS" else "bright_red"
         click.secho(f"Result: {tx_result}", fg=text_color)
     if verbose > 1:
-        pprint(result.result)
+        click.echo(pformat(result.result))
     return result

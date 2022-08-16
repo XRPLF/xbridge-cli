@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
-from pprint import pprint
+from pprint import pformat
 from sys import platform
 from typing import Any, Dict, Tuple
 
@@ -256,7 +256,7 @@ def generate_bootstrap(
         "witness_reward_seed": witness_reward_seed,
     }
     if verbose:
-        pprint(template_data)
+        click.echo(pformat(template_data))
 
     _generate_template(
         "bootstrap.jinja",
