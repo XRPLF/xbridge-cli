@@ -2,6 +2,7 @@
 
 from pprint import pprint
 
+import click
 from xrpl.clients.sync_client import SyncClient
 from xrpl.models import GenericRequest, Response, SignAndSubmit, Transaction
 
@@ -22,14 +23,14 @@ def submit_tx(
         The response from rippled.
     """
     if verbose > 0:
-        print(f"submitting {tx.transaction_type.value} tx to {client.url}...")
+        click.echo(f"submitting {tx.transaction_type.value} tx to {client.url}...")
         if verbose > 1:
             pprint(tx.to_xrpl())
     result = client.request(SignAndSubmit(transaction=tx, secret=seed))
     client.request(GenericRequest(method="ledger_accept"))
     tx_result = result.result.get("error") or result.result.get("engine_result")
     if verbose > 0:
-        print(f"Result: {tx_result}")
+        click.echo(f"Result: {tx_result}")
     if verbose > 1:
         pprint(result.result)
     return result

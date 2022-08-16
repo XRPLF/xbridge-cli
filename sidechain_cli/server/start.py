@@ -69,12 +69,12 @@ def start_server(name: str, exe: str, config: str, verbose: bool = False) -> Non
             config_json = json.load(f)
         is_rippled = False
     if check_server_exists(name, config):
-        print("Error: Server already running with that name or config.")
+        click.echo("Error: Server already running with that name or config.")
         return
 
     server_type = "rippled" if is_rippled else "witness"
     if verbose:
-        print(f"Starting {server_type} server {name}...")
+        click.echo(f"Starting {server_type} server {name}...")
 
     if is_rippled:
         to_run = [exe, "--conf", config, "-a"]
@@ -97,9 +97,9 @@ def start_server(name: str, exe: str, config: str, verbose: bool = False) -> Non
     # check if server actually started up correctly
     time.sleep(0.3)
     if process.poll() is not None:
-        print("ERROR")
+        click.echo("ERROR")
         with open(output_file) as f:
-            print(f.read())
+            click.echo(f.read())
         return
 
     if is_rippled:
@@ -130,8 +130,8 @@ def start_server(name: str, exe: str, config: str, verbose: bool = False) -> Non
         add_witness(witness_data)
 
     if verbose:
-        print(f"started {server_type} at `{exe}` with config `{config}`", flush=True)
-        print(f"PID: {pid}", flush=True)
+        click.echo(f"started {server_type} at `{exe}` with config `{config}`")
+        click.echo(f"PID: {pid}")
 
 
 @click.command(name="start-all")
@@ -184,7 +184,7 @@ def start_all_servers(
         verbose: Whether or not to print more verbose information.
     """  # noqa: D301
     if not os.path.isdir(config_dir):
-        print(f"Error: {config_dir} is not a directory.")
+        click.echo(f"Error: {config_dir} is not a directory.")
         return
     chains = []
     witnesses = []
@@ -233,7 +233,7 @@ def stop_server(
         verbose: Whether or not to print more verbose information.
     """  # noqa: D301
     if name is None and stop_all is False:
-        print("Error: Must specify a name or `--all`.")
+        click.echo("Error: Must specify a name or `--all`.")
         return
     config = get_config()
     if stop_all:
@@ -245,7 +245,7 @@ def stop_server(
         servers = [config.get_server(name)]
     if verbose:
         server_names = ",".join([server.name for server in servers])
-        print(f"Shutting down: {server_names}")
+        click.echo(f"Shutting down: {server_names}")
 
     # fout = open(os.devnull, "w")
     for server in servers:
@@ -262,7 +262,7 @@ def stop_server(
             pid = server.pid
             os.kill(pid, signal.SIGINT)
         if verbose:
-            print(f"Stopped {server.name}")
+            click.echo(f"Stopped {server.name}")
 
     remove_server(name, stop_all)
 
@@ -293,7 +293,7 @@ def restart_server(
         verbose: Whether or not to print more verbose information.
     """  # noqa: D301
     if name is None and restart_all is False:
-        print("Error: Must specify a name or `--all`.")
+        click.echo("Error: Must specify a name or `--all`.")
         return
 
     config = get_config()

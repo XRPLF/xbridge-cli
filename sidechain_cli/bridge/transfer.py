@@ -108,18 +108,18 @@ def send_transfer(
     print_level = max(verbose, 2 if tutorial else 0)
     bridge_config = get_config().get_bridge(bridge)
     if src_chain not in bridge_config.chains:
-        print(f"Error: {src_chain} not one of the chains in {bridge}.")
+        click.echo(f"Error: {src_chain} not one of the chains in {bridge}.")
         return
 
     try:
         from_wallet = Wallet(from_account, 0)
     except ValueError:
-        print(f"Invalid `from` seed: {from_account}")
+        click.echo(f"Invalid `from` seed: {from_account}")
         return
     try:
         to_wallet = Wallet(to_account, 0)
     except ValueError:
-        print(f"Invalid `to` seed: {to_account}")
+        click.echo(f"Invalid `to` seed: {to_account}")
         return
 
     dst_chain = [chain for chain in bridge_config.chains if chain != src_chain][0]
@@ -200,7 +200,7 @@ def send_transfer(
         if print_level > 1:
             pprint(proof_result)
         elif print_level > 0:
-            print(f"Proof from {witness_config.name} successfully received.")
+            click.echo(f"Proof from {witness_config.name} successfully received.")
 
         if "error" in proof_result:
             error_message = proof_result["error"]["error"]
@@ -233,7 +233,7 @@ def send_transfer(
         if "No such xchain claim id" not in e.args[0]:
             raise e
         if print_level > 0:
-            print(
+            click.echo(
                 "  This means that quorum has already been reached and the funds "
                 "have already been transferred."
             )

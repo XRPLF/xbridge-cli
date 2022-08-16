@@ -13,9 +13,9 @@ from sidechain_cli.utils import get_config
 def _list_chains() -> None:
     config = get_config()
     if len(config.chains) == 0:
-        print("No chains running.")
+        click.echo("No chains running.")
         return
-    print(
+    click.echo(
         tabulate(
             map(asdict, config.chains),
             headers="keys",
@@ -28,9 +28,9 @@ def _list_witnesses() -> None:
     """Get a list of running witness nodes."""
     config = get_config()
     if len(config.witnesses) == 0:
-        print("No witnesses running.")
+        click.echo("No witnesses running.")
         return
-    print(
+    click.echo(
         tabulate(
             map(asdict, config.witnesses),
             headers="keys",
