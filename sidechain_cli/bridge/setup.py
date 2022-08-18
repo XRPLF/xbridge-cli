@@ -2,7 +2,7 @@
 
 import json
 from pprint import pformat
-from typing import List, Tuple, cast
+from typing import List, Optional, Tuple, cast
 
 import click
 from xrpl.models import (
@@ -67,6 +67,10 @@ def _str_to_currency(token: str) -> CurrencyDict:
     help="The reward for witnesses providing a signature.",
 )
 @click.option(
+    "--create_account_amount",
+    help="The minimum amount of XRP it takes to create an account on the other chain.",
+)
+@click.option(
     "-v",
     "--verbose",
     is_flag=True,
@@ -77,6 +81,7 @@ def create_bridge(
     chains: Tuple[str, str],
     witnesses: List[str],
     signature_reward: str,
+    create_account_amount: Optional[int] = None,
     verbose: bool = True,
 ) -> None:
     """
@@ -87,6 +92,8 @@ def create_bridge(
         chains: The two chains that the bridge goes between.
         witnesses: The witness server(s) that monitor the bridge.
         signature_reward: The reward for witnesses providing a signature.
+        create_account_amount: The minimum amount (in XRP) to create an account on the
+            opposite chain (aka the minimum reserve).
         verbose: Whether or not to print more verbose information.
     """
     # check name
@@ -114,6 +121,11 @@ def create_bridge(
         config["XChainBridge"]["IssuingChainIssue"],
     )
 
+    if create_account_amount is not None:
+        str_create_account_amount = str(create_account_amount)
+    else:
+        str_create_account_amount = None
+
     bridge_data: BridgeData = {
         "name": name,
         "chains": chains,
@@ -121,6 +133,7 @@ def create_bridge(
         "door_accounts": doors,
         "xchain_currencies": tokens,
         "signature_reward": signature_reward,
+        "create_account_amount": str_create_account_amount,
     }
 
     if verbose:

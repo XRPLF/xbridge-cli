@@ -260,7 +260,10 @@ def stop_server(
             # to_run = [server.witnessd, "--config", server.config, "stop"]
             # subprocess.call(to_run, stdout=fout, stderr=subprocess.STDOUT)
             pid = server.pid
-            os.kill(pid, signal.SIGINT)
+            try:
+                os.kill(pid, signal.SIGINT)
+            except ProcessLookupError:
+                pass  # process already died somehow
         if verbose:
             click.echo(f"Stopped {server.name}")
 

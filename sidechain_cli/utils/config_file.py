@@ -7,7 +7,7 @@ import os
 from abc import ABC
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Literal, Tuple, Type, TypeVar, Union, cast
+from typing import Any, Dict, List, Literal, Optional, Tuple, Type, TypeVar, Union, cast
 
 from xrpl.clients import JsonRpcClient
 from xrpl.models import IssuedCurrency, XChainBridge
@@ -131,6 +131,7 @@ class BridgeConfig(ConfigItem):
     door_accounts: Tuple[str, str]
     xchain_currencies: Tuple[Currency, Currency]
     signature_reward: str
+    create_account_amount: Optional[str]
 
     def get_bridge(self: BridgeConfig) -> XChainBridge:
         """
