@@ -15,6 +15,7 @@ from sidechain_cli.utils import (
     ChainData,
     RippledConfig,
     ServerConfig,
+    WitnessConfig,
     WitnessData,
     add_chain,
     add_witness,
@@ -301,17 +302,29 @@ def restart_server(
 
     config = get_config()
     if restart_all:
-        chains = config.chains
+        servers = cast(List[ServerConfig], config.chains) + cast(
+            List[ServerConfig], config.witnesses
+        )
     else:
         assert name is not None
-        chains = [config.get_chain(name)]
+        servers = [config.get_server(name)]
 
     ctx.invoke(stop_server, name=name, stop_all=restart_all, verbose=verbose)
-    for chain in chains:
-        ctx.invoke(
-            start_server,
-            name=chain.name,
-            rippled=chain.rippled,
-            config=chain.config,
-            verbose=verbose,
-        )
+    for server in servers:
+        if isinstance(server, ChainConfig):
+            ctx.invoke(
+                start_server,
+                name=server.name,
+                exe=server.rippled,
+                config=server.config,
+                verbose=verbose,
+            )
+        else:
+            assert isinstance(server, WitnessConfig)
+            ctx.invoke(
+                start_server,
+                name=server.name,
+                exe=server.witnessd,
+                config=server.config,
+                verbose=verbose,
+            )
