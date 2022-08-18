@@ -189,13 +189,12 @@ def setup_bridge(bridge: str, bootstrap: str, verbose: int = 0) -> None:
         account = client1.request(wallet_propose).result["account_id"]
         signer_entries.append(SignerEntry(account=account, signer_weight=1))
     bridge_obj = bridge_config.get_bridge()
-    signature_reward = bridge_config.signature_reward
 
     create_tx1 = XChainCreateBridge(
         account=bridge_config.door_accounts[0],
         xchain_bridge=bridge_obj,
-        signature_reward=signature_reward
-        # TODO: add support for the create account amount
+        signature_reward=bridge_config.signature_reward,
+        min_account_create_amount=bridge_config.create_account_amount,
     )
     submit_tx(create_tx1, client1, bootstrap_config["mainchain_door"]["seed"], verbose)
 
@@ -211,8 +210,8 @@ def setup_bridge(bridge: str, bootstrap: str, verbose: int = 0) -> None:
     create_tx2 = XChainCreateBridge(
         account=bridge_config.door_accounts[1],
         xchain_bridge=bridge_obj,
-        signature_reward=signature_reward
-        # TODO: add support for the create account amount
+        signature_reward=bridge_config.signature_reward,
+        min_account_create_amount=bridge_config.create_account_amount,
     )
     submit_tx(create_tx2, client2, bootstrap_config["sidechain_door"]["seed"], verbose)
 

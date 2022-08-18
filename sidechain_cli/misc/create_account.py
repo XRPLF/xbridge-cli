@@ -115,7 +115,7 @@ def create_xchain_account(
         destination=to_account,
         amount=bridge_config.create_account_amount,
     )
-    submit_tx(fund_tx, from_client, from_wallet.seed)
+    submit_tx(fund_tx, from_client, from_wallet.seed, print_level)
 
     # fetch attestations
     proofs = []
