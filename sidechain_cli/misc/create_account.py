@@ -143,6 +143,7 @@ def create_xchain_account(
                     "reward_amount": bridge_config.signature_reward,
                     "destination": to_account,
                     "reward_account": "rGcwshLFWRu3vXxGQagvKZDCSEH9rKcdZC",
+                    "create_count": 1,
                 }
             ],
         }
@@ -159,7 +160,7 @@ def create_xchain_account(
             return
 
         proof = proof_result["result"]["XChainAttestationBatch"][
-            "XChainClaimAttestationBatch"
+            "XChainCreateAccountAttestationBatch"
         ][0]
         proofs.append(XChainCreateAccountAttestationBatchElement.from_xrpl(proof))
 
