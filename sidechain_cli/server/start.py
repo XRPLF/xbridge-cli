@@ -255,7 +255,10 @@ def stop_server(
             # to_run = [server.rippled, "--conf", server.config, "stop"]
             # subprocess.call(to_run, stdout=fout, stderr=subprocess.STDOUT)
             pid = server.pid
-            os.kill(pid, signal.SIGINT)
+            try:
+                os.kill(pid, signal.SIGINT)
+            except ProcessLookupError:
+                pass  # process already died somehow
         else:
             # TODO: stop the server with a CLI command
             # to_run = [server.witnessd, "--config", server.config, "stop"]
