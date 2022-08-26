@@ -144,7 +144,7 @@ def send_transfer(
         account=to_wallet.classic_address,
         xchain_bridge=bridge_obj,
         signature_reward=bridge_config.signature_reward,
-        other_chain_account=from_wallet.classic_address,
+        other_chain_source=from_wallet.classic_address,
     )
     seq_num_result = _submit_tx(seq_num_tx, dst_client, to_wallet.seed, print_level)
 
@@ -170,7 +170,7 @@ def send_transfer(
         amount=amount,
         xchain_bridge=bridge_obj,
         xchain_claim_id=xchain_claim_id,
-        other_chain_account=to_wallet.classic_address,
+        other_chain_destination=to_wallet.classic_address,
     )
     _submit_tx(commit_tx, src_client, from_wallet.seed, print_level)
 
