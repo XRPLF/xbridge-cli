@@ -170,7 +170,9 @@ def generate_witness_config(
         dst_door: The door account on the destination chain. Defaults to the genesis
             account.
         locking_reward_account: The reward account for the witness on the locking chain.
+        locking_reward_seed: The seed for the locking chain reward account.
         issuing_reward_account: The reward account for the witness on the issuing chain.
+        issuing_reward_seed: The seed for the issuing chain reward account.
         verbose: Whether or not to print more verbose information.
     """
     abs_config_dir = os.path.abspath(config_dir)
@@ -223,7 +225,8 @@ def generate_witness_config(
     help="The seed of the sidechain door account. Defaults to the genesis account.",
 )
 @click.option(
-    "--reward_accounts",
+    "--reward_account",
+    "reward_accounts",
     required=True,
     prompt=True,
     multiple=True,
@@ -247,7 +250,7 @@ def generate_bootstrap(
         mainchain_seed: The seed of the mainchain door account.
         sidechain_seed: The seed of the sidechain door account. Defaults to the genesis
             account.
-        witness_reward_seed: The seed of the witness reward account.
+        reward_accounts: The witness reward accounts (which need to be created).
         verbose: Whether or not to print more verbose information.
     """
     mainchain_door = Wallet(mainchain_seed, 0)
