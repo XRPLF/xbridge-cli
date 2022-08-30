@@ -24,7 +24,7 @@ def submit_tx(
     """
     if verbose > 0:
         click.secho(
-            f"submitting {tx.transaction_type.value} tx to {client.url}...", fg="blue"
+            f"Submitting {tx.transaction_type.value} tx to {client.url}...", fg="blue"
         )
         if verbose > 1:
             click.echo(pformat(tx.to_xrpl()))

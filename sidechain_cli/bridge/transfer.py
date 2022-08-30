@@ -169,32 +169,52 @@ def send_transfer(
     )
     _submit_tx(commit_tx, src_client, from_wallet.seed, print_level)
 
-    # TODO: wait for the witnesses to send their attestations (once witnesses send
-    # their own)
-    if tutorial:
-        click.pause(
-            info=click.style(
-                "\nWaiting for the proofs from the witness servers...", fg="blue"
-            )
+    if print_level > 0:
+        click.secho(
+            f"Waiting for attestations from the witness servers on {dst_client.url}...",
+            fg="blue",
         )
 
     # TODO: this should handle external networks better
     seconds_count = 0
-    tx_count = 0
+    attestation_count = 0
     while True:
         time.sleep(1)
         open_ledger = dst_client.request(
             Ledger(ledger_index="current", transactions=True, expand=True)
         )
-        print(open_ledger.result["ledger"]["transactions"])
-        if len(open_ledger.result["ledger"]["transactions"]) > 0:
+        open_txs = open_ledger.result["ledger"]["transactions"]
+        open_attestations = 0
+        for tx in open_txs:
+            if tx["TransactionType"] == "XChainAddAttestation":
+                batch = tx["XChainAttestationBatch"]
+                if batch["XChainBridge"] != bridge_config.to_xrpl():
+                    # make sure attestation is for this bridge
+                    continue
+                attestations = batch["XChainClaimAttestationBatch"]
+                for attestation in attestations:
+                    element = attestation["XChainClaimAttestationBatchElement"]
+                    # check that the attestation actually matches this transfer
+                    if element["Account"] != from_wallet.classic_address:
+                        continue
+                    if element["Amount"] != amount:
+                        continue
+                    if element["Destination"] != to_wallet.classic_address:
+                        continue
+                    if element["XChainClaimID"] != xchain_claim_id:
+                        continue
+                    open_attestations += 1
+                    click.secho(
+                        f"Received {open_attestations} attestations", fg="bright_green"
+                    )
+        if len(open_txs) > 0:
             dst_client.request(GenericRequest(method="ledger_accept"))
-            tx_count += len(open_ledger.result["ledger"]["transactions"])
+            attestation_count += open_attestations
             seconds_count = 0
         else:
             seconds_count += 1
 
-        if tx_count >= 4:
+        if attestation_count >= 4:
             break
 
         if seconds_count > 4:
