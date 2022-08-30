@@ -6,7 +6,7 @@ import os
 from pathlib import Path
 from pprint import pformat
 from sys import platform
-from typing import Any, Dict, Tuple
+from typing import Any, Dict, List, Tuple
 
 import click
 from jinja2 import Environment, FileSystemLoader
@@ -149,7 +149,9 @@ def generate_witness_config(
     mainchain_port: int,
     sidechain_port: int,
     witness_port: int,
+    locking_reward_seed: str,
     locking_reward_account: str,
+    issuing_reward_seed: str,
     issuing_reward_account: str,
     src_door: str,
     dst_door: str = "rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh",
@@ -182,7 +184,9 @@ def generate_witness_config(
         "witness_port": witness_port,
         "db_dir": f"{sub_dir}/db",
         "seed": Wallet.create(CryptoAlgorithm.SECP256K1).seed,
+        "locking_reward_seed": locking_reward_seed,
         "locking_reward_account": locking_reward_account,
+        "issuing_reward_seed": issuing_reward_seed,
         "issuing_reward_account": issuing_reward_account,
         "src_door": src_door,
         "src_issue": "XRP",
@@ -219,9 +223,10 @@ def generate_witness_config(
     help="The seed of the sidechain door account. Defaults to the genesis account.",
 )
 @click.option(
-    "--witness_reward_seed",
+    "--reward_accounts",
     required=True,
     prompt=True,
+    multiple=True,
     help="The seed of the witness reward account.",
 )
 @click.option(
@@ -231,7 +236,7 @@ def generate_bootstrap(
     config_dir: str,
     mainchain_seed: str,
     sidechain_seed: str,
-    witness_reward_seed: str,
+    reward_accounts: List[str],
     verbose: bool = False,
 ) -> None:
     """
@@ -253,7 +258,7 @@ def generate_bootstrap(
         "mainchain_seed": mainchain_door.seed,
         "sidechain_id": sidechain_door.classic_address,
         "sidechain_seed": sidechain_door.seed,
-        "witness_reward_seed": witness_reward_seed,
+        "witness_reward_accounts": reward_accounts,
     }
     if verbose:
         click.echo(pformat(template_data))
@@ -300,8 +305,13 @@ def generate_all_configs(
     abs_config_dir = os.path.abspath(config_dir)
     mc_port, sc_port = _generate_rippled_configs(abs_config_dir)
     src_door = Wallet.create(CryptoAlgorithm.SECP256K1)
-    witness_reward_wallet = Wallet.create()
+    reward_accounts = []
     for i in range(num_witnesses):
+        original_wallet = Wallet.create(crypto_algorithm=CryptoAlgorithm.SECP256K1)
+        witness_reward_wallet = Wallet(
+            original_wallet.seed, 0, algorithm=CryptoAlgorithm.ED25519
+        )
+        reward_accounts.append(witness_reward_wallet.classic_address)
         ctx.invoke(
             generate_witness_config,
             config_dir=abs_config_dir,
@@ -310,7 +320,9 @@ def generate_all_configs(
             sidechain_port=sc_port,
             witness_port=6010 + i,
             src_door=src_door.classic_address,
+            locking_reward_seed=witness_reward_wallet.seed,
             locking_reward_account=witness_reward_wallet.classic_address,
+            issuing_reward_seed=witness_reward_wallet.seed,
             issuing_reward_account=witness_reward_wallet.classic_address,
         )
     ctx.invoke(
@@ -318,5 +330,5 @@ def generate_all_configs(
         config_dir=abs_config_dir,
         mainchain_seed=src_door.seed,
         verbose=verbose,
-        witness_reward_seed=witness_reward_wallet.seed,
+        reward_accounts=reward_accounts,
     )

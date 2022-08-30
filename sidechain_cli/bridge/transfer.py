@@ -1,21 +1,17 @@
 """CLI command for setting up a bridge."""
 
-from pprint import pformat
+import time
 
 import click
-import httpx
 from xrpl.clients import JsonRpcClient
 from xrpl.models import (
+    GenericRequest,
+    Ledger,
     Response,
     Transaction,
     Tx,
-    XChainAddAttestation,
     XChainCommit,
     XChainCreateClaimID,
-)
-from xrpl.models.transactions.xchain_add_attestation import (
-    XChainAttestationBatch,
-    XChainClaimAttestationBatchElement,
 )
 from xrpl.wallet import Wallet
 
@@ -108,18 +104,18 @@ def send_transfer(
     print_level = max(verbose, 2 if tutorial else 0)
     bridge_config = get_config().get_bridge(bridge)
     if src_chain not in bridge_config.chains:
-        click.echo(f"Error: {src_chain} not one of the chains in {bridge}.")
+        click.secho(f"Error: {src_chain} not one of the chains in {bridge}.", fg="red")
         return
 
     try:
         from_wallet = Wallet(from_account, 0)
     except ValueError:
-        click.echo(f"Invalid `from` seed: {from_account}")
+        click.secho(f"Invalid `from` seed: {from_account}", fg="red")
         return
     try:
         to_wallet = Wallet(to_account, 0)
     except ValueError:
-        click.echo(f"Invalid `to` seed: {to_account}")
+        click.secho(f"Invalid `to` seed: {to_account}", fg="red")
         return
 
     dst_chain = [chain for chain in bridge_config.chains if chain != src_chain][0]
@@ -127,7 +123,6 @@ def send_transfer(
     dst_chain_config = get_config().get_chain(dst_chain)
     src_client = src_chain_config.get_client()
     dst_client = dst_chain_config.get_client()
-    src_door = bridge_config.door_accounts[bridge_config.chains.index(src_chain)]
 
     bridge_obj = bridge_config.get_bridge()
 
@@ -179,81 +174,31 @@ def send_transfer(
     if tutorial:
         click.pause(
             info=click.style(
-                "\nRetrieving the proofs from the witness servers...", fg="blue"
+                "\nWaiting for the proofs from the witness servers...", fg="blue"
             )
         )
-    proofs = []
 
-    for witness in bridge_config.witnesses:
-        witness_config = get_config().get_witness(witness)
-
-        if tutorial:
-            click.pause(
-                info=click.style(
-                    f"\nRetrieving the proofs from witness {witness_config.name}...",
-                    fg="blue",
-                )
-            )
-
-        witness_url = f"http://{witness_config.ip}:{witness_config.rpc_port}"
-        proof_request = {
-            "method": "witness",
-            "params": [
-                {
-                    "sending_account": from_wallet.classic_address,
-                    "reward_account": "rGzx83BVoqTYbGn7tiVAnFw7cbxjin13jL",
-                    "sending_amount": amount,
-                    "claim_id": int(xchain_claim_id, 16),
-                    "door": src_door,
-                    "bridge": bridge_config.to_xrpl(),
-                    "signature_reward": bridge_config.signature_reward,
-                    "destination": to_wallet.classic_address,
-                }
-            ],
-        }
-
-        proof_result = httpx.post(witness_url, json=proof_request).json()
-        if print_level > 1:
-            click.echo(pformat(proof_result))
-        elif print_level > 0:
-            click.echo(f"Proof from {witness_config.name} successfully received.")
-
-        if "error" in proof_result:
-            error_message = proof_result["error"]["error"]
-            raise Exception(f"Request for proof failed: {error_message}")
-
-        proof = proof_result["result"]["XChainAttestationBatch"][
-            "XChainClaimAttestationBatch"
-        ][0]
-        proofs.append(XChainClaimAttestationBatchElement.from_xrpl(proof))
-
-    attestation_tx = XChainAddAttestation(
-        account="rGzx83BVoqTYbGn7tiVAnFw7cbxjin13jL",
-        xchain_attestation_batch=XChainAttestationBatch(
-            xchain_bridge=bridge_config.get_bridge(),
-            xchain_claim_attestation_batch=proofs,
-            xchain_create_account_attestation_batch=[],
-        ),
-    )
-    if tutorial:
-        click.pause(
-            info=click.style("\nSubmitting attestation tx for witnesses...", fg="blue")
+    # TODO: this should handle external networks better
+    seconds_count = 0
+    tx_count = 0
+    while True:
+        time.sleep(1)
+        open_ledger = dst_client.request(
+            Ledger(ledger_index="current", transactions=True, expand=True)
         )
+        print(open_ledger.result["ledger"]["transactions"])
+        if len(open_ledger.result["ledger"]["transactions"]) > 0:
+            dst_client.request(GenericRequest(method="ledger_accept"))
+            tx_count += len(open_ledger.result["ledger"]["transactions"])
+            seconds_count = 0
+        else:
+            seconds_count += 1
 
-    try:
-        _submit_tx(
-            attestation_tx,
-            dst_client,
-            "snLsJNbh3qQVJuB2FmoGu3SGBENLB",
-            print_level,
-        )
-    except Exception as e:
-        if "No such xchain claim id" not in e.args[0]:
-            raise e
-        if print_level > 0:
-            click.echo(
-                "  This means that quorum has already been reached and the funds "
-                "have already been transferred."
-            )
+        if tx_count >= 4:
+            return
+
+        if seconds_count > 4:
+            click.secho("Error: no transaction sent by witnesses.", fg="red")
+            return
 
     # TODO: add support for XChainClaim if something goes wrong
