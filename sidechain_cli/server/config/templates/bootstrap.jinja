@@ -7,5 +7,5 @@
     "id": "{{ sidechain_id }}",
     "seed": "{{ sidechain_seed }}"
   },
-  "witness_reward_accounts": {{ witness_reward_accounts }}
+  "witness_reward_accounts": {{ witness_reward_accounts | list | tojson }}
 }
