@@ -1,6 +1,7 @@
 """CLI command for setting up a bridge."""
 
 import time
+from pprint import pformat
 
 import click
 from xrpl.clients import JsonRpcClient
@@ -16,6 +17,9 @@ from xrpl.models import (
 from xrpl.wallet import Wallet
 
 from sidechain_cli.utils import get_config, submit_tx
+
+_ATTESTATION_TIME_LIMIT = 4  # in seconds
+_WAIT_STEP_LENGTH = 0.05
 
 
 def _submit_tx(
@@ -176,15 +180,14 @@ def send_transfer(
         )
 
     # TODO: this should handle external networks better
-    seconds_count = 0
+    time_count = 0.0
     attestation_count = 0
     while True:
-        time.sleep(1)
+        time.sleep(_WAIT_STEP_LENGTH)
         open_ledger = dst_client.request(
             Ledger(ledger_index="current", transactions=True, expand=True)
         )
         open_txs = open_ledger.result["ledger"]["transactions"]
-        open_attestations = 0
         for tx in open_txs:
             if tx["TransactionType"] == "XChainAddAttestation":
                 batch = tx["XChainAttestationBatch"]
@@ -203,22 +206,26 @@ def send_transfer(
                         continue
                     if element["XChainClaimID"] != xchain_claim_id:
                         continue
-                    open_attestations += 1
-                    click.secho(
-                        f"Received {open_attestations} attestations", fg="bright_green"
-                    )
+                    attestation_count += 1
+                    if print_level > 1:
+                        click.echo(pformat(element))
+                    if print_level > 0:
+                        click.secho(
+                            f"Received {attestation_count} attestations",
+                            fg="bright_green",
+                        )
         if len(open_txs) > 0:
             dst_client.request(GenericRequest(method="ledger_accept"))
-            attestation_count += open_attestations
-            seconds_count = 0
+            time_count = 0
         else:
-            seconds_count += 1
+            time_count += _WAIT_STEP_LENGTH
 
-        if attestation_count >= 4:
+        if attestation_count >= 5:
+            # received enough attestations for quorum
             break
 
-        if seconds_count > 4:
-            click.secho("Error: no transaction sent by witnesses.", fg="red")
+        if time_count > _ATTESTATION_TIME_LIMIT:
+            click.secho("Error: Timeout on attestations.", fg="red")
             return
 
     # TODO: add support for XChainClaim if something goes wrong
