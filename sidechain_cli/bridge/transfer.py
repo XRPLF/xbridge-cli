@@ -195,7 +195,7 @@ def send_transfer(
             seconds_count += 1
 
         if tx_count >= 4:
-            return
+            break
 
         if seconds_count > 4:
             click.secho("Error: no transaction sent by witnesses.", fg="red")
