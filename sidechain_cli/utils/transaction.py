@@ -4,7 +4,9 @@ from pprint import pformat
 
 import click
 from xrpl.clients.sync_client import SyncClient
-from xrpl.models import GenericRequest, Response, SignAndSubmit, Transaction
+from xrpl.models import GenericRequest, Response, Transaction
+from xrpl.transaction import safe_sign_and_autofill_transaction, submit_transaction
+from xrpl.wallet import Wallet
 
 
 def submit_tx(
@@ -24,12 +26,15 @@ def submit_tx(
     """
     if verbose > 0:
         click.secho(
-            f"submitting {tx.transaction_type.value} tx to {client.url}...", fg="blue"
+            f"Submitting {tx.transaction_type.value} tx to {client.url}...", fg="blue"
         )
         if verbose > 1:
             click.echo(pformat(tx.to_xrpl()))
-    result = client.request(SignAndSubmit(transaction=tx, secret=seed))
+    signed_tx = safe_sign_and_autofill_transaction(tx, Wallet(seed, 0), client)
+    result = submit_transaction(signed_tx, client)
+
     client.request(GenericRequest(method="ledger_accept"))
+
     tx_result = result.result.get("error") or result.result.get("engine_result")
     if verbose > 0:
         text_color = "bright_green" if tx_result == "tesSUCCESS" else "bright_red"

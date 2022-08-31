@@ -1,15 +1,33 @@
 {
-  "LockingChainEndpoint": {
-    "IP": "127.0.0.1",
-    "Port": {{ mainchain_port }}
+  "LockingChain": {
+    "Endpoint": {
+      "IP": "127.0.0.1",
+      "Port": {{ mainchain_port }}
+    },
+    "TxnSubmit": {
+      "ShouldSubmit": true,
+      "SigningKeySeed": "{{ locking_reward_seed }}",
+      "SigningKeyType": "ed25519",
+      "SubmittingAccount": "{{ locking_reward_account }}"
+    },
+    "RewardAccount": "{{ locking_reward_account }}"
   },
-  "IssuingChainEndpoint": {
-    {% if is_linux -%}
-    "IP": "127.0.0.2",
-    {% else -%}
-    "IP": "127.0.0.1",
-    {%- endif %}
-    "Port": {{ sidechain_port }}
+  "IssuingChain": {
+    "Endpoint": {
+      {% if is_linux -%}
+      "IP": "127.0.0.2",
+      {% else -%}
+      "IP": "127.0.0.1",
+      {%- endif %}
+      "Port": {{ sidechain_port }}
+    },
+    "TxnSubmit": {
+      "ShouldSubmit": true,
+      "SigningKeySeed": "{{ issuing_reward_seed }}",
+      "SigningKeyType": "ed25519",
+      "SubmittingAccount": "{{ issuing_reward_account }}"
+    },
+    "RewardAccount": "{{ issuing_reward_account }}"
   },
   "RPCEndpoint": {
     {% if is_linux -%}
@@ -21,9 +39,7 @@
   },
   "DBDir": "{{ db_dir }}",
   "SigningKeySeed": "{{ seed }}",
-  "SigningKeyKeyType": "ed25519",
-  "LockingChainRewardAccount": "{{ locking_reward_account }}",
-  "IssuingChainRewardAccount": "{{ issuing_reward_account }}",
+  "SigningKeyType": "ed25519",
   "XChainBridge": {
     "LockingChainDoor": "{{ src_door }}",
     "LockingChainIssue": "{{ src_issue }}",
