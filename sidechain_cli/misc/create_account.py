@@ -1,25 +1,25 @@
 """Create/fund an account via a cross-chain transfer."""
 
+import time
 from pprint import pformat
 
 import click
-import httpx
 from xrpl.clients import JsonRpcClient
 from xrpl.models import (
     AccountInfo,
+    GenericRequest,
+    Ledger,
     Response,
-    SidechainXChainAccountCreate,
     Transaction,
     Tx,
-    XChainAddAttestation,
-)
-from xrpl.models.transactions.xchain_add_attestation import (
-    XChainAttestationBatch,
-    XChainCreateAccountAttestationBatchElement,
+    XChainAccountCreateCommit,
 )
 from xrpl.wallet import Wallet
 
 from sidechain_cli.utils import get_config, submit_tx
+
+_ATTESTATION_TIME_LIMIT = 4  # in seconds
+_WAIT_STEP_LENGTH = 0.05
 
 
 def _submit_tx(
@@ -85,7 +85,7 @@ def create_xchain_account(
         to_account: The chain to fund an account on.
         verbose: Whether or not to print more verbose information.
     """  # noqa: D301
-    tutorial = True
+    # tutorial = True
     print_level = 2
 
     bridge_config = get_config().get_bridge(bridge)
@@ -94,8 +94,6 @@ def create_xchain_account(
     to_chain = [chain for chain in bridge_config.chains if chain != from_chain][0]
     to_chain_config = get_config().get_chain(to_chain)
     to_client = to_chain_config.get_client()
-
-    from_door = bridge_config.door_accounts[bridge_config.chains.index(from_chain)]
 
     from_wallet = Wallet(from_seed, 0)
 
@@ -108,7 +106,7 @@ def create_xchain_account(
         return
 
     # submit XChainAccountCreate tx
-    fund_tx = SidechainXChainAccountCreate(
+    fund_tx = XChainAccountCreateCommit(
         account=from_wallet.classic_address,
         xchain_bridge=bridge_config.get_bridge(),
         signature_reward=bridge_config.signature_reward,
@@ -117,69 +115,56 @@ def create_xchain_account(
     )
     submit_tx(fund_tx, from_client, from_wallet.seed, print_level)
 
-    # fetch attestations
-    proofs = []
+    # wait for attestations
+    time_count = 0.0
+    attestation_count = 0
+    while True:
+        time.sleep(_WAIT_STEP_LENGTH)
+        open_ledger = to_client.request(
+            Ledger(ledger_index="current", transactions=True, expand=True)
+        )
+        open_txs = open_ledger.result["ledger"]["transactions"]
+        for tx in open_txs:
+            from pprint import pprint
 
-    for witness in bridge_config.witnesses:
-        witness_config = get_config().get_witness(witness)
+            pprint(tx)
+            if tx["TransactionType"] == "XChainAddAttestation":
+                batch = tx["XChainAttestationBatch"]
+                if batch["XChainBridge"] != bridge_config.to_xrpl():
+                    # make sure attestation is for this bridge
+                    continue
+                attestations = batch["XChainCreateAccountAttestationBatch"]
+                for attestation in attestations:
+                    element = attestation["XChainCreateAccountAttestationBatchElement"]
+                    # check that the attestation actually matches this transfer
+                    if element["Account"] != from_wallet.classic_address:
+                        continue
+                    if element["Amount"] != bridge_config.create_account_amount:
+                        continue
+                    if element["Destination"] != to_account:
+                        continue
+                    attestation_count += 1
+                    if print_level > 1:
+                        click.echo(pformat(element))
+                    if print_level > 0:
+                        click.secho(
+                            f"Received {attestation_count} attestations",
+                            fg="bright_green",
+                        )
+        if len(open_txs) > 0:
+            to_client.request(GenericRequest(method="ledger_accept"))
+            time_count = 0
+        else:
+            time_count += _WAIT_STEP_LENGTH
 
-        if tutorial:
-            click.pause(
-                info=click.style(
-                    f"\nRetrieving the proofs from witness {witness_config.name}...",
-                    fg="blue",
-                )
-            )
+        quorum = max(1, len(bridge_config.witnesses) - 1)
+        if attestation_count >= quorum:
+            # received enough attestations for quorum
+            break
 
-        witness_url = f"http://{witness_config.ip}:{witness_config.rpc_port}"
-        proof_request = {
-            "method": "witness_account_create",
-            "params": [
-                {
-                    "sending_account": from_wallet.classic_address,
-                    "sending_amount": bridge_config.create_account_amount,
-                    "door": from_door,
-                    "bridge": bridge_config.to_xrpl(),
-                    "reward_amount": bridge_config.signature_reward,
-                    "destination": to_account,
-                    "reward_account": "rGcwshLFWRu3vXxGQagvKZDCSEH9rKcdZC",
-                    "create_count": 1,
-                }
-            ],
-        }
-
-        proof_result = httpx.post(witness_url, json=proof_request).json()
-        if print_level > 1:
-            click.echo(pformat(proof_result))
-        elif print_level > 0:
-            click.echo(f"Proof from {witness_config.name} successfully received.")
-
-        if "error" in proof_result:
-            error_message = proof_result["error"]["error"]
-            click.secho(f"Error: Request for proof failed: {error_message}", fg="red")
+        if time_count > _ATTESTATION_TIME_LIMIT:
+            click.secho("Error: Timeout on attestations.", fg="red")
             return
-
-        proof = proof_result["result"]["XChainAttestationBatch"][
-            "XChainCreateAccountAttestationBatch"
-        ][0]
-        proofs.append(XChainCreateAccountAttestationBatchElement.from_xrpl(proof))
-
-    attestation_tx = XChainAddAttestation(
-        account="rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh",
-        xchain_attestation_batch=XChainAttestationBatch(
-            xchain_bridge=bridge_config.get_bridge(),
-            xchain_claim_attestation_batch=[],
-            xchain_create_account_attestation_batch=proofs,
-        ),
-    )
-
-    # submit attestation
-    _submit_tx(
-        attestation_tx,
-        to_client,
-        "snoPBrXtMeMyMHUVTgbuqAfg1SUTb",
-        print_level,
-    )
 
     if verbose:
         click.echo(pformat(to_client.request(AccountInfo(account=to_account)).result))
