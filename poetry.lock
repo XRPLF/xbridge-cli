@@ -474,7 +474,7 @@ websockets = {version = "^10.0", markers = "python_version >= \"3.10\" and pytho
 type = "git"
 url = "https://github.com/XRPLF/xrpl-py.git"
 reference = "sidechain-2.5"
-resolved_reference = "265f38c22d3cb3dda4d3ee1938c738a3c9ee0d41"
+resolved_reference = "d27726530d36dd8c5152de8312c4190145e269aa"
 
 [[package]]
 name = "zipp"
