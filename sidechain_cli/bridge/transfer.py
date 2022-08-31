@@ -228,5 +228,3 @@ def send_transfer(
         if time_count > _ATTESTATION_TIME_LIMIT:
             click.secho("Error: Timeout on attestations.", fg="red")
             return
-
-    # TODO: add support for XChainClaim if something goes wrong
