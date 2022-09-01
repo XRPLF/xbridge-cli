@@ -195,14 +195,18 @@ def setup_bridge(bridge: str, bootstrap: str, verbose: int = 0) -> None:
         signature_reward=bridge_config.signature_reward,
         min_account_create_amount=bridge_config.create_account_amounts[0],
     )
-    submit_tx(create_tx1, client1, bootstrap_config["mainchain_door"]["seed"], verbose)
+    submit_tx(
+        create_tx1, client1, bootstrap_config["locking_chain_door"]["seed"], verbose
+    )
 
     signer_tx1 = SignerListSet(
         account=bridge_config.door_accounts[0],
         signer_quorum=max(1, len(signer_entries) - 1),
         signer_entries=signer_entries,
     )
-    submit_tx(signer_tx1, client1, bootstrap_config["mainchain_door"]["seed"], verbose)
+    submit_tx(
+        signer_tx1, client1, bootstrap_config["locking_chain_door"]["seed"], verbose
+    )
 
     # TODO: disable master key
 
@@ -212,13 +216,17 @@ def setup_bridge(bridge: str, bootstrap: str, verbose: int = 0) -> None:
         signature_reward=bridge_config.signature_reward,
         min_account_create_amount=bridge_config.create_account_amounts[1],
     )
-    submit_tx(create_tx2, client2, bootstrap_config["sidechain_door"]["seed"], verbose)
+    submit_tx(
+        create_tx2, client2, bootstrap_config["issuing_chain_door"]["seed"], verbose
+    )
 
     signer_tx2 = SignerListSet(
         account=bridge_config.door_accounts[1],
         signer_quorum=max(1, len(signer_entries) - 1),
         signer_entries=signer_entries,
     )
-    submit_tx(signer_tx2, client2, bootstrap_config["sidechain_door"]["seed"], verbose)
+    submit_tx(
+        signer_tx2, client2, bootstrap_config["issuing_chain_door"]["seed"], verbose
+    )
 
     # TODO: disable master key

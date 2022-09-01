@@ -91,7 +91,7 @@ def send_transfer(
     tutorial: bool = False,
 ) -> None:
     """
-    Set up a bridge between a mainchain and sidechain.
+    Set up a bridge between a locking_chain and issuing_chain.
 
     Args:
         bridge: The bridge to transfer across.

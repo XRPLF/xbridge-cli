@@ -1,11 +1,11 @@
 {
-  "mainchain_door": {
-    "id": "{{ mainchain_id }}",
-    "seed": "{{ mainchain_seed }}"
+  "locking_chain_door": {
+    "id": "{{ locking_chain_id }}",
+    "seed": "{{ locking_chain_seed }}"
   },
-  "sidechain_door": {
-    "id": "{{ sidechain_id }}",
-    "seed": "{{ sidechain_seed }}"
+  "issuing_chain_door": {
+    "id": "{{ issuing_chain_id }}",
+    "seed": "{{ issuing_chain_seed }}"
   },
   "witness_reward_accounts": {{ witness_reward_accounts | list | tojson }}
 }
