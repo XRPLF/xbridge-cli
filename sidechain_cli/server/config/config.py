@@ -70,12 +70,12 @@ def _generate_rippled_configs(config_dir: str) -> Tuple[int, int]:
     """
     locking_ports = Ports.generate(0)
     _generate_standalone_config(
-        ports=locking_ports, cfg_type="mainchain", config_dir=config_dir
+        ports=locking_ports, cfg_type="locking_chain", config_dir=config_dir
     )
 
     issuing_ports = Ports.generate(1)
     _generate_standalone_config(
-        ports=issuing_ports, cfg_type="sidechain", config_dir=config_dir
+        ports=issuing_ports, cfg_type="issuing_chain", config_dir=config_dir
     )
 
     return locking_ports.ws_public_port, issuing_ports.ws_public_port
@@ -96,19 +96,19 @@ def _generate_rippled_configs(config_dir: str) -> Tuple[int, int]:
 )
 @click.option(
     "--mc_port",
-    "mainchain_port",
+    "locking_chain_port",
     required=True,
     prompt=True,
     type=int,
-    help="The port used by the mainchain.",
+    help="The port used by the locking chain.",
 )
 @click.option(
     "--sc_port",
-    "sidechain_port",
+    "issuing_chain_port",
     required=True,
     prompt=True,
     type=int,
-    help="The port used by the sidechain.",
+    help="The port used by the issuing chain.",
 )
 @click.option(
     "--witness_port",
@@ -146,8 +146,8 @@ def _generate_rippled_configs(config_dir: str) -> Tuple[int, int]:
 def generate_witness_config(
     config_dir: str,
     name: str,
-    mainchain_port: int,
-    sidechain_port: int,
+    locking_chain_port: int,
+    issuing_chain_port: int,
     witness_port: int,
     locking_reward_seed: str,
     locking_reward_account: str,
@@ -163,8 +163,8 @@ def generate_witness_config(
     Args:
         config_dir: The folder in which to store config files.
         name: The name of the witness server.
-        mainchain_port: The port used by the mainchain.
-        sidechain_port: The port used by the sidechain.
+        locking_chain_port: The port used by the locking chain.
+        issuing_chain_port: The port used by the issuing chain.
         witness_port: The port that will be used by the witness server.
         src_door: The door account on the source chain.
         dst_door: The door account on the destination chain. Defaults to the genesis
@@ -181,8 +181,8 @@ def generate_witness_config(
         Path(sub_dir + path).mkdir(parents=True, exist_ok=True)
 
     template_data = {
-        "mainchain_port": mainchain_port,
-        "sidechain_port": sidechain_port,
+        "locking_chain_port": locking_chain_port,
+        "issuing_chain_port": issuing_chain_port,
         "witness_port": witness_port,
         "db_dir": f"{sub_dir}/db",
         "seed": Wallet.create(CryptoAlgorithm.SECP256K1).seed,
@@ -213,16 +213,16 @@ def generate_witness_config(
 )
 @click.option(
     "--mc_seed",
-    "mainchain_seed",
+    "locking_chain_seed",
     required=True,
     prompt=True,
-    help="The seed of the mainchain door account.",
+    help="The seed of the locking chain door account.",
 )
 @click.option(
     "--sc_seed",
-    "sidechain_seed",
+    "issuing_chain_seed",
     default="snoPBrXtMeMyMHUVTgbuqAfg1SUTb",
-    help="The seed of the sidechain door account. Defaults to the genesis account.",
+    help="The seed of the issuing chain door account. Defaults to the genesis account.",
 )
 @click.option(
     "--reward_account",
@@ -237,8 +237,8 @@ def generate_witness_config(
 )
 def generate_bootstrap(
     config_dir: str,
-    mainchain_seed: str,
-    sidechain_seed: str,
+    locking_chain_seed: str,
+    issuing_chain_seed: str,
     reward_accounts: List[str],
     verbose: bool = False,
 ) -> None:
@@ -247,20 +247,20 @@ def generate_bootstrap(
 
     Args:
         config_dir: The folder in which to store config files.
-        mainchain_seed: The seed of the mainchain door account.
-        sidechain_seed: The seed of the sidechain door account. Defaults to the genesis
-            account.
+        locking_chain_seed: The seed of the locking_chain door account.
+        issuing_chain_seed: The seed of the issuing_chain door account. Defaults to the
+            genesis account.
         reward_accounts: The witness reward accounts (which need to be created).
         verbose: Whether or not to print more verbose information.
     """
-    mainchain_door = Wallet(mainchain_seed, 0)
-    sidechain_door = Wallet(sidechain_seed, 0)
+    locking_chain_door = Wallet(locking_chain_seed, 0)
+    issuing_chain_door = Wallet(issuing_chain_seed, 0)
 
     template_data = {
-        "mainchain_id": mainchain_door.classic_address,
-        "mainchain_seed": mainchain_door.seed,
-        "sidechain_id": sidechain_door.classic_address,
-        "sidechain_seed": sidechain_door.seed,
+        "locking_chain_id": locking_chain_door.classic_address,
+        "locking_chain_seed": locking_chain_door.seed,
+        "issuing_chain_id": issuing_chain_door.classic_address,
+        "issuing_chain_seed": issuing_chain_door.seed,
         "witness_reward_accounts": reward_accounts,
     }
     if verbose:
@@ -319,8 +319,8 @@ def generate_all_configs(
             generate_witness_config,
             config_dir=abs_config_dir,
             name=f"witness{i}",
-            mainchain_port=mc_port,
-            sidechain_port=sc_port,
+            locking_chain_port=mc_port,
+            issuing_chain_port=sc_port,
             witness_port=6010 + i,
             src_door=src_door.classic_address,
             locking_reward_seed=witness_reward_wallet.seed,
@@ -331,7 +331,7 @@ def generate_all_configs(
     ctx.invoke(
         generate_bootstrap,
         config_dir=abs_config_dir,
-        mainchain_seed=src_door.seed,
+        locking_chain_seed=src_door.seed,
         verbose=verbose,
         reward_accounts=reward_accounts,
     )

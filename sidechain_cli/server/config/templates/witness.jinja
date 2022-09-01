@@ -2,7 +2,7 @@
   "LockingChain": {
     "Endpoint": {
       "IP": "127.0.0.1",
-      "Port": {{ mainchain_port }}
+      "Port": {{ locking_chain_port }}
     },
     "TxnSubmit": {
       "ShouldSubmit": true,
@@ -19,7 +19,7 @@
       {% else -%}
       "IP": "127.0.0.1",
       {%- endif %}
-      "Port": {{ sidechain_port }}
+      "Port": {{ issuing_chain_port }}
     },
     "TxnSubmit": {
       "ShouldSubmit": true,
