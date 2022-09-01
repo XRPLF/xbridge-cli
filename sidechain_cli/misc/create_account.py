@@ -94,10 +94,13 @@ def create_xchain_account(
     to_chain = [chain for chain in bridge_config.chains if chain != from_chain][0]
     to_chain_config = get_config().get_chain(to_chain)
     to_client = to_chain_config.get_client()
+    create_account_amount = bridge_config.create_account_amounts[
+        bridge_config.chains.index(from_chain)
+    ]
 
     from_wallet = Wallet(from_seed, 0)
 
-    if bridge_config.create_account_amount is None:
+    if create_account_amount is None:
         click.secho(
             "Error: Cannot create a cross-chain account if the create account amount "
             "is not set.",
@@ -111,7 +114,7 @@ def create_xchain_account(
         xchain_bridge=bridge_config.get_bridge(),
         signature_reward=bridge_config.signature_reward,
         destination=to_account,
-        amount=bridge_config.create_account_amount,
+        amount=create_account_amount,
     )
     submit_tx(fund_tx, from_client, from_wallet.seed, print_level)
 
@@ -139,7 +142,7 @@ def create_xchain_account(
                     # check that the attestation actually matches this transfer
                     if element["Account"] != from_wallet.classic_address:
                         continue
-                    if element["Amount"] != bridge_config.create_account_amount:
+                    if element["Amount"] != create_account_amount:
                         continue
                     if element["Destination"] != to_account:
                         continue

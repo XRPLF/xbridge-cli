@@ -1,6 +1,6 @@
 """Helper types."""
 
-from typing import List, Literal, Optional, Tuple, TypedDict, Union
+from typing import List, Literal, Tuple, TypedDict, Union
 
 
 class ServerData(TypedDict):
@@ -50,4 +50,4 @@ class BridgeData(TypedDict):
     door_accounts: Tuple[str, str]
     xchain_currencies: Tuple[Currency, Currency]
     signature_reward: str
-    create_account_amount: Optional[str]
+    create_account_amounts: Tuple[str, str]
