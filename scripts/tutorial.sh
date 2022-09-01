@@ -2,7 +2,7 @@ rm ~/.config/sidechain-cli/config.json  # TODO: remove once cleanup is better
 sidechain-cli server start-all --verbose
 sidechain-cli server list
 read -p "Pausing..."
-sidechain-cli bridge create --name=bridge --chains mainchain sidechain --witness witness0 --witness witness1 --witness witness2 --witness witness3 --witness witness4 --create_account_amount 5000000
+sidechain-cli bridge create --name=bridge --chains mainchain sidechain --witness witness0 --witness witness1 --witness witness2 --witness witness3 --witness witness4 --verbose
 cat ../sidechain-config/bridge_bootstrap.json | jq .mainchain_door.id | tr -d '"' | xargs sidechain-cli fund --chain mainchain --account
 sidechain-cli bridge build --bridge bridge --bootstrap ../sidechain-config/bridge_bootstrap.json --verbose
 sidechain-cli fund --chain mainchain --account raFcdz1g8LWJDJWJE2ZKLRGdmUmsTyxaym
