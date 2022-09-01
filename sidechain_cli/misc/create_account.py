@@ -69,10 +69,13 @@ def _submit_tx(
     help="The account to fund on the opposite chain.",
 )
 @click.option(
-    "--verbose", is_flag=True, help="Whether or not to print more verbose information."
+    "-v",
+    "--verbose",
+    help="Whether or not to print more verbose information. Also supports `-vv`.",
+    count=True,
 )
 def create_xchain_account(
-    from_chain: str, bridge: str, from_seed: str, to_account: str, verbose: bool = False
+    from_chain: str, bridge: str, from_seed: str, to_account: str, verbose: int = 0
 ) -> None:
     """
     Create an account on the opposite chain via a cross-chain transfer.
@@ -83,11 +86,9 @@ def create_xchain_account(
         bridge: The bridge across which to create the account.
         from_seed: The seed of the account that the funds come from.
         to_account: The chain to fund an account on.
-        verbose: Whether or not to print more verbose information.
+        verbose: Whether or not to print more verbose information. Add more v's for
+            more verbosity.
     """  # noqa: D301
-    # tutorial = True
-    print_level = 2
-
     bridge_config = get_config().get_bridge(bridge)
     from_chain_config = get_config().get_chain(from_chain)
     from_client = from_chain_config.get_client()
@@ -116,7 +117,7 @@ def create_xchain_account(
         destination=to_account,
         amount=create_account_amount,
     )
-    submit_tx(fund_tx, from_client, from_wallet.seed, print_level)
+    submit_tx(fund_tx, from_client, from_wallet.seed, verbose)
 
     # wait for attestations
     time_count = 0.0
@@ -147,9 +148,9 @@ def create_xchain_account(
                     if element["Destination"] != to_account:
                         continue
                     attestation_count += 1
-                    if print_level > 1:
+                    if verbose > 1:
                         click.echo(pformat(element))
-                    if print_level > 0:
+                    if verbose > 0:
                         click.secho(
                             f"Received {attestation_count} attestations",
                             fg="bright_green",
@@ -169,5 +170,5 @@ def create_xchain_account(
             click.secho("Error: Timeout on attestations.", fg="red")
             return
 
-    if verbose:
+    if verbose > 0:
         click.echo(pformat(to_client.request(AccountInfo(account=to_account)).result))
