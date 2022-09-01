@@ -3,8 +3,8 @@ sidechain-cli server start-all --verbose
 sidechain-cli server list
 read -p "Pausing..."
 sidechain-cli bridge create --name=bridge --chains mainchain sidechain --witness witness0 --witness witness1 --witness witness2 --witness witness3 --witness witness4 --create_account_amount 5000000
-cat ../sidechain-config/bridge_bootstrap.json | jq .mainchain_door.id | tr -d '"' | sidechain-cli fund --chain mainchain
-sidechain-cli bridge build --bridge bridge --bootstrap ../sidechain-config/bridge_bootstrap.json -vv
+cat ../sidechain-config/bridge_bootstrap.json | jq .mainchain_door.id | tr -d '"' | xargs sidechain-cli fund --chain mainchain --account
+sidechain-cli bridge build --bridge bridge --bootstrap ../sidechain-config/bridge_bootstrap.json --verbose
 sidechain-cli fund --chain mainchain --account raFcdz1g8LWJDJWJE2ZKLRGdmUmsTyxaym
 sidechain-cli fund --chain sidechain --account rJdTJRJZ6GXCCRaamHJgEqVzB7Zy4557Pi
 sidechain-cli fund --chain sidechain --account rGzx83BVoqTYbGn7tiVAnFw7cbxjin13jL
