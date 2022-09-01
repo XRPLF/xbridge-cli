@@ -8,6 +8,7 @@ import click
 from xrpl.models import (
     GenericRequest,
     IssuedCurrency,
+    ServerState,
     SignerEntry,
     SignerListSet,
     XChainCreateBridge,
@@ -114,6 +115,16 @@ def create_bridge(
         config["XChainBridge"]["IssuingChainIssue"],
     )
 
+    chain1 = get_config().get_chain(chains[0])
+    client1 = chain1.get_client()
+    chain2 = get_config().get_chain(chains[1])
+    client2 = chain2.get_client()
+    server_state1 = client1.request(ServerState())
+    min_create1 = server_state1.result["state"]["validated_ledger"]["reserve_base"]
+    server_state2 = client2.request(ServerState())
+    min_create2 = server_state2.result["state"]["validated_ledger"]["reserve_base"]
+    print(min_create1, min_create2)
+
     bridge_data: BridgeData = {
         "name": name,
         "chains": chains,
@@ -121,6 +132,7 @@ def create_bridge(
         "door_accounts": doors,
         "xchain_currencies": tokens,
         "signature_reward": signature_reward,
+        "create_account_amounts": (str(min_create2), str(min_create1)),
     }
 
     if verbose:
@@ -176,13 +188,12 @@ def setup_bridge(bridge: str, bootstrap: str, verbose: int = 0) -> None:
         account = client1.request(wallet_propose).result["account_id"]
         signer_entries.append(SignerEntry(account=account, signer_weight=1))
     bridge_obj = bridge_config.get_bridge()
-    signature_reward = bridge_config.signature_reward
 
     create_tx1 = XChainCreateBridge(
         account=bridge_config.door_accounts[0],
         xchain_bridge=bridge_obj,
-        signature_reward=signature_reward
-        # TODO: add support for the create account amount
+        signature_reward=bridge_config.signature_reward,
+        min_account_create_amount=bridge_config.create_account_amounts[0],
     )
     submit_tx(create_tx1, client1, bootstrap_config["mainchain_door"]["seed"], verbose)
 
@@ -198,8 +209,8 @@ def setup_bridge(bridge: str, bootstrap: str, verbose: int = 0) -> None:
     create_tx2 = XChainCreateBridge(
         account=bridge_config.door_accounts[1],
         xchain_bridge=bridge_obj,
-        signature_reward=signature_reward
-        # TODO: add support for the create account amount
+        signature_reward=bridge_config.signature_reward,
+        min_account_create_amount=bridge_config.create_account_amounts[1],
     )
     submit_tx(create_tx2, client2, bootstrap_config["sidechain_door"]["seed"], verbose)
 

@@ -15,6 +15,7 @@ from sidechain_cli.utils import (
     ChainData,
     RippledConfig,
     ServerConfig,
+    WitnessConfig,
     WitnessData,
     add_chain,
     add_witness,
@@ -254,13 +255,19 @@ def stop_server(
             # to_run = [server.rippled, "--conf", server.config, "stop"]
             # subprocess.call(to_run, stdout=fout, stderr=subprocess.STDOUT)
             pid = server.pid
-            os.kill(pid, signal.SIGINT)
+            try:
+                os.kill(pid, signal.SIGINT)
+            except ProcessLookupError:
+                pass  # process already died somehow
         else:
             # TODO: stop the server with a CLI command
             # to_run = [server.witnessd, "--config", server.config, "stop"]
             # subprocess.call(to_run, stdout=fout, stderr=subprocess.STDOUT)
             pid = server.pid
-            os.kill(pid, signal.SIGINT)
+            try:
+                os.kill(pid, signal.SIGINT)
+            except ProcessLookupError:
+                pass  # process already died somehow
         if verbose:
             click.echo(f"Stopped {server.name}")
 
@@ -298,17 +305,29 @@ def restart_server(
 
     config = get_config()
     if restart_all:
-        chains = config.chains
+        servers = cast(List[ServerConfig], config.chains) + cast(
+            List[ServerConfig], config.witnesses
+        )
     else:
         assert name is not None
-        chains = [config.get_chain(name)]
+        servers = [config.get_server(name)]
 
     ctx.invoke(stop_server, name=name, stop_all=restart_all, verbose=verbose)
-    for chain in chains:
-        ctx.invoke(
-            start_server,
-            name=chain.name,
-            rippled=chain.rippled,
-            config=chain.config,
-            verbose=verbose,
-        )
+    for server in servers:
+        if isinstance(server, ChainConfig):
+            ctx.invoke(
+                start_server,
+                name=server.name,
+                exe=server.rippled,
+                config=server.config,
+                verbose=verbose,
+            )
+        else:
+            assert isinstance(server, WitnessConfig)
+            ctx.invoke(
+                start_server,
+                name=server.name,
+                exe=server.witnessd,
+                config=server.config,
+                verbose=verbose,
+            )
