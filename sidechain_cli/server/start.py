@@ -142,7 +142,7 @@ def start_server(name: str, exe: str, config: str, verbose: bool = False) -> Non
     required=True,
     prompt=True,
     type=click.Path(exists=True),
-    help="The folder in which to store config files.",
+    help="The folder in which config files are storeds.",
 )
 @click.option(
     "--rippled_exe",
