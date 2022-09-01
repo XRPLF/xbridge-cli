@@ -100,7 +100,7 @@ def _generate_rippled_configs(config_dir: str) -> Tuple[int, int]:
     required=True,
     prompt=True,
     type=int,
-    help="The port used by the locking_chain.",
+    help="The port used by the locking chain.",
 )
 @click.option(
     "--sc_port",
@@ -108,7 +108,7 @@ def _generate_rippled_configs(config_dir: str) -> Tuple[int, int]:
     required=True,
     prompt=True,
     type=int,
-    help="The port used by the issuing_chain.",
+    help="The port used by the issuing chain.",
 )
 @click.option(
     "--witness_port",
@@ -163,8 +163,8 @@ def generate_witness_config(
     Args:
         config_dir: The folder in which to store config files.
         name: The name of the witness server.
-        locking_chain_port: The port used by the locking_chain.
-        issuing_chain_port: The port used by the issuing_chain.
+        locking_chain_port: The port used by the locking chain.
+        issuing_chain_port: The port used by the issuing chain.
         witness_port: The port that will be used by the witness server.
         src_door: The door account on the source chain.
         dst_door: The door account on the destination chain. Defaults to the genesis
@@ -216,13 +216,13 @@ def generate_witness_config(
     "locking_chain_seed",
     required=True,
     prompt=True,
-    help="The seed of the locking_chain door account.",
+    help="The seed of the locking chain door account.",
 )
 @click.option(
     "--sc_seed",
     "issuing_chain_seed",
     default="snoPBrXtMeMyMHUVTgbuqAfg1SUTb",
-    help="The seed of the issuing_chain door account. Defaults to the genesis account.",
+    help="The seed of the issuing chain door account. Defaults to the genesis account.",
 )
 @click.option(
     "--reward_account",
