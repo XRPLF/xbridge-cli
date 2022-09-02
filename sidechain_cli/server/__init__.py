@@ -4,6 +4,7 @@ import click
 
 from sidechain_cli.server.config import create_server_configs
 from sidechain_cli.server.list import list_servers
+from sidechain_cli.server.print import print_server_output
 from sidechain_cli.server.request import get_server_status, request_server
 from sidechain_cli.server.start import (
     restart_server,
@@ -27,6 +28,7 @@ server.add_command(restart_server, name="restart")
 server.add_command(create_server_configs, name="create-config")
 
 server.add_command(list_servers, name="list")
+server.add_command(print_server_output, name="print")
 
 server.add_command(get_server_status, name="status")
 server.add_command(request_server, name="request")
