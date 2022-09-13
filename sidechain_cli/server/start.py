@@ -47,7 +47,10 @@ from sidechain_cli.utils import (
     help="The filepath to the exe config file.",
 )
 @click.option(
-    "--verbose", is_flag=True, help="Whether or not to print more verbose information."
+    "-v",
+    "--verbose",
+    is_flag=True,
+    help="Whether or not to print more verbose information.",
 )
 def start_server(name: str, exe: str, config: str, verbose: bool = False) -> None:
     """
@@ -161,7 +164,10 @@ def start_server(name: str, exe: str, config: str, verbose: bool = False) -> Non
     help="The filepath to the witnessd executable.",
 )
 @click.option(
-    "--verbose", is_flag=True, help="Whether or not to print more verbose information."
+    "-v",
+    "--verbose",
+    is_flag=True,
+    help="Whether or not to print more verbose information.",
 )
 @click.pass_context
 def start_all_servers(
@@ -219,7 +225,10 @@ def start_all_servers(
     "--all", "stop_all", is_flag=True, help="Whether to stop all of the servers."
 )
 @click.option(
-    "--verbose", is_flag=True, help="Whether or not to print more verbose information."
+    "-v",
+    "--verbose",
+    is_flag=True,
+    help="Whether or not to print more verbose information.",
 )
 def stop_server(
     name: Optional[str] = None, stop_all: bool = False, verbose: bool = False
@@ -280,7 +289,10 @@ def stop_server(
     "--all", "restart_all", is_flag=True, help="Whether to stop all of the servers."
 )
 @click.option(
-    "--verbose", is_flag=True, help="Whether or not to print more verbose information."
+    "-v",
+    "--verbose",
+    is_flag=True,
+    help="Whether or not to print more verbose information.",
 )
 @click.pass_context
 def restart_server(

@@ -15,7 +15,10 @@ from sidechain_cli.utils import ChainConfig, get_config
 @click.argument("command", required=True)
 @click.argument("args", nargs=-1)
 @click.option(
-    "--verbose", is_flag=True, help="Whether or not to print more verbose information."
+    "-v",
+    "--verbose",
+    is_flag=True,
+    help="Whether or not to print more verbose information.",
 )
 def request_server(
     name: str, command: str, args: Tuple[str], verbose: bool = False
