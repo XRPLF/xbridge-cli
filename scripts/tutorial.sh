@@ -8,6 +8,4 @@ sidechain-cli bridge build --bridge bridge --bootstrap $XCHAIN_CONFIG_DIR/bridge
 sidechain-cli fund --chain locking_chain --account raFcdz1g8LWJDJWJE2ZKLRGdmUmsTyxaym
 sidechain-cli fund --chain issuing_chain --account rJdTJRJZ6GXCCRaamHJgEqVzB7Zy4557Pi
 sidechain-cli fund --chain issuing_chain --account rGzx83BVoqTYbGn7tiVAnFw7cbxjin13jL
-jq -c '.witness_reward_accounts[]' $XCHAIN_CONFIG_DIR/bridge_bootstrap.json | xargs -L1 sidechain-cli fund --chain locking_chain --account
-jq -c '.witness_reward_accounts[]' $XCHAIN_CONFIG_DIR/bridge_bootstrap.json | xargs -L1 sidechain-cli fund --chain issuing_chain --account
 sidechain-cli bridge transfer --bridge bridge --src_chain locking_chain --amount 10000000 --from snqs2zzXuMA71w9isKHPTrvFn1HaJ --to snyEJjY2Xi5Dxdh81Jy9Mj3AiYRQM --tutorial
