@@ -92,6 +92,7 @@ def send_transfer(
 ) -> None:
     """
     Set up a bridge between a locking chain and issuing chain.
+    \f
 
     Args:
         bridge: The bridge to transfer across.
@@ -104,7 +105,7 @@ def send_transfer(
 
     Raises:
         Exception: If there is an error with a transaction somewhere along the way.
-    """
+    """  # noqa: D301
     print_level = max(verbose, 2 if tutorial else 0)
     bridge_config = get_config().get_bridge(bridge)
     if src_chain not in bridge_config.chains:
@@ -173,7 +174,16 @@ def send_transfer(
     )
     _submit_tx(commit_tx, src_client, from_wallet.seed, print_level)
 
-    if print_level > 0:
+    # wait for attestations
+    if tutorial:
+        click.pause(
+            info=click.style(
+                "Waiting for attestations from the witness servers on "
+                f"{dst_client.url}...",
+                fg="blue",
+            )
+        )
+    elif print_level > 0:
         click.secho(
             f"Waiting for attestations from the witness servers on {dst_client.url}...",
             fg="blue",

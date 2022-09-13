@@ -14,6 +14,7 @@ from xrpl.models import (
     XChainCreateBridge,
 )
 
+from sidechain_cli.misc.fund import fund_account
 from sidechain_cli.utils import BridgeData
 from sidechain_cli.utils import Currency as CurrencyDict
 from sidechain_cli.utils import (
@@ -82,6 +83,7 @@ def create_bridge(
 ) -> None:
     """
     Keep track of a bridge between a locking chain and issuing chain.
+    \f
 
     Args:
         name: The name of the bridge (used for differentiation purposes).
@@ -89,7 +91,7 @@ def create_bridge(
         witnesses: The witness server(s) that monitor the bridge.
         signature_reward: The reward for witnesses providing a signature.
         verbose: Whether or not to print more verbose information.
-    """
+    """  # noqa: D301
     # check name
     if check_bridge_exists(name):
         click.echo(f"Bridge named {name} already exists.")
@@ -123,7 +125,6 @@ def create_bridge(
     min_create1 = server_state1.result["state"]["validated_ledger"]["reserve_base"]
     server_state2 = client2.request(ServerState())
     min_create2 = server_state2.result["state"]["validated_ledger"]["reserve_base"]
-    print(min_create1, min_create2)
 
     bridge_data: BridgeData = {
         "name": name,
@@ -157,16 +158,21 @@ def create_bridge(
     help="Whether or not to print more verbose information. Also supports `-vv`.",
     count=True,
 )
-def setup_bridge(bridge: str, bootstrap: str, verbose: int = 0) -> None:
+@click.pass_context
+def setup_bridge(
+    ctx: click.Context, bridge: str, bootstrap: str, verbose: int = 0
+) -> None:
     """
     Set up a bridge between a locking chain and issuing chain.
+    \f
 
     Args:
+        ctx: The click context.
         bridge: The bridge to build.
         bootstrap: The filepath to the bootstrap config file.
         verbose: Whether or not to print more verbose information. Add more v's for
             more verbosity.
-    """
+    """  # noqa: D301
     bridge_config = get_config().get_bridge(bridge)
     with open(bootstrap) as f:
         bootstrap_config = json.load(f)
@@ -230,3 +236,20 @@ def setup_bridge(bridge: str, bootstrap: str, verbose: int = 0) -> None:
     )
 
     # TODO: disable master key
+
+    for witness_acct in bootstrap_config["witness_reward_accounts"]:
+        ctx.invoke(
+            fund_account,
+            chain=bridge_config.chains[0],
+            account=witness_acct,
+            verbose=verbose > 1,
+        )
+        ctx.invoke(
+            fund_account,
+            chain=bridge_config.chains[1],
+            account=witness_acct,
+            verbose=verbose > 1,
+        )
+
+    if verbose > 0:
+        click.secho("Initialized witness reward accounts", fg="blue")

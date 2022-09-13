@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import shutil
 from pathlib import Path
 from pprint import pformat
 from sys import platform
@@ -43,7 +44,13 @@ def _generate_standalone_config(
     sub_dir = f"{abs_config_dir}/{cfg_type}"
 
     for path in ["", "/db"]:
-        Path(sub_dir + path).mkdir(parents=True, exist_ok=True)
+        dirpath = Path(sub_dir + path)
+        if dirpath.exists():
+            if dirpath.is_dir():
+                shutil.rmtree(dirpath)
+            else:
+                os.remove(dirpath)
+        dirpath.mkdir(parents=True)
 
     template_data = {
         "sub_dir": sub_dir,
@@ -141,7 +148,10 @@ def _generate_rippled_configs(config_dir: str) -> Tuple[int, int]:
     help="The reward account for the witness on the issuing chain.",
 )
 @click.option(
-    "--verbose", is_flag=True, help="Whether or not to print more verbose information."
+    "-v",
+    "--verbose",
+    is_flag=True,
+    help="Whether or not to print more verbose information.",
 )
 def generate_witness_config(
     config_dir: str,
@@ -159,6 +169,7 @@ def generate_witness_config(
 ) -> None:
     """
     Generate a witness config file.
+    \f
 
     Args:
         config_dir: The folder in which to store config files.
@@ -174,11 +185,17 @@ def generate_witness_config(
         issuing_reward_account: The reward account for the witness on the issuing chain.
         issuing_reward_seed: The seed for the issuing chain reward account.
         verbose: Whether or not to print more verbose information.
-    """
+    """  # noqa: D301
     abs_config_dir = os.path.abspath(config_dir)
     sub_dir = f"{abs_config_dir}/{name}"
     for path in ["", "/db"]:
-        Path(sub_dir + path).mkdir(parents=True, exist_ok=True)
+        dirpath = Path(sub_dir + path)
+        if dirpath.exists():
+            if dirpath.is_dir():
+                shutil.rmtree(dirpath)
+            else:
+                os.remove(dirpath)
+        dirpath.mkdir(parents=True)
 
     template_data = {
         "locking_chain_port": locking_chain_port,
@@ -233,7 +250,10 @@ def generate_witness_config(
     help="The seed of the witness reward account.",
 )
 @click.option(
-    "--verbose", is_flag=True, help="Whether or not to print more verbose information."
+    "-v",
+    "--verbose",
+    is_flag=True,
+    help="Whether or not to print more verbose information.",
 )
 def generate_bootstrap(
     config_dir: str,
@@ -244,6 +264,7 @@ def generate_bootstrap(
 ) -> None:
     """
     Generate a bootstrap config file. Used by the scripts to initialize the bridge.
+    \f
 
     Args:
         config_dir: The folder in which to store config files.
@@ -252,7 +273,7 @@ def generate_bootstrap(
             genesis account.
         reward_accounts: The witness reward accounts (which need to be created).
         verbose: Whether or not to print more verbose information.
-    """
+    """  # noqa: D301
     locking_chain_door = Wallet(locking_chain_seed, 0)
     issuing_chain_door = Wallet(issuing_chain_seed, 0)
 
@@ -289,7 +310,10 @@ def generate_bootstrap(
     help="The number of witness configs to generate.",
 )
 @click.option(
-    "--verbose", is_flag=True, help="Whether or not to print more verbose information."
+    "-v",
+    "--verbose",
+    is_flag=True,
+    help="Whether or not to print more verbose information.",
 )
 @click.pass_context
 def generate_all_configs(
@@ -306,6 +330,7 @@ def generate_all_configs(
     """
     # TODO: add support for external networks
     abs_config_dir = os.path.abspath(config_dir)
+
     mc_port, sc_port = _generate_rippled_configs(abs_config_dir)
     src_door = Wallet.create(CryptoAlgorithm.SECP256K1)
     reward_accounts = []

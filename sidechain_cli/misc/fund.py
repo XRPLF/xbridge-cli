@@ -26,7 +26,10 @@ from sidechain_cli.utils import get_config, submit_tx
     help="The account to fund.",
 )
 @click.option(
-    "--verbose", is_flag=True, help="Whether or not to print more verbose information."
+    "-v",
+    "--verbose",
+    is_flag=True,
+    help="Whether or not to print more verbose information.",
 )
 def fund_account(chain: str, account: str, verbose: bool = False) -> None:
     """
