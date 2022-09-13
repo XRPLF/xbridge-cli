@@ -12,10 +12,11 @@ from sidechain_cli.utils.config_file import CONFIG_FOLDER
 def print_server_output(name: str) -> None:
     """
     Print the stdout/stderr output of a server.
+    \f
 
     Args:
         name: Name of the server.
-    """
+    """  # noqa: D301
     file_loc = os.path.join(CONFIG_FOLDER, f"{name}.out")
     with open(file_loc) as f:
         for line in f:

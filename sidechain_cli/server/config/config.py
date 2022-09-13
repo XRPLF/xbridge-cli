@@ -169,6 +169,7 @@ def generate_witness_config(
 ) -> None:
     """
     Generate a witness config file.
+    \f
 
     Args:
         config_dir: The folder in which to store config files.
@@ -184,7 +185,7 @@ def generate_witness_config(
         issuing_reward_account: The reward account for the witness on the issuing chain.
         issuing_reward_seed: The seed for the issuing chain reward account.
         verbose: Whether or not to print more verbose information.
-    """
+    """  # noqa: D301
     abs_config_dir = os.path.abspath(config_dir)
     sub_dir = f"{abs_config_dir}/{name}"
     for path in ["", "/db"]:
@@ -263,6 +264,7 @@ def generate_bootstrap(
 ) -> None:
     """
     Generate a bootstrap config file. Used by the scripts to initialize the bridge.
+    \f
 
     Args:
         config_dir: The folder in which to store config files.
@@ -271,7 +273,7 @@ def generate_bootstrap(
             genesis account.
         reward_accounts: The witness reward accounts (which need to be created).
         verbose: Whether or not to print more verbose information.
-    """
+    """  # noqa: D301
     locking_chain_door = Wallet(locking_chain_seed, 0)
     issuing_chain_door = Wallet(issuing_chain_seed, 0)
 
