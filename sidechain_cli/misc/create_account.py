@@ -120,6 +120,12 @@ def create_xchain_account(
     submit_tx(fund_tx, from_client, from_wallet.seed, verbose)
 
     # wait for attestations
+    if verbose > 0:
+        click.secho(
+            f"Waiting for attestations from the witness servers on {to_client.url}...",
+            fg="blue",
+        )
+
     time_count = 0.0
     attestation_count = 0
     while True:

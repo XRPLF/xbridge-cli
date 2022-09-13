@@ -173,7 +173,16 @@ def send_transfer(
     )
     _submit_tx(commit_tx, src_client, from_wallet.seed, print_level)
 
-    if print_level > 0:
+    # wait for attestations
+    if tutorial:
+        click.pause(
+            info=click.style(
+                "Waiting for attestations from the witness servers on "
+                f"{dst_client.url}...",
+                fg="blue",
+            )
+        )
+    elif print_level > 0:
         click.secho(
             f"Waiting for attestations from the witness servers on {dst_client.url}...",
             fg="blue",
