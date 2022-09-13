@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import shutil
 from pathlib import Path
 from pprint import pformat
 from sys import platform
@@ -43,7 +44,13 @@ def _generate_standalone_config(
     sub_dir = f"{abs_config_dir}/{cfg_type}"
 
     for path in ["", "/db"]:
-        Path(sub_dir + path).mkdir(parents=True, exist_ok=True)
+        dirpath = Path(sub_dir + path)
+        if dirpath.exists():
+            if dirpath.is_dir():
+                shutil.rmtree(dirpath)
+            else:
+                os.remove(dirpath)
+        dirpath.mkdir(parents=True)
 
     template_data = {
         "sub_dir": sub_dir,
@@ -178,7 +185,13 @@ def generate_witness_config(
     abs_config_dir = os.path.abspath(config_dir)
     sub_dir = f"{abs_config_dir}/{name}"
     for path in ["", "/db"]:
-        Path(sub_dir + path).mkdir(parents=True, exist_ok=True)
+        dirpath = Path(sub_dir + path)
+        if dirpath.exists():
+            if dirpath.is_dir():
+                shutil.rmtree(dirpath)
+            else:
+                os.remove(dirpath)
+        dirpath.mkdir(parents=True)
 
     template_data = {
         "locking_chain_port": locking_chain_port,
