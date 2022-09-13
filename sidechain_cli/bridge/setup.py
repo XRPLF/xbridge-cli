@@ -123,7 +123,6 @@ def create_bridge(
     min_create1 = server_state1.result["state"]["validated_ledger"]["reserve_base"]
     server_state2 = client2.request(ServerState())
     min_create2 = server_state2.result["state"]["validated_ledger"]["reserve_base"]
-    print(min_create1, min_create2)
 
     bridge_data: BridgeData = {
         "name": name,

@@ -129,9 +129,6 @@ def create_xchain_account(
         )
         open_txs = open_ledger.result["ledger"]["transactions"]
         for tx in open_txs:
-            from pprint import pprint
-
-            pprint(tx)
             if tx["TransactionType"] == "XChainAddAttestation":
                 batch = tx["XChainAttestationBatch"]
                 if batch["XChainBridge"] != bridge_config.to_xrpl():
