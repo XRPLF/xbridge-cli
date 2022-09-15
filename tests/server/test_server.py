@@ -1,8 +1,10 @@
+import os
 import unittest
 
 from click.testing import CliRunner
 
 from sidechain_cli.main import main
+from sidechain_cli.utils.config_file import CONFIG_FOLDER
 
 
 class TestServer(unittest.TestCase):
@@ -71,3 +73,19 @@ class TestServer(unittest.TestCase):
             r"[a-zA-Z0-9-_\/\.]+ *\| *[0-9\.]+ *\| *[0-9]+ *$",
         )
         self.assertEqual(lines[14], "")
+
+    def test_print_rippled(self):
+        server_list = self.runner.invoke(
+            main, ["server", "print", "--name", "locking_chain"]
+        )
+        with open(os.path.join(CONFIG_FOLDER, "locking_chain.out"), "r") as f:
+            expected_output1 = f.read()
+
+        config_dir = os.path.abspath(os.getenv("XCHAIN_CONFIG_DIR"))
+        with open(os.path.join(config_dir, "locking_chain", "debug.log")) as f:
+            expected_output2 = f.read()
+
+        self.assertEqual(server_list.output, expected_output1)
+
+        lines = server_list.output.split("\n")
+        self.assertIn("\n".join(lines[3:]), expected_output2)
