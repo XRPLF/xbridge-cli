@@ -8,13 +8,15 @@ from sidechain_cli.utils.config_file import CONFIG_FOLDER
 
 
 class TestServer(unittest.TestCase):
-    def setUp(self):
-        self.runner = CliRunner()
-        start_result = self.runner.invoke(main, ["server", "start-all"])
+    @classmethod
+    def setUpClass(cls):
+        cls.runner = CliRunner()
+        start_result = cls.runner.invoke(main, ["server", "start-all"])
         assert start_result.exit_code == 0
 
-    def tearDown(self):
-        stop_result = self.runner.invoke(main, ["server", "stop", "--all"])
+    @classmethod
+    def tearDownClass(cls):
+        stop_result = cls.runner.invoke(main, ["server", "stop", "--all"])
         assert stop_result.exit_code == 0
 
     def test_list(self):
