@@ -91,3 +91,12 @@ class TestServer(unittest.TestCase):
 
         lines = server_list.output.split("\n")
         self.assertIn("\n".join(lines[3:]), expected_output2)
+
+    def test_print_witness(self):
+        server_list = self.runner.invoke(
+            main, ["server", "print", "--name", "witness0"]
+        )
+        with open(os.path.join(CONFIG_FOLDER, "witness0.out"), "r") as f:
+            expected_output = f.read()
+
+        self.assertEqual(server_list.output, expected_output)
