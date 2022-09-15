@@ -6,9 +6,9 @@ from sidechain_cli.main import main
 
 
 class TestBasicCreation(unittest.TestCase):
-    def test_startup_close(self):
+    def test_start_stop(self):
         runner = CliRunner()
-        no_chains_list_output = "No chains running.\n\n\nNo witnesses running.\n"
+        no_chains_list_output = "No chains running.\n\nNo witnesses running.\n"
 
         start_result = runner.invoke(main, ["server", "start-all"])
         assert start_result.exit_code == 0

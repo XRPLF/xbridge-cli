@@ -53,5 +53,5 @@ def _list_witnesses() -> None:
 def list_servers() -> None:
     """Get a list of running rippled nodes."""
     _list_chains()
-    click.echo("\n")
+    click.echo("")
     _list_witnesses()
