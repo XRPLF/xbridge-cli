@@ -100,3 +100,9 @@ class TestServer(unittest.TestCase):
             expected_output = f.read()
 
         self.assertEqual(server_list.output, expected_output)
+
+    def test_restart_rippled(self):
+        self.runner.invoke(main, ["server", "restart", "--name", "locking_chain"])
+
+    def test_restart_witness(self):
+        self.runner.invoke(main, ["server", "restart", "--name", "witness0"])
