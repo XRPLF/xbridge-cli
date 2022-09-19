@@ -10,7 +10,7 @@ from sidechain_cli.utils import get_config
 from sidechain_cli.utils.config_file import _CONFIG_FILE
 
 
-class TestBridgeSetup(unittest.TestCase):
+class TestBridgeBuild(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         # reset config file
@@ -28,7 +28,7 @@ class TestBridgeSetup(unittest.TestCase):
         stop_result = cls.runner.invoke(main, ["server", "stop", "--all"])
         assert stop_result.exit_code == 0, stop_result.output
 
-    def test_bridge(self):
+    def test_bridge_build(self):
         ###############################################################################
         # Part 1:
         # test bridge create
@@ -55,31 +55,9 @@ class TestBridgeSetup(unittest.TestCase):
             ],
         )
         self.assertEqual(runner_result.exit_code, 0, runner_result.output)
-        with open(_CONFIG_FILE) as f:
-            result = json.load(f)
-
-        config_dir = os.path.abspath(os.getenv("XCHAIN_CONFIG_DIR"))
-        with open(os.path.join(config_dir, "bridge_bootstrap.json")) as f:
-            bootstrap = json.load(f)
-
-        expected_result = {
-            "name": "test_bridge",
-            "chains": ["locking_chain", "issuing_chain"],
-            "witnesses": ["witness0", "witness1", "witness2", "witness3", "witness4"],
-            "door_accounts": [
-                bootstrap["locking_chain_door"]["id"],
-                bootstrap["issuing_chain_door"]["id"],
-            ],
-            "xchain_currencies": ["XRP", "XRP"],
-            "signature_reward": "100",
-            "create_account_amounts": ["5000000", "5000000"],
-        }
-
-        self.assertEqual(result["bridges"][0], expected_result)
 
         ###############################################################################
-        # Part 2:
-        # test bridge build
+        # Actual test: bridge build
         config_dir = os.path.abspath(os.getenv("XCHAIN_CONFIG_DIR"))
         with open(os.path.join(config_dir, "bridge_bootstrap.json")) as f:
             bootstrap = json.load(f)
@@ -129,42 +107,3 @@ class TestBridgeSetup(unittest.TestCase):
         self.assertEqual(
             len(signer_list["SignerEntries"]), len(bridge_config.witnesses)
         )
-
-        ###############################################################################
-        # Part 3:
-        # test bridge transfer
-
-        # initialize accounts
-        fund_result1 = self.runner.invoke(
-            main,
-            [
-                "fund",
-                "--account=raFcdz1g8LWJDJWJE2ZKLRGdmUmsTyxaym",
-                "--chain=locking_chain",
-            ],
-        )
-        self.assertEqual(fund_result1.exit_code, 0, fund_result1.output)
-        fund_result2 = self.runner.invoke(
-            main,
-            [
-                "fund",
-                "--account=rJdTJRJZ6GXCCRaamHJgEqVzB7Zy4557Pi",
-                "--chain=issuing_chain",
-            ],
-        )
-        self.assertEqual(fund_result2.exit_code, 0, fund_result2.output)
-
-        runner_result = self.runner.invoke(
-            main,
-            [
-                "bridge",
-                "transfer",
-                "--bridge=test_bridge",
-                "--src_chain=locking_chain",
-                "--amount=10000000",
-                "--from=snqs2zzXuMA71w9isKHPTrvFn1HaJ",
-                "--to=snyEJjY2Xi5Dxdh81Jy9Mj3AiYRQM",
-                "--verbose",
-            ],
-        )
-        self.assertEqual(runner_result.exit_code, 0, runner_result.output)
