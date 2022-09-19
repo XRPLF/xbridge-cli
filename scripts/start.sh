@@ -3,7 +3,7 @@ sidechain-cli server start-all
 sidechain-cli server list
 sidechain-cli bridge create --name=bridge --chains locking_chain issuing_chain --witness witness0 --witness witness1 --witness witness2 --witness witness3 --witness witness4
 jq .locking_chain_door.id $XCHAIN_CONFIG_DIR/bridge_bootstrap.json | tr -d '"' | xargs sidechain-cli fund --chain locking_chain --account
-sidechain-cli bridge build --bridge bridge --bootstrap $XCHAIN_CONFIG_DIR/bridge_bootstrap.json
+sidechain-cli bridge build --bridge bridge
 sidechain-cli fund --chain locking_chain --account raFcdz1g8LWJDJWJE2ZKLRGdmUmsTyxaym
 sidechain-cli fund --chain issuing_chain --account rJdTJRJZ6GXCCRaamHJgEqVzB7Zy4557Pi
 sidechain-cli fund --chain issuing_chain --account rGzx83BVoqTYbGn7tiVAnFw7cbxjin13jL

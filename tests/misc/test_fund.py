@@ -1,12 +1,10 @@
-import json
 import unittest
 
 from click.testing import CliRunner
-from xrpl.clients import JsonRpcClient
 from xrpl.models import AccountInfo
 
 from sidechain_cli.main import main
-from sidechain_cli.utils.config_file import _CONFIG_FILE
+from sidechain_cli.utils import get_config
 
 
 class TestBridgeSetup(unittest.TestCase):
@@ -22,15 +20,7 @@ class TestBridgeSetup(unittest.TestCase):
         assert stop_result.exit_code == 0, stop_result.output
 
     def test_fund(self):
-        with open(_CONFIG_FILE) as f:
-            config = json.load(f)
-        locking_chain = [
-            chain for chain in config["chains"] if chain["name"] == "locking_chain"
-        ][0]
-        locking_chain_url = (
-            locking_chain["http_ip"] + ":" + str(locking_chain["http_port"])
-        )
-        client = JsonRpcClient(f"http://{locking_chain_url}")
+        client = get_config().get_chain("locking_chain").get_client()
 
         test_account = "rHvgvEAy1npZ2kCde6mM5anjXo7Gpqxi78"
         initial_account_info = client.request(AccountInfo(account=test_account))

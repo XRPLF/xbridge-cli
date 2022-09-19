@@ -1,6 +1,7 @@
 """CLI command for setting up a bridge."""
 
 import json
+import os
 from pprint import pformat
 from typing import List, Tuple, cast
 
@@ -147,6 +148,7 @@ def create_bridge(
 )
 @click.option(
     "--bootstrap",
+    envvar="XCHAIN_CONFIG_DIR",
     required=True,
     prompt=True,
     type=click.Path(exists=True),
@@ -173,6 +175,10 @@ def setup_bridge(
         verbose: Whether or not to print more verbose information. Add more v's for
             more verbosity.
     """  # noqa: D301
+    # get bootstrap if using env var
+    if bootstrap == os.getenv("XCHAIN_CONFIG_DIR"):
+        bootstrap = os.path.join(bootstrap, "bridge_bootstrap.json")
+
     bridge_config = get_config().get_bridge(bridge)
     with open(bootstrap) as f:
         bootstrap_config = json.load(f)
