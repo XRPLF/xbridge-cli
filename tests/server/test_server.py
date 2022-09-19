@@ -8,6 +8,8 @@ from sidechain_cli.utils.config_file import CONFIG_FOLDER
 
 
 class TestServer(unittest.TestCase):
+    maxDiff = None
+
     @classmethod
     def setUpClass(cls):
         cls.runner = CliRunner()
@@ -78,13 +80,13 @@ class TestServer(unittest.TestCase):
 
     def test_print_rippled(self):
         server_list = self.runner.invoke(
-            main, ["server", "print", "--name", "locking_chain"]
+            main, ["server", "print", "--name", "issuing_chain"]
         )
-        with open(os.path.join(CONFIG_FOLDER, "locking_chain.out"), "r") as f:
+        with open(os.path.join(CONFIG_FOLDER, "issuing_chain.out"), "r") as f:
             expected_output1 = f.read()
 
         config_dir = os.path.abspath(os.getenv("XCHAIN_CONFIG_DIR"))
-        with open(os.path.join(config_dir, "locking_chain", "debug.log")) as f:
+        with open(os.path.join(config_dir, "issuing_chain", "debug.log")) as f:
             expected_output2 = f.read()
 
         self.assertEqual(server_list.output, expected_output1)
