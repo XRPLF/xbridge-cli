@@ -212,7 +212,6 @@ def start_all_servers(
         ctx.invoke(
             start_server, name=name, exe=rippled_exe, config=config, verbose=verbose
         )
-    # time.sleep(3)
     for name, config in witnesses:
         ctx.invoke(
             start_server, name=name, exe=witnessd_exe, config=config, verbose=verbose
