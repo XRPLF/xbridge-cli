@@ -247,8 +247,8 @@ def stop_server(
         return
     config = get_config()
     if stop_all:
-        servers = cast(List[ServerConfig], config.chains) + cast(
-            List[ServerConfig], config.witnesses
+        servers = cast(List[ServerConfig], config.witnesses) + cast(
+            List[ServerConfig], config.chains
         )
     else:
         assert name is not None
