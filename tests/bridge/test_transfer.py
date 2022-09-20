@@ -70,6 +70,8 @@ class TestBridgeTransfer(unittest.TestCase):
         assert stop_result.exit_code == 0, stop_result.output
 
     def test_bridge_transfer(self):
+        bridge_config = get_config().get_bridge("test_bridge")
+
         send_account = "raFcdz1g8LWJDJWJE2ZKLRGdmUmsTyxaym"
         receive_account = "rJdTJRJZ6GXCCRaamHJgEqVzB7Zy4557Pi"
         amount = xrp_to_drops(10)
@@ -120,5 +122,9 @@ class TestBridgeTransfer(unittest.TestCase):
             (final_balance_locking), initial_balance_locking - int(amount) - 10
         )
         self.assertEqual(
-            final_balance_issuing, initial_balance_issuing + int(amount) - 10
+            final_balance_issuing,
+            initial_balance_issuing
+            + int(amount)
+            - 10
+            - int(bridge_config.signature_reward),
         )
