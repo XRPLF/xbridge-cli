@@ -22,7 +22,7 @@ class TestBridgeTransfer(unittest.TestCase):
 
         cls.runner = CliRunner()
         start_result = cls.runner.invoke(main, ["server", "start-all", "--verbose"])
-        assert start_result.exit_code == 0, start_result.output
+        assert start_result.exit_code == 0, start_result.exception
 
         # create bridge
         create_result = cls.runner.invoke(
@@ -127,4 +127,5 @@ class TestBridgeTransfer(unittest.TestCase):
             + int(amount)
             - 10
             - int(bridge_config.signature_reward),
+            runner_result.output,
         )
