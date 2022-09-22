@@ -1,38 +1,18 @@
 import json
 import os
-import unittest
 
-from click.testing import CliRunner
 from xrpl.models import AccountObjects
 
 from sidechain_cli.main import main
 from sidechain_cli.utils import get_config
-from sidechain_cli.utils.config_file import _CONFIG_FILE
 
 
-class TestBridgeBuild(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls):
-        # reset config file
-        os.remove(_CONFIG_FILE)
-        with open(_CONFIG_FILE, "w") as f:
-            data = {"chains": [], "witnesses": [], "bridges": []}
-            json.dump(data, f, indent=4)
-
-        cls.runner = CliRunner()
-        start_result = cls.runner.invoke(main, ["server", "start-all", "--verbose"])
-        assert start_result.exit_code == 0, start_result.output
-
-    @classmethod
-    def tearDownClass(cls):
-        stop_result = cls.runner.invoke(main, ["server", "stop", "--all"])
-        assert stop_result.exit_code == 0, stop_result.output
-
-    def test_bridge_build(self):
+class TestBridgeBuild:
+    def test_bridge_build(self, runner):
         ###############################################################################
         # Part 1:
         # test bridge create
-        runner_result = self.runner.invoke(
+        runner_result = runner.invoke(
             main,
             [
                 "bridge",
@@ -54,7 +34,7 @@ class TestBridgeBuild(unittest.TestCase):
                 "--verbose",
             ],
         )
-        self.assertEqual(runner_result.exit_code, 0, runner_result.output)
+        assert runner_result.exit_code == 0, runner_result.output
 
         ###############################################################################
         # Actual test: bridge build
@@ -64,15 +44,15 @@ class TestBridgeBuild(unittest.TestCase):
 
         locking_door = bootstrap["locking_chain_door"]["id"]
         issuing_door = bootstrap["issuing_chain_door"]["id"]
-        fund_result = self.runner.invoke(
+        fund_result = runner.invoke(
             main, ["fund", f"--account={locking_door}", "--chain=locking_chain"]
         )
-        self.assertEqual(fund_result.exit_code, 0, fund_result.output)
+        assert fund_result.exit_code == 0, fund_result.output
 
-        runner_result = self.runner.invoke(
+        runner_result = runner.invoke(
             main, ["bridge", "build", "--bridge=test_bridge", "--verbose"]
         )
-        self.assertEqual(runner_result.exit_code, 0, runner_result.output)
+        assert runner_result.exit_code == 0, runner_result.output
 
         locking_client = get_config().get_chain("locking_chain").get_client()
         issuing_client = get_config().get_chain("issuing_chain").get_client()
@@ -85,13 +65,11 @@ class TestBridgeBuild(unittest.TestCase):
         bridge = [obj for obj in locking_objects if obj["LedgerEntryType"] == "Bridge"][
             0
         ]
-        self.assertEqual(bridge["XChainBridge"], bridge_config.to_xrpl())
+        assert bridge["XChainBridge"] == bridge_config.to_xrpl()
         signer_list = [
             obj for obj in locking_objects if obj["LedgerEntryType"] == "SignerList"
         ][0]
-        self.assertEqual(
-            len(signer_list["SignerEntries"]), len(bridge_config.witnesses)
-        )
+        assert len(signer_list["SignerEntries"]) == len(bridge_config.witnesses)
 
         issuing_objects_result = issuing_client.request(
             AccountObjects(account=issuing_door)
@@ -100,10 +78,8 @@ class TestBridgeBuild(unittest.TestCase):
         bridge = [obj for obj in issuing_objects if obj["LedgerEntryType"] == "Bridge"][
             0
         ]
-        self.assertEqual(bridge["XChainBridge"], bridge_config.to_xrpl())
+        assert bridge["XChainBridge"] == bridge_config.to_xrpl()
         signer_list = [
             obj for obj in issuing_objects if obj["LedgerEntryType"] == "SignerList"
         ][0]
-        self.assertEqual(
-            len(signer_list["SignerEntries"]), len(bridge_config.witnesses)
-        )
+        assert len(signer_list["SignerEntries"]) == len(bridge_config.witnesses)

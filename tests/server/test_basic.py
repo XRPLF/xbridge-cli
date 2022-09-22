@@ -1,21 +1,16 @@
-import unittest
-
-from click.testing import CliRunner
-
 from sidechain_cli.main import main
 
 
-class TestBasicCreation(unittest.TestCase):
-    def test_start_stop(self):
-        runner = CliRunner()
+class TestBasicCreation:
+    def test_start_stop(self, runner):
         no_chains_list_output = "No chains running.\n\nNo witnesses running.\n"
 
         start_result = runner.invoke(main, ["server", "start-all"])
-        assert start_result.exit_code == 0
+        assert start_result.exit_code == 0, start_result.exception
         start_list = runner.invoke(main, ["server", "list"])
-        assert start_list.output != no_chains_list_output
+        assert start_list.output != no_chains_list_output, start_result.exception
 
         stop_result = runner.invoke(main, ["server", "stop", "--all"])
-        assert stop_result.exit_code == 0
+        assert stop_result.exit_code == 0, stop_result.exception
         stop_list = runner.invoke(main, ["server", "list"])
-        assert stop_list.output == no_chains_list_output
+        assert stop_list.output == no_chains_list_output, stop_result.exception

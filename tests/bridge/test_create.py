@@ -1,33 +1,13 @@
 import json
 import os
-import unittest
-
-from click.testing import CliRunner
 
 from sidechain_cli.main import main
 from sidechain_cli.utils.config_file import _CONFIG_FILE
 
 
-class TestBridgeCreate(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls):
-        # reset config file
-        os.remove(_CONFIG_FILE)
-        with open(_CONFIG_FILE, "w") as f:
-            data = {"chains": [], "witnesses": [], "bridges": []}
-            json.dump(data, f, indent=4)
-
-        cls.runner = CliRunner()
-        start_result = cls.runner.invoke(main, ["server", "start-all", "--verbose"])
-        assert start_result.exit_code == 0, start_result.output
-
-    @classmethod
-    def tearDownClass(cls):
-        stop_result = cls.runner.invoke(main, ["server", "stop", "--all"])
-        assert stop_result.exit_code == 0, stop_result.output
-
-    def test_bridge_create(self):
-        runner_result = self.runner.invoke(
+class TestBridgeCreate:
+    def test_bridge_create(self, runner):
+        runner_result = runner.invoke(
             main,
             [
                 "bridge",
@@ -49,7 +29,7 @@ class TestBridgeCreate(unittest.TestCase):
                 "--verbose",
             ],
         )
-        self.assertEqual(runner_result.exit_code, 0, runner_result.output)
+        assert runner_result.exit_code == 0, runner_result.output
         with open(_CONFIG_FILE) as f:
             result = json.load(f)
 
@@ -70,4 +50,4 @@ class TestBridgeCreate(unittest.TestCase):
             "create_account_amounts": ["5000000", "5000000"],
         }
 
-        self.assertEqual(result["bridges"][0], expected_result)
+        assert result["bridges"][0] == expected_result

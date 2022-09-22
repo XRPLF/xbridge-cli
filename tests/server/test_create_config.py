@@ -1,53 +1,32 @@
 import os
-import shutil
-import tempfile
-import unittest
-import unittest.mock
-
-from click.testing import CliRunner
 
 from sidechain_cli.main import main
 
 
-class TestBasicCreation(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls):
-        cls.tempdir = tempfile.TemporaryDirectory()
+class TestBasicCreation:
+    def test_create_config(self, runner):
+        tempdir = os.getenv("XCHAIN_CONFIG_DIR")
+        create_result = runner.invoke(main, ["server", "create-config", "all"])
+        assert create_result.exit_code == 0
 
-    @classmethod
-    def tearDownClass(cls):
-        shutil.rmtree(cls.tempdir.name)
+        for name in ["locking_chain", "issuing_chain"]:
+            assert name in os.listdir(tempdir)
+            subfolder = os.path.join(tempdir, name)
+            assert os.path.isdir(subfolder) is True
 
-    def test_create_config(self):
-        with unittest.mock.patch.dict(
-            os.environ,
-            {
-                **os.environ,
-                "XCHAIN_CONFIG_DIR": self.tempdir.name,
-            },
-        ):
-            runner = CliRunner()
-            create_result = runner.invoke(main, ["server", "create-config", "all"])
-            self.assertEqual(create_result.exit_code, 0)
+            assert "db" in os.listdir(subfolder)
+            assert os.path.isdir(os.path.join(subfolder, "db")) is True
 
-            for name in ["locking_chain", "issuing_chain"]:
-                self.assertIn(name, os.listdir(self.tempdir.name))
-                subfolder = os.path.join(self.tempdir.name, name)
-                self.assertTrue(os.path.isdir(subfolder))
+            assert "rippled.cfg" in os.listdir(subfolder)
+            assert os.path.isfile(os.path.join(subfolder, "rippled.cfg")) is True
 
-                self.assertIn("db", os.listdir(subfolder))
-                self.assertTrue(os.path.isdir(os.path.join(subfolder, "db")))
+        for name in [f"witness{i}" for i in range(5)]:
+            assert name in os.listdir(tempdir)
+            subfolder = os.path.join(tempdir, name)
+            assert os.path.isdir(subfolder) is True
 
-                self.assertIn("rippled.cfg", os.listdir(subfolder))
-                self.assertTrue(os.path.isfile(os.path.join(subfolder, "rippled.cfg")))
+            assert "db" in os.listdir(subfolder)
+            assert os.path.isdir(os.path.join(subfolder, "db")) is True
 
-            for name in [f"witness{i}" for i in range(5)]:
-                self.assertIn(name, os.listdir(self.tempdir.name))
-                subfolder = os.path.join(self.tempdir.name, name)
-                self.assertTrue(os.path.isdir(subfolder))
-
-                self.assertIn("db", os.listdir(subfolder))
-                self.assertTrue(os.path.isdir(os.path.join(subfolder, "db")))
-
-                self.assertIn("witness.json", os.listdir(subfolder))
-                self.assertTrue(os.path.isfile(os.path.join(subfolder, "witness.json")))
+            assert "witness.json" in os.listdir(subfolder)
+            assert os.path.isfile(os.path.join(subfolder, "witness.json")) is True
