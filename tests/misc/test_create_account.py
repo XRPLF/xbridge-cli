@@ -1,6 +1,3 @@
-import json
-import os
-
 import pytest
 from xrpl.account import does_account_exist, get_balance
 
@@ -8,49 +5,7 @@ from sidechain_cli.main import main
 from sidechain_cli.utils import get_config
 
 
-@pytest.fixture(autouse=True)
-def create_bridge(runner):
-    # create bridge
-    create_result = runner.invoke(
-        main,
-        [
-            "bridge",
-            "create",
-            "--name=test_bridge",
-            "--chains",
-            "locking_chain",
-            "issuing_chain",
-            "--witness",
-            "witness0",
-            "--witness",
-            "witness1",
-            "--witness",
-            "witness2",
-            "--witness",
-            "witness3",
-            "--witness",
-            "witness4",
-            "--verbose",
-        ],
-    )
-    assert create_result.exit_code == 0, create_result.output
-
-    config_dir = os.path.abspath(os.getenv("XCHAIN_CONFIG_DIR"))
-    with open(os.path.join(config_dir, "bridge_bootstrap.json")) as f:
-        bootstrap = json.load(f)
-
-    locking_door = bootstrap["locking_chain_door"]["id"]
-    fund_result = runner.invoke(
-        main, ["fund", f"--account={locking_door}", "--chain=locking_chain"]
-    )
-    assert fund_result.exit_code == 0, fund_result.output
-
-    build_result = runner.invoke(
-        main, ["bridge", "build", "--bridge=test_bridge", "--verbose"]
-    )
-    assert build_result.exit_code == 0, build_result.output
-
-
+@pytest.mark.usefixtures("runner", "create_bridge")
 class TestCreateAccount:
     def test_create_account(self, runner):
         bridge_config = get_config().get_bridge("test_bridge")

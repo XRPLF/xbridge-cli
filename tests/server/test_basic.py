@@ -1,8 +1,11 @@
+from click.testing import CliRunner
+
 from sidechain_cli.main import main
 
 
 class TestBasicCreation:
-    def test_start_stop(self, runner):
+    def test_start_stop(self):
+        runner = CliRunner()
         no_chains_list_output = "No chains running.\n\nNo witnesses running.\n"
 
         start_result = runner.invoke(main, ["server", "start-all"])

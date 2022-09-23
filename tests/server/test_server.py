@@ -1,10 +1,13 @@
 import os
 import re
 
+import pytest
+
 from sidechain_cli.main import main
 from sidechain_cli.utils.config_file import CONFIG_FOLDER
 
 
+@pytest.mark.usefixtures("runner")
 class TestServer:
     def test_list(self, runner):
         server_list = runner.invoke(main, ["server", "list"])

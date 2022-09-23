@@ -1,9 +1,11 @@
+import pytest
 from xrpl.models import AccountInfo
 
 from sidechain_cli.main import main
 from sidechain_cli.utils import get_config
 
 
+@pytest.mark.usefixtures("runner")
 class TestFund:
     def test_fund(self, runner):
         client = get_config().get_chain("locking_chain").get_client()

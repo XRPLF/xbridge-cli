@@ -1,12 +1,14 @@
 import json
 import os
 
+import pytest
 from xrpl.models import AccountObjects
 
 from sidechain_cli.main import main
 from sidechain_cli.utils import get_config
 
 
+@pytest.mark.usefixtures("runner")
 class TestBridgeBuild:
     def test_bridge_build(self, runner):
         ###############################################################################

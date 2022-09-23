@@ -1,10 +1,13 @@
 import json
 import os
 
+import pytest
+
 from sidechain_cli.main import main
 from sidechain_cli.utils.config_file import _CONFIG_FILE
 
 
+@pytest.mark.usefixtures("runner")
 class TestBridgeCreate:
     def test_bridge_create(self, runner):
         runner_result = runner.invoke(
