@@ -1,3 +1,4 @@
+import json
 import os
 import re
 
@@ -96,3 +97,12 @@ class TestServer:
     def test_restart_witness(self, runner):
         result = runner.invoke(main, ["server", "restart", "--name", "witness0"])
         assert result.exit_code == 0
+
+    def test_request(self, runner):
+        result = runner.invoke(
+            main, ["server", "request", "--name", "locking_chain", "ping"]
+        )
+        assert result.exit_code == 0
+
+        expected = {"result": {"role": "admin", "status": "success"}}
+        assert json.loads(result.output) == expected
