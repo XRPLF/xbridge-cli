@@ -50,7 +50,7 @@ def runner():
         data = {"chains": [], "witnesses": [], "bridges": []}
         json.dump(data, f, indent=4)
 
-    cli_runner = CliRunner(mix_stderr=False)
+    cli_runner = CliRunner()
 
     # create config files
     result = cli_runner.invoke(main, ["server", "create-config", "all"])
