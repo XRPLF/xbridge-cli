@@ -212,7 +212,6 @@ def start_all_servers(
         ctx.invoke(
             start_server, name=name, exe=rippled_exe, config=config, verbose=verbose
         )
-    time.sleep(3)
     for name, config in witnesses:
         ctx.invoke(
             start_server, name=name, exe=witnessd_exe, config=config, verbose=verbose
@@ -247,8 +246,8 @@ def stop_server(
         return
     config = get_config()
     if stop_all:
-        servers = cast(List[ServerConfig], config.chains) + cast(
-            List[ServerConfig], config.witnesses
+        servers = cast(List[ServerConfig], config.witnesses) + cast(
+            List[ServerConfig], config.chains
         )
     else:
         assert name is not None

@@ -1,13 +1,13 @@
 """CLI command for setting up a bridge."""
 
 import json
+import os
 from pprint import pformat
-from typing import List, Tuple, cast
+from typing import List, Tuple
 
 import click
 from xrpl.models import (
     GenericRequest,
-    IssuedCurrency,
     ServerState,
     SignerEntry,
     SignerListSet,
@@ -15,9 +15,8 @@ from xrpl.models import (
 )
 
 from sidechain_cli.misc.fund import fund_account
-from sidechain_cli.utils import BridgeData
-from sidechain_cli.utils import Currency as CurrencyDict
 from sidechain_cli.utils import (
+    BridgeData,
     add_bridge,
     check_bridge_exists,
     check_chain_exists,
@@ -25,20 +24,6 @@ from sidechain_cli.utils import (
     get_config,
     submit_tx,
 )
-
-
-def _str_to_currency(token: str) -> CurrencyDict:
-    if token == "XRP":
-        return "XRP"
-    if token.count(".") != 1:
-        raise Exception(
-            f'Token {token} not a valid token. Must be "XRP" or of the form '
-            '"BTC.issuer".'
-        )
-    currency, issuer = token.split(".")
-    return cast(
-        CurrencyDict, IssuedCurrency(currency=currency, issuer=issuer).to_dict()
-    )
 
 
 @click.command(name="create")
@@ -147,6 +132,7 @@ def create_bridge(
 )
 @click.option(
     "--bootstrap",
+    envvar="XCHAIN_CONFIG_DIR",
     required=True,
     prompt=True,
     type=click.Path(exists=True),
@@ -173,6 +159,10 @@ def setup_bridge(
         verbose: Whether or not to print more verbose information. Add more v's for
             more verbosity.
     """  # noqa: D301
+    # get bootstrap if using env var
+    if bootstrap == os.getenv("XCHAIN_CONFIG_DIR"):
+        bootstrap = os.path.join(bootstrap, "bridge_bootstrap.json")
+
     bridge_config = get_config().get_bridge(bridge)
     with open(bootstrap) as f:
         bootstrap_config = json.load(f)
