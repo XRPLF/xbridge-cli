@@ -10,7 +10,7 @@ from sidechain_cli.utils.config_file import _CONFIG_FILE
 @pytest.mark.usefixtures("runner")
 class TestBridgeCreate:
     def test_bridge_create(self, runner):
-        runner_result = runner.invoke(
+        create_result = runner.invoke(
             main,
             [
                 "bridge",
@@ -32,7 +32,7 @@ class TestBridgeCreate:
                 "--verbose",
             ],
         )
-        assert runner_result.exit_code == 0, runner_result.output
+        assert create_result.exit_code == 0
         with open(_CONFIG_FILE) as f:
             result = json.load(f)
 

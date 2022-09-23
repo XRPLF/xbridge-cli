@@ -41,7 +41,7 @@ def pytest_sessionfinish(session, exitstatus):
     env_vars.stop()
 
 
-@pytest.fixture()
+@pytest.fixture(scope="class")
 def runner():
     print("Hiiiiiiiasdufhas8dfoasdijfak")
     # reset CLI config file
@@ -67,7 +67,7 @@ def runner():
     assert stop_result.exit_code == 0, stop_result.output
 
 
-@pytest.fixture(autouse=True)
+@pytest.fixture(scope="class")
 def create_bridge(runner):
     # create bridge
     create_result = runner.invoke(
