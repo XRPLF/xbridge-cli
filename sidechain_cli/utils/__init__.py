@@ -1,11 +1,11 @@
 """Util methods for the sidechain CLI."""
 
 from sidechain_cli.utils.config_file import (
-    CONFIG_FOLDER,
     BridgeConfig,
     ChainConfig,
     ServerConfig,
     WitnessConfig,
+    get_config_folder,
 )
 from sidechain_cli.utils.config_utils import (
     add_bridge,
@@ -50,10 +50,10 @@ __all__ = [
     "Currency",
     "IssuedCurrencyDict",
     "WitnessData",
-    "CONFIG_FOLDER",
     "RippledConfig",
     "BridgeConfig",
     "ChainConfig",
     "WitnessConfig",
     "ServerConfig",
+    "get_config_folder",
 ]

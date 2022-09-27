@@ -6,5 +6,14 @@
     "esbonio.sphinx.confDir": "${workspaceFolder}/docs",
     "python.linting.mypyEnabled": true,
     "mypy.runUsingActiveInterpreter": true,
-    "python.linting.ignorePatterns": [ "venv/**/*.py" ],
+    "python.linting.ignorePatterns": [
+        "venv/**/*.py"
+    ],
+    "cSpell.words": [
+        "getenv",
+        "noqa",
+        "pytest",
+        "witnessd",
+        "xchain"
+    ],
 }

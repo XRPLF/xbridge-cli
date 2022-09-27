@@ -4,7 +4,7 @@ import shutil
 import tempfile
 import unittest
 import unittest.mock
-from typing import Any, Optional
+from typing import Any, Dict, List, Optional
 
 import pytest
 from click.testing import CliRunner
@@ -12,38 +12,59 @@ from click.testing import CliRunner
 from sidechain_cli.main import main
 from sidechain_cli.utils.config_file import _CONFIG_FILE
 
-tempdir: Optional[tempfile.TemporaryDirectory] = None
-env_vars: Optional[Any] = None
+config_dir: Optional[tempfile.TemporaryDirectory] = None
+home_dir: Optional[tempfile.TemporaryDirectory] = None
+mocked_vars: List[Any] = []
 
 
-def pytest_sessionstart(session):
+def pytest_configure(config):
     """
     Called after the Session object has been created and
     before performing collection and entering the run test loop.
     """
-    global tempdir, env_vars
-    tempdir = tempfile.TemporaryDirectory()
+    global home_dir, config_dir, mocked_vars
+    config_dir = tempfile.TemporaryDirectory()
     env_vars = unittest.mock.patch.dict(
         os.environ,
         {
-            "XCHAIN_CONFIG_DIR": tempdir.name,
+            "XCHAIN_CONFIG_DIR": config_dir.name,
         },
     )
     env_vars.start()
 
+    home_dir = tempfile.TemporaryDirectory()
+    config_var = unittest.mock.patch(
+        "sidechain_cli.utils.config_file.CONFIG_FOLDER",
+        home_dir.name,
+    )
+    config_var.start()
 
-def pytest_sessionfinish(session, exitstatus):
+    config_file = os.path.join(home_dir.name, "config.json")
+    with open(config_file, "w") as f:
+        data: Dict[str, List[Any]] = {"chains": [], "witnesses": [], "bridges": []}
+        json.dump(data, f, indent=4)
+    config_var2 = unittest.mock.patch(
+        "sidechain_cli.utils.config_file._CONFIG_FILE",
+        config_file,
+    )
+
+    config_var2.start()
+    mocked_vars.extend([env_vars, config_var, config_var2])
+
+
+def pytest_unconfigure(config):
     """
     Called after whole test run finished, right before
     returning the exit status to the system.
     """
-    shutil.rmtree(tempdir.name)
-    env_vars.stop()
+    shutil.rmtree(home_dir.name)
+    shutil.rmtree(config_dir.name)
+    for var in mocked_vars:
+        var.stop()
 
 
 @pytest.fixture(scope="class")
 def runner():
-    print("Hiiiiiiiasdufhas8dfoasdijfak")
     # reset CLI config file
     os.remove(_CONFIG_FILE)
     with open(_CONFIG_FILE, "w") as f:
