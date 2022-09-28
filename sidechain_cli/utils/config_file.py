@@ -32,6 +32,17 @@ if not os.path.exists(_CONFIG_FILE):
 # TODO: consider having separate JSONs for each node type
 # (e.g. chains.json, witnesses.json, bridges.json)
 
+
+def get_config_folder() -> str:
+    """
+    Get the folder in which all of the CLI config data is located.
+
+    Returns:
+        The full name of the config folder.
+    """
+    return CONFIG_FOLDER
+
+
 T = TypeVar("T", bound="ConfigItem")
 
 

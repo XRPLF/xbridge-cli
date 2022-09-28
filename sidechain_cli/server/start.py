@@ -10,7 +10,6 @@ from typing import List, Optional, cast
 import click
 
 from sidechain_cli.utils import (
-    CONFIG_FOLDER,
     ChainConfig,
     ChainData,
     RippledConfig,
@@ -21,6 +20,7 @@ from sidechain_cli.utils import (
     add_witness,
     check_server_exists,
     get_config,
+    get_config_folder,
     remove_server,
 )
 
@@ -86,7 +86,7 @@ def start_server(name: str, exe: str, config: str, verbose: bool = False) -> Non
         to_run = [exe, "--config", config, "--verbose"]
 
     # create output file for easier debug purposes
-    output_file = f"{CONFIG_FOLDER}/{name}.out"
+    output_file = f"{get_config_folder()}/{name}.out"
     if not os.path.exists(output_file):
         # initialize file if it doesn't exist
         with open(output_file, "w") as f:
@@ -99,7 +99,7 @@ def start_server(name: str, exe: str, config: str, verbose: bool = False) -> Non
     pid = process.pid
 
     # check if server actually started up correctly
-    time.sleep(0.3)
+    time.sleep(0.5)
     if process.poll() is not None:
         click.echo("ERROR")
         with open(output_file) as f:
