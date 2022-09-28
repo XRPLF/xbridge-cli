@@ -10,7 +10,6 @@ import pytest
 from click.testing import CliRunner
 
 from sidechain_cli.main import main
-from sidechain_cli.utils.config_file import _CONFIG_FILE
 
 config_dir: Optional[tempfile.TemporaryDirectory] = None
 home_dir: Optional[tempfile.TemporaryDirectory] = None
@@ -66,8 +65,9 @@ def pytest_unconfigure(config):
 @pytest.fixture(scope="class")
 def runner():
     # reset CLI config file
-    os.remove(_CONFIG_FILE)
-    with open(_CONFIG_FILE, "w") as f:
+    config_file = os.path.join(home_dir.name, "config.json")
+    os.remove(config_file)
+    with open(config_file, "w") as f:
         data = {"chains": [], "witnesses": [], "bridges": []}
         json.dump(data, f, indent=4)
 
@@ -121,7 +121,7 @@ def create_bridge(runner):
 
     locking_door = bootstrap["locking_chain_door"]["id"]
     fund_result = runner.invoke(
-        main, ["fund", f"--account={locking_door}", "--chain=locking_chain"]
+        main, ["fund", f"--account={locking_door}", "--chain", "locking_chain", "-v"]
     )
     assert fund_result.exit_code == 0, fund_result.output
 

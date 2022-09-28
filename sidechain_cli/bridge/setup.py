@@ -92,19 +92,20 @@ def create_bridge(
             click.echo(f"Witness {witness} is not running.")
             return
 
-    config = get_config().get_witness((witnesses[0])).get_config()
+    config = get_config()
+    witness_config = config.get_witness((witnesses[0])).get_config()
     doors = (
-        config["XChainBridge"]["LockingChainDoor"],
-        config["XChainBridge"]["IssuingChainDoor"],
+        witness_config["XChainBridge"]["LockingChainDoor"],
+        witness_config["XChainBridge"]["IssuingChainDoor"],
     )
     tokens = (
-        config["XChainBridge"]["LockingChainIssue"],
-        config["XChainBridge"]["IssuingChainIssue"],
+        witness_config["XChainBridge"]["LockingChainIssue"],
+        witness_config["XChainBridge"]["IssuingChainIssue"],
     )
 
-    chain1 = get_config().get_chain(chains[0])
+    chain1 = config.get_chain(chains[0])
     client1 = chain1.get_client()
-    chain2 = get_config().get_chain(chains[1])
+    chain2 = config.get_chain(chains[1])
     client2 = chain2.get_client()
     server_state1 = client1.request(ServerState())
     min_create1 = server_state1.result["state"]["validated_ledger"]["reserve_base"]

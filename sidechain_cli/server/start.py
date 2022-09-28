@@ -99,7 +99,7 @@ def start_server(name: str, exe: str, config: str, verbose: bool = False) -> Non
     pid = process.pid
 
     # check if server actually started up correctly
-    time.sleep(0.3)
+    time.sleep(0.4)
     if process.poll() is not None:
         click.echo("ERROR")
         with open(output_file) as f:

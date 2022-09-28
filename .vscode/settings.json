@@ -10,9 +10,14 @@
         "venv/**/*.py"
     ],
     "cSpell.words": [
+        "Popen",
+        "envvar",
+        "fout",
         "getenv",
         "noqa",
+        "pformat",
         "pytest",
+        "secho",
         "witnessd",
         "xchain"
     ],
