@@ -56,10 +56,10 @@ def pytest_unconfigure(config):
     Called after whole test run finished, right before
     returning the exit status to the system.
     """
-    shutil.rmtree(home_dir.name)
-    shutil.rmtree(config_dir.name)
     for var in mocked_vars:
         var.stop()
+    shutil.rmtree(home_dir.name)
+    shutil.rmtree(config_dir.name)
 
 
 @pytest.fixture(scope="class")
