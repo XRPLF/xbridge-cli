@@ -19,7 +19,9 @@ from sidechain_cli.server.config.ports import Ports
 JINJA_ENV = Environment(
     loader=FileSystemLoader(
         searchpath=os.path.join(*os.path.split(__file__)[:-1], "templates")
-    )
+    ),
+    trim_blocks=True,
+    lstrip_blocks=True,
 )
 
 
@@ -97,9 +99,8 @@ def _generate_rippled_configs(config_dir: str) -> Tuple[int, int]:
 )
 @click.option(
     "--name",
-    required=True,
-    prompt=True,
-    help="The name of the witness server.",
+    default="witness",
+    help="The name of the witness server. Used for the folder name.",
 )
 @click.option(
     "--mc_port",
@@ -142,6 +143,12 @@ def _generate_rippled_configs(config_dir: str) -> Tuple[int, int]:
     help="The reward account for the witness on the locking chain.",
 )
 @click.option(
+    "--signing_seed",
+    required=True,
+    prompt=True,
+    help="The seed to use for signing attestations.",
+)
+@click.option(
     "--issuing_reward_account",
     required=True,
     prompt=True,
@@ -164,6 +171,7 @@ def generate_witness_config(
     issuing_reward_seed: str,
     issuing_reward_account: str,
     src_door: str,
+    signing_seed: str,
     dst_door: str = "rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh",
     verbose: bool = False,
 ) -> None:
@@ -180,6 +188,7 @@ def generate_witness_config(
         src_door: The door account on the source chain.
         dst_door: The door account on the destination chain. Defaults to the genesis
             account.
+        signing_seed: The seed to use for signing attestations.
         locking_reward_account: The reward account for the witness on the locking chain.
         locking_reward_seed: The seed for the locking chain reward account.
         issuing_reward_account: The reward account for the witness on the issuing chain.
@@ -202,7 +211,7 @@ def generate_witness_config(
         "issuing_chain_port": issuing_chain_port,
         "witness_port": witness_port,
         "db_dir": f"{sub_dir}/db",
-        "seed": Wallet.create(CryptoAlgorithm.SECP256K1).seed,
+        "seed": signing_seed,
         "locking_reward_seed": locking_reward_seed,
         "locking_reward_account": locking_reward_account,
         "issuing_reward_seed": issuing_reward_seed,
@@ -223,10 +232,11 @@ def generate_witness_config(
 
 @click.command(name="bootstrap")
 @click.option(
-    "--config_dir",
+    "--directory",
+    "config_dir",
     required=True,
     prompt=True,
-    help="The folder in which to store config files.",
+    help="The folder in which to store the bridge bootstrap file.",
 )
 @click.option(
     "--mc_seed",
@@ -250,6 +260,14 @@ def generate_witness_config(
     help="The seed of the witness reward account.",
 )
 @click.option(
+    "--signing_account",
+    "signing_accounts",
+    required=True,
+    prompt=True,
+    multiple=True,
+    help="The account the witness uses to sign attestations.",
+)
+@click.option(
     "-v",
     "--verbose",
     is_flag=True,
@@ -260,6 +278,7 @@ def generate_bootstrap(
     locking_chain_seed: str,
     issuing_chain_seed: str,
     reward_accounts: List[str],
+    signing_accounts: List[str],
     verbose: bool = False,
 ) -> None:
     """
@@ -272,17 +291,27 @@ def generate_bootstrap(
         issuing_chain_seed: The seed of the issuing_chain door account. Defaults to the
             genesis account.
         reward_accounts: The witness reward accounts (which need to be created).
+        signing_accounts: The accounts the witness uses to sign attestations.
         verbose: Whether or not to print more verbose information.
     """  # noqa: D301
-    locking_chain_door = Wallet(locking_chain_seed, 0)
-    issuing_chain_door = Wallet(issuing_chain_seed, 0)
+    locking_door = Wallet(locking_chain_seed, 0)
+    issuing_door = Wallet(issuing_chain_seed, 0)
 
     template_data = {
-        "locking_chain_id": locking_chain_door.classic_address,
-        "locking_chain_seed": locking_chain_door.seed,
-        "issuing_chain_id": issuing_chain_door.classic_address,
-        "issuing_chain_seed": issuing_chain_door.seed,
-        "witness_reward_accounts": reward_accounts,
+        "is_linux": platform == "linux" or platform == "linux2",
+        "locking_node_port": 5005,
+        "locking_door_account": locking_door.classic_address,
+        "locking_door_seed": locking_door.seed,
+        "locking_issue": "XRP",
+        "locking_reward_accounts": reward_accounts,
+        "locking_submit_accounts": reward_accounts,
+        "issuing_node_port": 5006,
+        "issuing_door_account": issuing_door.classic_address,
+        "issuing_door_seed": issuing_door.seed,
+        "issuing_issue": "XRP",
+        "issuing_reward_accounts": reward_accounts,
+        "issuing_submit_accounts": reward_accounts,
+        "signing_accounts": signing_accounts,
     }
     if verbose:
         click.echo(pformat(template_data))
@@ -334,12 +363,15 @@ def generate_all_configs(
     mc_port, sc_port = _generate_rippled_configs(abs_config_dir)
     src_door = Wallet.create(CryptoAlgorithm.SECP256K1)
     reward_accounts = []
+    signing_accounts = []
     for i in range(num_witnesses):
         original_wallet = Wallet.create(crypto_algorithm=CryptoAlgorithm.SECP256K1)
         witness_reward_wallet = Wallet(
             original_wallet.seed, 0, algorithm=CryptoAlgorithm.ED25519
         )
         reward_accounts.append(witness_reward_wallet.classic_address)
+        signing_wallet = Wallet.create(CryptoAlgorithm.SECP256K1)
+        signing_accounts.append(signing_wallet.classic_address)
         ctx.invoke(
             generate_witness_config,
             config_dir=abs_config_dir,
@@ -347,6 +379,7 @@ def generate_all_configs(
             locking_chain_port=mc_port,
             issuing_chain_port=sc_port,
             witness_port=6010 + i,
+            signing_seed=signing_wallet.seed,
             src_door=src_door.classic_address,
             locking_reward_seed=witness_reward_wallet.seed,
             locking_reward_account=witness_reward_wallet.classic_address,
@@ -359,4 +392,5 @@ def generate_all_configs(
         locking_chain_seed=src_door.seed,
         verbose=verbose,
         reward_accounts=reward_accounts,
+        signing_accounts=signing_accounts,
     )

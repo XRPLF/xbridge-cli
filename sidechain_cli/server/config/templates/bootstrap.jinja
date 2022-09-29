@@ -1,11 +1,75 @@
 {
-  "locking_chain_door": {
-    "id": "{{ locking_chain_id }}",
-    "seed": "{{ locking_chain_seed }}"
+  "LockingChain": {
+    "Endpoint": {
+      "IP": "127.0.0.1",
+      "JsonRPCPort": {{ locking_node_port }}
+    },
+    "DoorAccount": {
+      "Address": "{{ locking_door_account }}",
+      "Seed": "{{ locking_door_seed }}",
+      "KeyType": "ed25519"
+    },
+    "BridgeIssue": "{{ locking_issue }}",
+    "WitnessRewardAccounts": [
+    {% for account in locking_reward_accounts %}
+      "{{ account }}"
+      {%- if not loop.last -%}
+      ,
+      {% endif %}
+    {% endfor +%}
+    ],
+    "WitnessSubmitAccounts": [
+    {% for account in locking_submit_accounts %}
+      "{{ account }}"
+      {%- if not loop.last -%}
+      ,
+      {% endif %}
+    {% endfor +%}
+    ]
   },
-  "issuing_chain_door": {
-    "id": "{{ issuing_chain_id }}",
-    "seed": "{{ issuing_chain_seed }}"
+  "IssuingChain": {
+    "Endpoint": {
+      {% if is_linux %}
+      "IP": "127.0.0.2",
+      {% else %}
+      "IP": "127.0.0.1",
+      {% endif %}
+      "JsonRPCPort": {{ issuing_node_port }}
+    },
+    "DoorAccount": {
+      "Address": "{{ issuing_door_account }}",
+      "Seed": "{{ issuing_door_seed }}",
+      "KeyType": "ed25519"
+    },
+    "BridgeIssue": "{{ issuing_issue }}",
+    "WitnessRewardAccounts": [
+    {% for account in issuing_reward_accounts %}
+      "{{ account }}"
+      {%- if not loop.last -%}
+      ,
+      {% endif %}
+    {% endfor +%}
+    ],
+    "WitnessSubmitAccounts": [
+    {% for account in issuing_submit_accounts %}
+      "{{ account }}"
+      {%- if not loop.last -%}
+      ,
+      {% endif %}
+    {% endfor +%}
+    ]
   },
-  "witness_reward_accounts": {{ witness_reward_accounts | list | tojson }}
+  "Witnesses": {
+    "SignerList": [
+    {% for account in signing_accounts %}
+      {
+        "Account": "{{ account }}",
+        "Weight": 1
+      }
+      {%- if not loop.last -%}
+      ,
+      {% endif %}
+    {% endfor +%}
+    ]
+  }
 }

@@ -7,10 +7,14 @@
     "python.linting.mypyEnabled": true,
     "mypy.runUsingActiveInterpreter": true,
     "python.linting.ignorePatterns": [
-        "venv/**/*.py"
+        ".venv/**/*.py"
     ],
     "cSpell.words": [
+        "Dkuk",
+        "MHUV",
         "Popen",
+        "Tgbuq",
+        "bwdty",
         "envvar",
         "fout",
         "getenv",
