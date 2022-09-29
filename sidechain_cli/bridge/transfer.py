@@ -230,7 +230,7 @@ def send_transfer(
         else:
             time_count += _WAIT_STEP_LENGTH
 
-        quorum = max(1, len(bridge_config.witnesses) - 1)
+        quorum = max(1, bridge_config.num_witnesses - 1)
         if attestation_count >= quorum:
             # received enough attestations for quorum
             break

@@ -71,7 +71,7 @@ class TestBridgeBuild:
         signer_list = [
             obj for obj in locking_objects if obj["LedgerEntryType"] == "SignerList"
         ][0]
-        assert len(signer_list["SignerEntries"]) == len(bridge_config.witnesses)
+        assert len(signer_list["SignerEntries"]) == bridge_config.num_witnesses
 
         issuing_objects_result = issuing_client.request(
             AccountObjects(account=issuing_door)
@@ -84,4 +84,4 @@ class TestBridgeBuild:
         signer_list = [
             obj for obj in issuing_objects if obj["LedgerEntryType"] == "SignerList"
         ][0]
-        assert len(signer_list["SignerEntries"]) == len(bridge_config.witnesses)
+        assert len(signer_list["SignerEntries"]) == bridge_config.num_witnesses

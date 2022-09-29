@@ -370,7 +370,8 @@ def generate_all_configs(
             original_wallet.seed, 0, algorithm=CryptoAlgorithm.ED25519
         )
         reward_accounts.append(witness_reward_wallet.classic_address)
-        signing_wallet = Wallet.create(CryptoAlgorithm.SECP256K1)
+        wallet = Wallet.create(CryptoAlgorithm.SECP256K1)
+        signing_wallet = Wallet(wallet.seed, 0, algorithm=CryptoAlgorithm.ED25519)
         signing_accounts.append(signing_wallet.classic_address)
         ctx.invoke(
             generate_witness_config,

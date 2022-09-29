@@ -43,7 +43,7 @@ class TestBridgeCreate:
         expected_result = {
             "name": "test_bridge",
             "chains": ["locking_chain", "issuing_chain"],
-            "witnesses": ["witness0", "witness1", "witness2", "witness3", "witness4"],
+            "num_witnesses": 5,
             "door_accounts": [
                 bootstrap["LockingChain"]["DoorAccount"]["Address"],
                 bootstrap["IssuingChain"]["DoorAccount"]["Address"],

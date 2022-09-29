@@ -1,6 +1,6 @@
 """Helper types."""
 
-from typing import List, Literal, Tuple, TypedDict, Union
+from typing import Literal, Tuple, TypedDict, Union
 
 
 class ServerData(TypedDict):
@@ -46,7 +46,7 @@ class BridgeData(TypedDict):
 
     name: str
     chains: Tuple[str, str]
-    witnesses: List[str]
+    num_witnesses: int
     door_accounts: Tuple[str, str]
     xchain_currencies: Tuple[Currency, Currency]
     signature_reward: str

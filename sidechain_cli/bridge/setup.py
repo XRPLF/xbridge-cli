@@ -6,13 +6,7 @@ from pprint import pformat
 from typing import List, Tuple
 
 import click
-from xrpl.models import (
-    GenericRequest,
-    ServerState,
-    SignerEntry,
-    SignerListSet,
-    XChainCreateBridge,
-)
+from xrpl.models import ServerState, SignerEntry, SignerListSet, XChainCreateBridge
 
 from sidechain_cli.misc.fund import fund_account
 from sidechain_cli.utils import (
@@ -115,7 +109,7 @@ def create_bridge(
     bridge_data: BridgeData = {
         "name": name,
         "chains": chains,
-        "witnesses": witnesses,
+        "num_witnesses": len(witnesses),
         "door_accounts": doors,
         "xchain_currencies": tokens,
         "signature_reward": signature_reward,
@@ -174,16 +168,12 @@ def setup_bridge(
     client2 = chain2.get_client()
 
     signer_entries = []
-    for witness in bridge_config.witnesses:
-        witness_config = get_config().get_witness((witness)).get_config()
-        # TODO: refactor to avoid using wallet_propose
-        wallet_propose = GenericRequest(
-            method="wallet_propose",
-            seed=witness_config["SigningKeySeed"],
-            key_type="ed25519",
+    for witness_entry in bootstrap_config["Witnesses"]["SignerList"]:
+        signer_entries.append(
+            SignerEntry(
+                account=witness_entry["Account"], signer_weight=witness_entry["Weight"]
+            )
         )
-        account = client1.request(wallet_propose).result["account_id"]
-        signer_entries.append(SignerEntry(account=account, signer_weight=1))
 
     bridge_obj = bridge_config.get_bridge()
     locking_door_account = bootstrap_config["LockingChain"]["DoorAccount"]["Address"]
