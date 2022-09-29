@@ -184,51 +184,54 @@ def setup_bridge(
         )
         account = client1.request(wallet_propose).result["account_id"]
         signer_entries.append(SignerEntry(account=account, signer_weight=1))
+
     bridge_obj = bridge_config.get_bridge()
+    locking_door_account = bootstrap_config["LockingChain"]["DoorAccount"]["Address"]
+    locking_door_seed = bootstrap_config["LockingChain"]["DoorAccount"]["Seed"]
 
     create_tx1 = XChainCreateBridge(
-        account=bridge_config.door_accounts[0],
+        account=locking_door_account,
         xchain_bridge=bridge_obj,
         signature_reward=bridge_config.signature_reward,
         min_account_create_amount=bridge_config.create_account_amounts[0],
     )
-    submit_tx(
-        create_tx1, client1, bootstrap_config["locking_chain_door"]["seed"], verbose
-    )
+    submit_tx(create_tx1, client1, locking_door_seed, verbose)
 
     signer_tx1 = SignerListSet(
-        account=bridge_config.door_accounts[0],
+        account=locking_door_account,
         signer_quorum=max(1, len(signer_entries) - 1),
         signer_entries=signer_entries,
     )
-    submit_tx(
-        signer_tx1, client1, bootstrap_config["locking_chain_door"]["seed"], verbose
-    )
+    submit_tx(signer_tx1, client1, locking_door_seed, verbose)
 
     # TODO: disable master key
 
+    issuing_door_account = bootstrap_config["IssuingChain"]["DoorAccount"]["Address"]
+    issuing_door_seed = bootstrap_config["IssuingChain"]["DoorAccount"]["Seed"]
+
     create_tx2 = XChainCreateBridge(
-        account=bridge_config.door_accounts[1],
+        account=issuing_door_account,
         xchain_bridge=bridge_obj,
         signature_reward=bridge_config.signature_reward,
         min_account_create_amount=bridge_config.create_account_amounts[1],
     )
-    submit_tx(
-        create_tx2, client2, bootstrap_config["issuing_chain_door"]["seed"], verbose
-    )
+    issuing_door_seed = bootstrap_config["IssuingChain"]["DoorAccount"]["Seed"]
+    submit_tx(create_tx2, client2, issuing_door_seed, verbose)
 
     signer_tx2 = SignerListSet(
-        account=bridge_config.door_accounts[1],
+        account=issuing_door_account,
         signer_quorum=max(1, len(signer_entries) - 1),
         signer_entries=signer_entries,
     )
-    submit_tx(
-        signer_tx2, client2, bootstrap_config["issuing_chain_door"]["seed"], verbose
-    )
+    submit_tx(signer_tx2, client2, issuing_door_seed, verbose)
 
     # TODO: disable master key
 
-    for witness_acct in bootstrap_config["witness_reward_accounts"]:
+    accounts_to_create = set(
+        bootstrap_config["IssuingChain"]["WitnessRewardAccounts"]
+        + bootstrap_config["IssuingChain"]["WitnessSubmitAccounts"]
+    )
+    for witness_acct in accounts_to_create:
         ctx.invoke(
             fund_account,
             chain=bridge_config.chains[0],

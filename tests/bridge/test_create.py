@@ -45,8 +45,8 @@ class TestBridgeCreate:
             "chains": ["locking_chain", "issuing_chain"],
             "witnesses": ["witness0", "witness1", "witness2", "witness3", "witness4"],
             "door_accounts": [
-                bootstrap["locking_chain_door"]["id"],
-                bootstrap["issuing_chain_door"]["id"],
+                bootstrap["LockingChain"]["DoorAccount"]["Address"],
+                bootstrap["IssuingChain"]["DoorAccount"]["Address"],
             ],
             "xchain_currencies": ["XRP", "XRP"],
             "signature_reward": "100",
