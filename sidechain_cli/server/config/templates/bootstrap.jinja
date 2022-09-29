@@ -11,20 +11,10 @@
     },
     "BridgeIssue": "{{ locking_issue }}",
     "WitnessRewardAccounts": [
-    {% for account in locking_reward_accounts %}
-      "{{ account }}"
-      {%- if not loop.last -%}
-      ,
-      {% endif %}
-    {% endfor +%}
+      "{{ locking_reward_accounts | join("\",\n      \"") }}"
     ],
     "WitnessSubmitAccounts": [
-    {% for account in locking_submit_accounts %}
-      "{{ account }}"
-      {%- if not loop.last -%}
-      ,
-      {% endif %}
-    {% endfor +%}
+      "{{ locking_submit_accounts | join("\",\n      \"") }}"
     ]
   },
   "IssuingChain": {
@@ -43,20 +33,10 @@
     },
     "BridgeIssue": "{{ issuing_issue }}",
     "WitnessRewardAccounts": [
-    {% for account in issuing_reward_accounts %}
-      "{{ account }}"
-      {%- if not loop.last -%}
-      ,
-      {% endif %}
-    {% endfor +%}
+      "{{ issuing_reward_accounts | join("\",\n      \"") }}"
     ],
     "WitnessSubmitAccounts": [
-    {% for account in issuing_submit_accounts %}
-      "{{ account }}"
-      {%- if not loop.last -%}
-      ,
-      {% endif %}
-    {% endfor +%}
+      "{{ issuing_submit_accounts | join("\",\n      \"") }}"
     ]
   },
   "Witnesses": {
