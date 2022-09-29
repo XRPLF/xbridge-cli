@@ -72,7 +72,7 @@ def submit_tx_external(
     signed_tx = safe_sign_and_autofill_transaction(tx, Wallet(seed, 0), client)
     result = send_reliable_submission(signed_tx, client)
 
-    tx_result = result.result.get("error") or result.result.get("engine_result")
+    tx_result = result.result["meta"]["TransactionResult"]
     if verbose > 0:
         text_color = "bright_green" if tx_result == "tesSUCCESS" else "bright_red"
         click.secho(f"Result: {tx_result}", fg=text_color)
