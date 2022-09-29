@@ -7,6 +7,8 @@ from typing import Tuple
 import click
 from xrpl.clients import JsonRpcClient
 from xrpl.models import (
+    AccountSet,
+    AccountSetFlag,
     ServerState,
     SignerEntry,
     SignerListSet,
@@ -78,9 +80,9 @@ def setup_production_bridge(
     client1 = JsonRpcClient(chain_urls[0])
     client2 = JsonRpcClient(chain_urls[1])
     server_state1 = client1.request(ServerState())
-    min_create1 = str(server_state1.result["state"]["validated_ledger"]["reserve_base"])
+    min_create1 = server_state1.result["state"]["validated_ledger"]["reserve_base"]
     server_state2 = client2.request(ServerState())
-    min_create2 = str(server_state2.result["state"]["validated_ledger"]["reserve_base"])
+    min_create2 = server_state2.result["state"]["validated_ledger"]["reserve_base"]
 
     signer_entries = []
     for witness_entry in bootstrap_config["Witnesses"]["SignerList"]:
@@ -90,46 +92,45 @@ def setup_production_bridge(
             )
         )
 
-    locking_door_account = bootstrap_config["LockingChain"]["DoorAccount"]["Address"]
-    locking_door_seed = bootstrap_config["LockingChain"]["DoorAccount"]["Seed"]
+    # set up locking chain side
+    def _set_up_one_chain(
+        door_account: str, door_seed: str, min_create: int, client: JsonRpcClient
+    ) -> None:
+        create_tx = XChainCreateBridge(
+            account=door_account,
+            xchain_bridge=bridge_obj,
+            signature_reward=signature_reward,
+            min_account_create_amount=str(
+                min_create2
+            ),  # account reserve on issuing chain
+        )
+        submit_tx_external(create_tx, client, door_seed, verbose)
 
-    create_tx1 = XChainCreateBridge(
-        account=locking_door_account,
-        xchain_bridge=bridge_obj,
-        signature_reward=signature_reward,
-        min_account_create_amount=min_create2,  # account reserve on issuing chain
+        signer_tx = SignerListSet(
+            account=door_account,
+            signer_quorum=max(1, len(signer_entries) - 1),
+            signer_entries=signer_entries,
+        )
+        submit_tx_external(signer_tx, client, door_seed, verbose)
+
+        disable_master_tx = AccountSet(
+            account=door_account, set_flag=AccountSetFlag.ASF_DISABLE_MASTER
+        )
+        submit_tx_external(disable_master_tx, client, door_seed, verbose)
+
+    _set_up_one_chain(
+        door_account=bootstrap_config["LockingChain"]["DoorAccount"]["Address"],
+        door_seed=bootstrap_config["LockingChain"]["DoorAccount"]["Seed"],
+        min_create=min_create2,
+        client=client1,
     )
-    submit_tx_external(create_tx1, client1, locking_door_seed, verbose)
 
-    signer_tx1 = SignerListSet(
-        account=locking_door_account,
-        signer_quorum=max(1, len(signer_entries) - 1),
-        signer_entries=signer_entries,
+    _set_up_one_chain(
+        door_account=bootstrap_config["IssuingChain"]["DoorAccount"]["Address"],
+        door_seed=bootstrap_config["IssuingChain"]["DoorAccount"]["Seed"],
+        min_create=min_create1,
+        client=client2,
     )
-    submit_tx_external(signer_tx1, client1, locking_door_seed, verbose)
-
-    # TODO: disable master key
-
-    issuing_door_account = bootstrap_config["IssuingChain"]["DoorAccount"]["Address"]
-    issuing_door_seed = bootstrap_config["IssuingChain"]["DoorAccount"]["Seed"]
-
-    create_tx2 = XChainCreateBridge(
-        account=issuing_door_account,
-        xchain_bridge=bridge_obj,
-        signature_reward=signature_reward,
-        min_account_create_amount=min_create1,  # account reserve on locking chain
-    )
-    issuing_door_seed = bootstrap_config["IssuingChain"]["DoorAccount"]["Seed"]
-    submit_tx_external(create_tx2, client2, issuing_door_seed, verbose)
-
-    signer_tx2 = SignerListSet(
-        account=issuing_door_account,
-        signer_quorum=max(1, len(signer_entries) - 1),
-        signer_entries=signer_entries,
-    )
-    submit_tx_external(signer_tx2, client2, issuing_door_seed, verbose)
-
-    # TODO: disable master key
 
     accounts_to_create = set(
         bootstrap_config["IssuingChain"]["WitnessRewardAccounts"]
