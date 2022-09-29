@@ -6,12 +6,18 @@ from typing import Tuple
 
 import click
 from xrpl.clients import JsonRpcClient
-from xrpl.models import ServerState, SignerEntry, SignerListSet, XChainCreateBridge
+from xrpl.models import (
+    ServerState,
+    SignerEntry,
+    SignerListSet,
+    XChainBridge,
+    XChainCreateBridge,
+)
 
-from sidechain_cli.utils import BridgeConfig, submit_tx_external
+from sidechain_cli.utils import submit_tx_external
 
 
-@click.command(name="create")
+@click.command(name="build")
 @click.option(
     "--chains",
     "chain_urls",
@@ -62,13 +68,11 @@ def create_bridge(
     with open(bootstrap) as f:
         bootstrap_config = json.load(f)
 
-    doors = (
-        bootstrap_config["LockingChain"]["DoorAccount"]["Address"],
-        bootstrap_config["IssuingChain"]["DoorAccount"]["Address"],
-    )
-    tokens = (
-        bootstrap_config["LockingChain"]["BridgeIssue"],
-        bootstrap_config["IssuingChain"]["BridgeIssue"],
+    bridge_obj = XChainBridge(
+        locking_chain_door=bootstrap_config["LockingChain"]["DoorAccount"]["Address"],
+        locking_chain_issue=bootstrap_config["LockingChain"]["BridgeIssue"],
+        issuing_chain_door=bootstrap_config["IssuingChain"]["DoorAccount"]["Address"],
+        issuing_chain_issue=bootstrap_config["IssuingChain"]["BridgeIssue"],
     )
 
     client1 = JsonRpcClient(chain_urls[0])
@@ -78,14 +82,6 @@ def create_bridge(
     server_state2 = client2.request(ServerState())
     min_create2 = server_state2.result["state"]["validated_ledger"]["reserve_base"]
 
-    bridge_dict = {
-        "door_accounts": doors,
-        "xchain_currencies": tokens,
-        "signature_reward": signature_reward,
-        "create_account_amounts": (str(min_create2), str(min_create1)),
-    }
-    bridge_config = BridgeConfig.from_dict(bridge_dict)
-
     signer_entries = []
     for witness_entry in bootstrap_config["Witnesses"]["SignerList"]:
         signer_entries.append(
@@ -94,15 +90,14 @@ def create_bridge(
             )
         )
 
-    bridge_obj = bridge_config.get_bridge()
     locking_door_account = bootstrap_config["LockingChain"]["DoorAccount"]["Address"]
     locking_door_seed = bootstrap_config["LockingChain"]["DoorAccount"]["Seed"]
 
     create_tx1 = XChainCreateBridge(
         account=locking_door_account,
         xchain_bridge=bridge_obj,
-        signature_reward=bridge_config.signature_reward,
-        min_account_create_amount=bridge_config.create_account_amounts[0],
+        signature_reward=signature_reward,
+        min_account_create_amount=min_create2,  # account reserve on issuing chain
     )
     submit_tx_external(create_tx1, client1, locking_door_seed, verbose)
 
@@ -121,8 +116,8 @@ def create_bridge(
     create_tx2 = XChainCreateBridge(
         account=issuing_door_account,
         xchain_bridge=bridge_obj,
-        signature_reward=bridge_config.signature_reward,
-        min_account_create_amount=bridge_config.create_account_amounts[1],
+        signature_reward=signature_reward,
+        min_account_create_amount=min_create1,  # account reserve on locking chain
     )
     issuing_door_seed = bootstrap_config["IssuingChain"]["DoorAccount"]["Seed"]
     submit_tx_external(create_tx2, client2, issuing_door_seed, verbose)
