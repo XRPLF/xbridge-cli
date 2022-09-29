@@ -4,6 +4,7 @@ import click
 
 from sidechain_cli.bridge.create_account import create_xchain_account
 from sidechain_cli.bridge.setup import setup_bridge
+from sidechain_cli.bridge.setup_prod import setup_production_bridge
 from sidechain_cli.bridge.transfer import send_transfer
 
 
@@ -16,5 +17,6 @@ def bridge() -> None:
 bridge.add_command(setup_bridge, name="build")
 bridge.add_command(create_xchain_account, name="create-account")
 bridge.add_command(send_transfer, name="transfer")
+bridge.add_command(setup_production_bridge, name="prod-build")
 
 __all__ = ["bridge"]

@@ -17,7 +17,7 @@ from xrpl.models import (
 from sidechain_cli.utils import submit_tx_external
 
 
-@click.command(name="build")
+@click.command(name="prod-build")
 @click.option(
     "--chains",
     "chain_urls",
@@ -45,7 +45,7 @@ from sidechain_cli.utils import submit_tx_external
     is_flag=True,
     help="Whether or not to print more verbose information.",
 )
-def create_bridge(
+def setup_production_bridge(
     chain_urls: Tuple[str, str],
     signature_reward: str,
     bootstrap: str,
@@ -78,9 +78,9 @@ def create_bridge(
     client1 = JsonRpcClient(chain_urls[0])
     client2 = JsonRpcClient(chain_urls[1])
     server_state1 = client1.request(ServerState())
-    min_create1 = server_state1.result["state"]["validated_ledger"]["reserve_base"]
+    min_create1 = str(server_state1.result["state"]["validated_ledger"]["reserve_base"])
     server_state2 = client2.request(ServerState())
-    min_create2 = server_state2.result["state"]["validated_ledger"]["reserve_base"]
+    min_create2 = str(server_state2.result["state"]["validated_ledger"]["reserve_base"])
 
     signer_entries = []
     for witness_entry in bootstrap_config["Witnesses"]["SignerList"]:
