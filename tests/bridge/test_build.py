@@ -44,8 +44,8 @@ class TestBridgeBuild:
         with open(os.path.join(config_dir, "bridge_bootstrap.json")) as f:
             bootstrap = json.load(f)
 
-        locking_door = bootstrap["locking_chain_door"]["id"]
-        issuing_door = bootstrap["issuing_chain_door"]["id"]
+        locking_door = bootstrap["LockingChain"]["DoorAccount"]["Address"]
+        issuing_door = bootstrap["IssuingChain"]["DoorAccount"]["Address"]
         fund_result = runner.invoke(
             main, ["fund", f"--account={locking_door}", "--chain=locking_chain"]
         )
@@ -71,7 +71,7 @@ class TestBridgeBuild:
         signer_list = [
             obj for obj in locking_objects if obj["LedgerEntryType"] == "SignerList"
         ][0]
-        assert len(signer_list["SignerEntries"]) == len(bridge_config.witnesses)
+        assert len(signer_list["SignerEntries"]) == bridge_config.num_witnesses
 
         issuing_objects_result = issuing_client.request(
             AccountObjects(account=issuing_door)
@@ -84,4 +84,4 @@ class TestBridgeBuild:
         signer_list = [
             obj for obj in issuing_objects if obj["LedgerEntryType"] == "SignerList"
         ][0]
-        assert len(signer_list["SignerEntries"]) == len(bridge_config.witnesses)
+        assert len(signer_list["SignerEntries"]) == bridge_config.num_witnesses

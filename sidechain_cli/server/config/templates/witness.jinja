@@ -14,11 +14,11 @@
   },
   "IssuingChain": {
     "Endpoint": {
-      {% if is_linux -%}
+      {% if is_linux %}
       "IP": "127.0.0.2",
-      {% else -%}
+      {% else %}
       "IP": "127.0.0.1",
-      {%- endif %}
+      {% endif %}
       "Port": {{ issuing_chain_port }}
     },
     "TxnSubmit": {
@@ -30,11 +30,11 @@
     "RewardAccount": "{{ issuing_reward_account }}"
   },
   "RPCEndpoint": {
-    {% if is_linux -%}
+    {% if is_linux %}
     "IP": "127.0.0.3",
-    {% else -%}
+    {% else %}
     "IP": "127.0.0.1",
-    {%- endif %}
+    {% endif %}
     "Port": {{ witness_port }}
   },
   "DBDir": "{{ db_dir }}",
