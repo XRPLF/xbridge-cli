@@ -2,7 +2,7 @@
 
 import json
 import os
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import click
 from xrpl.account import does_account_exist
@@ -56,7 +56,6 @@ def _sign_attestation(
     for key, prefix in _ATTESTATION_ENCODE_ORDER:
         value = attestation_dict[key]
         if key == "was_locking_chain_send":
-            print(str(value))
             encoded_obj += "0" + str(value)
         else:
             xrpl_attestation = transaction_json_to_binary_codec_form({key: value})
@@ -66,7 +65,6 @@ def _sign_attestation(
     signed_attestation = XChainCreateAccountAttestationBatchElement.from_dict(
         attestation_dict
     )
-    print(signed_attestation, signed_attestation.to_dict())
     return signed_attestation
 
 
@@ -148,8 +146,8 @@ def setup_production_bridge(
     if bridge_obj.issuing_chain_issue == "XRP" and funding_seed is None:
         raise click.ClickException("Must include `funding_seed` for XRP-XRP bridge.")
 
-    client1 = JsonRpcClient(chain_urls[0])
-    client2 = JsonRpcClient(chain_urls[1])
+    locking_client = JsonRpcClient(chain_urls[0])
+    issuing_client = JsonRpcClient(chain_urls[1])
 
     accounts_locking_check = set(
         [locking_door]
@@ -161,31 +159,35 @@ def setup_production_bridge(
         + bootstrap_config["IssuingChain"]["WitnessSubmitAccounts"]
     )
 
-    # check locking chain for accounts
+    # check locking chain for accounts that should already exist
     for account in accounts_locking_check:
-        if not does_account_exist(account, client1):
+        if not does_account_exist(account, locking_client):
             raise click.ClickException(
                 f"Account {account} does not exist on the locking chain."
             )
-    if not does_account_exist(issuing_door, client2):
+    # make sure issuing door account exists
+    if not does_account_exist(issuing_door, issuing_client):
         raise click.ClickException(
             f"Issuing chain door {issuing_door} does not exist on the locking chain."
         )
     if bridge_obj.issuing_chain_issue != "XRP":
         # if a bridge is an XRP bridge, then the accounts need to be created via the
         # bridge (the bridge that doesn't exist yet)
+        # so we only check if accounts already exist on the issuing chain for IOU
+        # bridges
         for account in accounts_issuing_check:
-            if not does_account_exist(account, client2):
+            if not does_account_exist(account, issuing_client):
                 raise click.ClickException(
                     f"Account {account} does not exist on the issuing chain."
                 )
 
     # get min create account amount values
-    server_state1 = client1.request(ServerState())
+    server_state1 = locking_client.request(ServerState())
     min_create1 = server_state1.result["state"]["validated_ledger"]["reserve_base"]
-    server_state2 = client2.request(ServerState())
+    server_state2 = issuing_client.request(ServerState())
     min_create2 = server_state2.result["state"]["validated_ledger"]["reserve_base"]
 
+    # set up signer entries for multisign on the door accounts
     signer_entries = []
     for witness_entry in bootstrap_config["Witnesses"]["SignerList"]:
         signer_entries.append(
@@ -200,39 +202,44 @@ def setup_production_bridge(
     ###################################################################################
     # set up locking chain
 
+    # create the bridge
     create_tx1 = XChainCreateBridge(
         account=locking_door,
         xchain_bridge=bridge_obj,
         signature_reward=signature_reward,
         min_account_create_amount=str(min_create2),
     )
-    submit_tx_external(create_tx1, client1, locking_door_seed, verbose)
+    submit_tx_external(create_tx1, locking_client, locking_door_seed, verbose)
 
+    # set up multisign on the door account
     signer_tx1 = SignerListSet(
         account=locking_door,
         signer_quorum=max(1, len(signer_entries) - 1),
         signer_entries=signer_entries,
     )
-    submit_tx_external(signer_tx1, client1, locking_door_seed, verbose)
+    submit_tx_external(signer_tx1, locking_client, locking_door_seed, verbose)
 
+    # disable the master key
     disable_master_tx1 = AccountSet(
         account=locking_door, set_flag=AccountSetFlag.ASF_DISABLE_MASTER
     )
-    submit_tx_external(disable_master_tx1, client1, locking_door_seed, verbose)
+    submit_tx_external(disable_master_tx1, locking_client, locking_door_seed, verbose)
 
     ###################################################################################
     # set up issuing chain
 
+    # create the bridge
     create_tx2 = XChainCreateBridge(
         account=issuing_door,
         xchain_bridge=bridge_obj,
         signature_reward=signature_reward,
         min_account_create_amount=str(min_create1),
     )
-    submit_tx_external(create_tx2, client2, issuing_door_seed, verbose)
+    submit_tx_external(create_tx2, issuing_client, issuing_door_seed, verbose)
 
     if bridge_obj.issuing_chain_issue == "XRP":
-        # we need to create the accounts via the bridge
+        # we need to create the witness reward + submission accounts via the bridge
+
         # set up a signer list with the issuing seed as the only account
         # TODO: remove when master keys and regular keys are supported
         new_wallet = Wallet.create()
@@ -243,13 +250,33 @@ def setup_production_bridge(
                 SignerEntry(account=new_wallet.classic_address, signer_weight=1)
             ],
         )
-        submit_tx_external(hacky_signer_tx, client2, issuing_door_seed, verbose)
+        submit_tx_external(hacky_signer_tx, issuing_client, issuing_door_seed, verbose)
+
+        # helper function for submittion the attestations
+        def _submit_attestations(
+            attestations: List[XChainCreateAccountAttestationBatchElement],
+        ) -> None:
+            attestation_tx = XChainAddAttestation(
+                account=issuing_door,
+                xchain_attestation_batch=XChainAttestationBatch(
+                    xchain_bridge=bridge_obj,
+                    xchain_claim_attestation_batch=[],
+                    xchain_create_account_attestation_batch=attestations,
+                ),
+            )
+            submit_tx_external(
+                attestation_tx, issuing_client, issuing_door_seed, verbose
+            )
+
         assert funding_seed is not None  # for typing purposes - checked earlier
         funding_wallet = Wallet(funding_seed, 0)
         amount = str(min_create2 * 2)  # submit accounts need spare funds
         attestations = []
         count = 1
+
+        # create the accounts
         for account in accounts_issuing_check:
+            # commit the funds for the account
             acct_tx = XChainAccountCreateCommit(
                 account=funding_wallet.classic_address,
                 xchain_bridge=bridge_obj,
@@ -257,7 +284,9 @@ def setup_production_bridge(
                 destination=account,
                 amount=amount,
             )
-            submit_tx_external(acct_tx, client1, funding_seed, verbose)
+            submit_tx_external(acct_tx, locking_client, funding_seed, verbose)
+
+            # set up the attestation for the commit
             init_attestation = XChainCreateAccountAttestationBatchElement(
                 account=funding_wallet.classic_address,
                 amount=amount,
@@ -275,36 +304,23 @@ def setup_production_bridge(
             attestations.append(signed_attestation)
             count += 1
 
+            # we can only have 8 attestations in an XChainAddAttestation tx
             if len(attestations) == 8:
-                attestation_tx = XChainAddAttestation(
-                    account=issuing_door,
-                    xchain_attestation_batch=XChainAttestationBatch(
-                        xchain_bridge=bridge_obj,
-                        xchain_claim_attestation_batch=[],
-                        xchain_create_account_attestation_batch=attestations,
-                    ),
-                )
-                submit_tx_external(attestation_tx, client2, issuing_door_seed, verbose)
+                _submit_attestations(attestations)
                 attestations = []
 
-        attestation_tx = XChainAddAttestation(
-            account=issuing_door,
-            xchain_attestation_batch=XChainAttestationBatch(
-                xchain_bridge=bridge_obj,
-                xchain_claim_attestation_batch=[],
-                xchain_create_account_attestation_batch=attestations,
-            ),
-        )
-        submit_tx_external(attestation_tx, client2, issuing_door_seed, verbose)
+        _submit_attestations(attestations)
 
+    # set up multisign on the door account
     signer_tx2 = SignerListSet(
         account=issuing_door,
         signer_quorum=max(1, len(signer_entries) - 1),
         signer_entries=signer_entries,
     )
-    submit_tx_external(signer_tx2, client2, issuing_door_seed, verbose)
+    submit_tx_external(signer_tx2, issuing_client, issuing_door_seed, verbose)
 
+    # disable the master key
     disable_master_tx2 = AccountSet(
         account=issuing_door, set_flag=AccountSetFlag.ASF_DISABLE_MASTER
     )
-    submit_tx_external(disable_master_tx2, client2, issuing_door_seed, verbose)
+    submit_tx_external(disable_master_tx2, issuing_client, issuing_door_seed, verbose)
