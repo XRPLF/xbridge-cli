@@ -2,11 +2,13 @@
 
 import json
 import os
-from typing import Optional, Tuple
+from typing import Any, Dict, Optional, Tuple
 
 import click
 from xrpl.account import does_account_exist
 from xrpl.clients import JsonRpcClient
+from xrpl.core.binarycodec import encode
+from xrpl.core.keypairs import sign
 from xrpl.models import (
     AccountSet,
     AccountSetFlag,
@@ -18,6 +20,7 @@ from xrpl.models import (
     XChainBridge,
     XChainCreateBridge,
 )
+from xrpl.models.transactions.transaction import transaction_json_to_binary_codec_form
 from xrpl.models.transactions.xchain_add_attestation import (
     XChainAttestationBatch,
     XChainCreateAccountAttestationBatchElement,
@@ -25,6 +28,46 @@ from xrpl.models.transactions.xchain_add_attestation import (
 from xrpl.wallet import Wallet
 
 from sidechain_cli.utils import submit_tx_external
+
+_ATTESTATION_ENCODE_ORDER = [
+    ("account", 4),
+    ("amount", 2),
+    ("signature_reward", 4),
+    ("attestation_reward_account", 6),
+    ("was_locking_chain_send", 0),
+    ("xchain_account_create_count", 4),
+    ("destination", 4),
+]
+
+
+def _sign_attestation(
+    attestation: XChainCreateAccountAttestationBatchElement,
+    bridge: XChainBridge,
+    private_key: str,
+) -> XChainCreateAccountAttestationBatchElement:
+    attestation_dict = attestation.to_dict()[
+        "xchain_create_account_attestation_batch_element"
+    ]
+    # TODO: use this instead once it's been implemented
+    # attestation_xrpl = transaction_json_to_binary_codec_form(attestation_dict)
+    # encoded_obj = encode(attestation_xrpl)
+    bridge_dict: Dict[str, Any] = {"xchain_bridge": bridge.to_dict()}
+    encoded_obj = encode(transaction_json_to_binary_codec_form(bridge_dict))[4:]
+    for key, prefix in _ATTESTATION_ENCODE_ORDER:
+        value = attestation_dict[key]
+        if key == "was_locking_chain_send":
+            print(str(value))
+            encoded_obj += "0" + str(value)
+        else:
+            xrpl_attestation = transaction_json_to_binary_codec_form({key: value})
+            encoded_obj += encode(xrpl_attestation)[prefix:]
+    signature = sign(bytes.fromhex(encoded_obj), private_key)
+    attestation_dict["signature"] = signature
+    signed_attestation = XChainCreateAccountAttestationBatchElement.from_dict(
+        attestation_dict
+    )
+    print(signed_attestation, signed_attestation.to_dict())
+    return signed_attestation
 
 
 @click.command(name="prod-build")
@@ -190,10 +233,22 @@ def setup_production_bridge(
 
     if bridge_obj.issuing_chain_issue == "XRP":
         # we need to create the accounts via the bridge
+        # set up a signer list with the issuing seed as the only account
+        # TODO: remove when master keys and regular keys are supported
+        new_wallet = Wallet.create()
+        hacky_signer_tx = SignerListSet(
+            account=issuing_door,
+            signer_quorum=1,
+            signer_entries=[
+                SignerEntry(account=new_wallet.classic_address, signer_weight=1)
+            ],
+        )
+        submit_tx_external(hacky_signer_tx, client2, issuing_door_seed, verbose)
         assert funding_seed is not None  # for typing purposes - checked earlier
         funding_wallet = Wallet(funding_seed, 0)
         amount = str(min_create2 * 2)  # submit accounts need spare funds
         attestations = []
+        count = 1
         for account in accounts_issuing_check:
             acct_tx = XChainAccountCreateCommit(
                 account=funding_wallet.classic_address,
@@ -203,26 +258,33 @@ def setup_production_bridge(
                 amount=amount,
             )
             submit_tx_external(acct_tx, client1, funding_seed, verbose)
-            attestation = XChainCreateAccountAttestationBatchElement(
-                account=issuing_door,
+            init_attestation = XChainCreateAccountAttestationBatchElement(
+                account=funding_wallet.classic_address,
                 amount=amount,
                 attestation_reward_account=issuing_door,
                 destination=account,
-                public_key=funding_wallet.public_key,
+                public_key=new_wallet.public_key,
                 signature="",
                 signature_reward=signature_reward,
                 was_locking_chain_send=1,
-                xchain_account_create_count="1",
+                xchain_account_create_count=str(count),
             )
-            attestations.append(attestation)
+            signed_attestation = _sign_attestation(
+                init_attestation, bridge_obj, new_wallet.private_key
+            )
+            attestations.append(signed_attestation)
+            count += 1
 
             if len(attestations) == 8:
                 attestation_tx = XChainAddAttestation(
+                    account=issuing_door,
                     xchain_attestation_batch=XChainAttestationBatch(
-                        xchain_create_account_attestation_batch=attestations
-                    )
+                        xchain_bridge=bridge_obj,
+                        xchain_claim_attestation_batch=[],
+                        xchain_create_account_attestation_batch=attestations,
+                    ),
                 )
-                submit_tx_external(attestation_tx, client1, issuing_door_seed, verbose)
+                submit_tx_external(attestation_tx, client2, issuing_door_seed, verbose)
                 attestations = []
 
         attestation_tx = XChainAddAttestation(
@@ -233,7 +295,7 @@ def setup_production_bridge(
                 xchain_create_account_attestation_batch=attestations,
             ),
         )
-        submit_tx_external(attestation_tx, client1, issuing_door_seed, verbose)
+        submit_tx_external(attestation_tx, client2, issuing_door_seed, verbose)
 
     signer_tx2 = SignerListSet(
         account=issuing_door,
