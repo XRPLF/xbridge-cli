@@ -66,9 +66,6 @@ class TestBridgeProdBuild:
             [
                 "bridge",
                 "prod-build",
-                "--chains",
-                locking_url,
-                issuing_url,
                 "--funding_seed",
                 "snoPBrXtMeMyMHUVTgbuqAfg1SUTb",
                 "--verbose",

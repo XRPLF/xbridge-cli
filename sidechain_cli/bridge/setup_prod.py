@@ -70,28 +70,17 @@ def _sign_attestation(
 
 @click.command(name="prod-build")
 @click.option(
-    "--chains",
-    "chain_urls",
-    required=True,
-    nargs=2,
-    type=str,
-    help=(
-        "The URLs of nodes on each of the two chains that the bridge goes between. "
-        "Must be the locking chain and then the issuing chain."
-    ),
-)
-@click.option(
-    "--signature_reward",
-    default="100",
-    help="The reward for witnesses providing a signature.",
-)
-@click.option(
     "--bootstrap",
     envvar="XCHAIN_CONFIG_DIR",
     required=True,
     prompt=True,
     type=click.Path(exists=True),
     help="The filepath to the bootstrap config file.",
+)
+@click.option(
+    "--signature_reward",
+    default="100",
+    help="The reward for witnesses providing a signature.",
 )
 @click.option(
     "--funding_seed",
@@ -107,9 +96,8 @@ def _sign_attestation(
     help="Whether or not to print more verbose information.",
 )
 def setup_production_bridge(
-    chain_urls: Tuple[str, str],
-    signature_reward: str,
     bootstrap: str,
+    signature_reward: str,
     funding_seed: Optional[str],
     verbose: int = 0,
 ) -> None:
@@ -118,10 +106,8 @@ def setup_production_bridge(
     \f
 
     Args:
-        chain_urls: The URLs of nodes on each of the two chains that the bridge goes
-            between.
-        signature_reward: The reward for witnesses providing a signature.
         bootstrap: The filepath to the bootstrap config file.
+        signature_reward: The reward for witnesses providing a signature.
         funding_seed: The master key of an account on the locking chain that can fund
             accounts on the issuing chain. This is only needed for an XRP-XRP bridge.
         verbose: Whether or not to print more verbose information.
@@ -149,8 +135,13 @@ def setup_production_bridge(
     if bridge_obj.issuing_chain_issue == "XRP" and funding_seed is None:
         raise click.ClickException("Must include `funding_seed` for XRP-XRP bridge.")
 
-    locking_client = JsonRpcClient(chain_urls[0])
-    issuing_client = JsonRpcClient(chain_urls[1])
+    locking_endpoint = bootstrap_config["LockingChain"]["Endpoint"]
+    locking_url = f"http://{locking_endpoint['IP']}:{locking_endpoint['JsonRPCPort']}"
+    locking_client = JsonRpcClient(locking_url)
+
+    issuing_endpoint = bootstrap_config["IssuingChain"]["Endpoint"]
+    issuing_url = f"http://{issuing_endpoint['IP']}:{issuing_endpoint['JsonRPCPort']}"
+    issuing_client = JsonRpcClient(issuing_url)
 
     accounts_locking_check = set(
         [locking_door]
