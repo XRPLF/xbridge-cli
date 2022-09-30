@@ -29,7 +29,7 @@ from xrpl.wallet import Wallet
 
 from sidechain_cli.utils import submit_tx_external
 
-_ATTESTATION_ENCODE_ORDER = [
+_ATTESTATION_ENCODE_ORDER: List[Tuple[str, int]] = [
     ("account", 4),
     ("amount", 2),
     ("signature_reward", 4),
@@ -75,7 +75,10 @@ def _sign_attestation(
     required=True,
     nargs=2,
     type=str,
-    help="The URLs of nodes on each of the two chains that the bridge goes between.",
+    help=(
+        "The URLs of nodes on each of the two chains that the bridge goes between. "
+        "Must be the locking chain and then the issuing chain."
+    ),
 )
 @click.option(
     "--signature_reward",
