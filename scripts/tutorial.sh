@@ -6,7 +6,7 @@ read -p "Pausing... (hit enter to continue)"
 jq .LockingChain.DoorAccount.Address $XCHAIN_CONFIG_DIR/bridge_bootstrap.json | tr -d '"' | xargs sidechain-cli fund --chain locking_chain --account
 jq '.LockingChain.WitnessSubmitAccounts[]' $XCHAIN_CONFIG_DIR/bridge_bootstrap.json | tr -d '"' | xargs -L1 sidechain-cli fund --chain locking_chain --account
 jq '.LockingChain.WitnessRewardAccounts[]' $XCHAIN_CONFIG_DIR/bridge_bootstrap.json | tr -d '"' | xargs -L1 sidechain-cli fund --chain locking_chain --account
-sidechain-cli bridge build --bridge bridge --bootstrap $XCHAIN_CONFIG_DIR/bridge_bootstrap.json --verbose
+sidechain-cli bridge build --name=bridge --chains locking_chain issuing_chain -v
 sidechain-cli fund --chain locking_chain --account raFcdz1g8LWJDJWJE2ZKLRGdmUmsTyxaym
 sidechain-cli fund --chain issuing_chain --account rJdTJRJZ6GXCCRaamHJgEqVzB7Zy4557Pi
 sidechain-cli fund --chain issuing_chain --account rGzx83BVoqTYbGn7tiVAnFw7cbxjin13jL
