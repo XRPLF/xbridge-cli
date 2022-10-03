@@ -1,4 +1,5 @@
 rm ~/.config/sidechain-cli/config.json  # TODO: remove once cleanup is better
+sidechain-cli server create-config all
 sidechain-cli server start-all --verbose
 sidechain-cli server list
 read -p "Pausing... (hit enter to continue)"
