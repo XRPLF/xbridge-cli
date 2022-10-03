@@ -90,12 +90,23 @@ def runner():
 
 @pytest.fixture(scope="class")
 def create_bridge(runner):
-    # create bridge
+    # fund locking door
+    config_dir = os.path.abspath(os.getenv("XCHAIN_CONFIG_DIR"))
+    with open(os.path.join(config_dir, "bridge_bootstrap.json")) as f:
+        bootstrap = json.load(f)
+
+    locking_door = bootstrap["LockingChain"]["DoorAccount"]["Address"]
+    fund_result = runner.invoke(
+        main, ["fund", f"--account={locking_door}", "--chain", "locking_chain", "-v"]
+    )
+    assert fund_result.exit_code == 0, fund_result.output
+
+    # build bridge
     create_result = runner.invoke(
         main,
         [
             "bridge",
-            "create",
+            "build",
             "--name=test_bridge",
             "--chains",
             "locking_chain",
@@ -114,18 +125,3 @@ def create_bridge(runner):
         ],
     )
     assert create_result.exit_code == 0, create_result.output
-
-    config_dir = os.path.abspath(os.getenv("XCHAIN_CONFIG_DIR"))
-    with open(os.path.join(config_dir, "bridge_bootstrap.json")) as f:
-        bootstrap = json.load(f)
-
-    locking_door = bootstrap["LockingChain"]["DoorAccount"]["Address"]
-    fund_result = runner.invoke(
-        main, ["fund", f"--account={locking_door}", "--chain", "locking_chain", "-v"]
-    )
-    assert fund_result.exit_code == 0, fund_result.output
-
-    build_result = runner.invoke(
-        main, ["bridge", "build", "--bridge=test_bridge", "--verbose"]
-    )
-    assert build_result.exit_code == 0, build_result.output
