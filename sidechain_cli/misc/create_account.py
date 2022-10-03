@@ -2,6 +2,7 @@
 
 import time
 from pprint import pformat
+from typing import Optional
 
 import click
 from xrpl.clients import JsonRpcClient
@@ -14,6 +15,7 @@ from xrpl.models import (
     Tx,
     XChainAccountCreateCommit,
 )
+from xrpl.utils import drops_to_xrp, xrp_to_drops
 from xrpl.wallet import Wallet
 
 from sidechain_cli.utils import get_config, submit_tx
@@ -69,13 +71,27 @@ def _submit_tx(
     help="The account to fund on the opposite chain.",
 )
 @click.option(
+    "--amount",
+    default=None,
+    type=int,
+    help=(
+        "The amount (in XRP) with which to fund the account. Must be greater than the "
+        "account reserve. Defaults to the account reserve."
+    ),
+)
+@click.option(
     "-v",
     "--verbose",
     help="Whether or not to print more verbose information. Also supports `-vv`.",
     count=True,
 )
 def create_xchain_account(
-    from_chain: str, bridge: str, from_seed: str, to_account: str, verbose: int = 0
+    from_chain: str,
+    bridge: str,
+    from_seed: str,
+    to_account: str,
+    amount: Optional[int],
+    verbose: int = 0,
 ) -> None:
     """
     Create an account on the opposite chain via a cross-chain transfer.
@@ -86,8 +102,13 @@ def create_xchain_account(
         bridge: The bridge across which to create the account.
         from_seed: The seed of the account that the funds come from.
         to_account: The chain to fund an account on.
+        amount: The amount with which to fund the account. Must be greater than the
+            account reserve. Defaults to the account reserve.
         verbose: Whether or not to print more verbose information. Add more v's for
             more verbosity.
+
+    Raises:
+        ClickException: Amount is less than the minimum account reserve.
     """  # noqa: D301
     bridge_config = get_config().get_bridge(bridge)
     from_chain_config = get_config().get_chain(from_chain)
@@ -95,13 +116,11 @@ def create_xchain_account(
     to_chain = [chain for chain in bridge_config.chains if chain != from_chain][0]
     to_chain_config = get_config().get_chain(to_chain)
     to_client = to_chain_config.get_client()
-    create_account_amount = bridge_config.create_account_amounts[
+    min_create_account_amount = bridge_config.create_account_amounts[
         bridge_config.chains.index(from_chain)
     ]
 
-    from_wallet = Wallet(from_seed, 0)
-
-    if create_account_amount is None:
+    if min_create_account_amount is None:
         click.secho(
             "Error: Cannot create a cross-chain account if the create account amount "
             "is not set.",
@@ -109,13 +128,26 @@ def create_xchain_account(
         )
         return
 
+    if amount is None:
+        create_amount = min_create_account_amount
+    else:
+        create_amount_xrp = drops_to_xrp(min_create_account_amount)
+        if amount < create_amount_xrp:
+            raise click.ClickException(
+                f"Amount must be greater than account reserve of {create_amount_xrp} "
+                "XRP."
+            )
+        create_amount = xrp_to_drops(amount)
+
+    from_wallet = Wallet(from_seed, 0)
+
     # submit XChainAccountCreate tx
     fund_tx = XChainAccountCreateCommit(
         account=from_wallet.classic_address,
         xchain_bridge=bridge_config.get_bridge(),
         signature_reward=bridge_config.signature_reward,
         destination=to_account,
-        amount=create_account_amount,
+        amount=create_amount,
     )
     submit_tx(fund_tx, from_client, from_wallet.seed, verbose)
 
@@ -146,7 +178,7 @@ def create_xchain_account(
                     # check that the attestation actually matches this transfer
                     if element["Account"] != from_wallet.classic_address:
                         continue
-                    if element["Amount"] != create_account_amount:
+                    if element["Amount"] != create_amount:
                         continue
                     if element["Destination"] != to_account:
                         continue

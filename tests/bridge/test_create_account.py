@@ -41,8 +41,10 @@ class TestCreateAccount:
                 "snqs2zzXuMA71w9isKHPTrvFn1HaJ",
                 "--to",
                 f"{account_to_create}",
+                "--verbose",
             ],
         )
+        print(runner_result.output)
         assert runner_result.exit_code == 0, runner_result.output
 
         final_balance_locking = get_balance(send_account, locking_client)

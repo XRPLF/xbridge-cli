@@ -96,13 +96,21 @@ def create_bridge(runner):
         bootstrap = json.load(f)
 
     locking_door = bootstrap["LockingChain"]["DoorAccount"]["Address"]
-    fund_result = runner.invoke(
-        main, ["fund", f"--account={locking_door}", "--chain", "locking_chain", "-v"]
+
+    # fund needed accounts on the locking chain
+    accounts_locking_fund = set(
+        [locking_door]
+        + bootstrap["LockingChain"]["WitnessRewardAccounts"]
+        + bootstrap["LockingChain"]["WitnessSubmitAccounts"]
     )
-    assert fund_result.exit_code == 0, fund_result.output
+    for account in accounts_locking_fund:
+        fund_result = runner.invoke(
+            main, ["fund", f"--account={account}", "--chain=locking_chain"]
+        )
+        assert fund_result.exit_code == 0, fund_result.output
 
     # build bridge
-    create_result = runner.invoke(
+    build_result = runner.invoke(
         main,
         [
             "bridge",
@@ -111,17 +119,7 @@ def create_bridge(runner):
             "--chains",
             "locking_chain",
             "issuing_chain",
-            "--witness",
-            "witness0",
-            "--witness",
-            "witness1",
-            "--witness",
-            "witness2",
-            "--witness",
-            "witness3",
-            "--witness",
-            "witness4",
             "--verbose",
         ],
     )
-    assert create_result.exit_code == 0, create_result.output
+    assert build_result.exit_code == 0, build_result.output
