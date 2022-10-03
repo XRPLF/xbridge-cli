@@ -3,13 +3,14 @@
 import json
 import os
 from pprint import pformat
-from typing import List, Tuple
+from typing import Any, Dict, List, Tuple, cast
 
 import click
 from xrpl.models import ServerState, SignerEntry, SignerListSet, XChainCreateBridge
 
 from sidechain_cli.misc.fund import fund_account
 from sidechain_cli.utils import (
+    BridgeConfig,
     BridgeData,
     add_bridge,
     check_bridge_exists,
@@ -20,7 +21,7 @@ from sidechain_cli.utils import (
 )
 
 
-@click.command(name="create")
+@click.command(name="build")
 @click.option(
     "--name",
     required=True,
@@ -43,6 +44,14 @@ from sidechain_cli.utils import (
     help="The witness servers that monitor the bridge.",
 )
 @click.option(
+    "--bootstrap",
+    envvar="XCHAIN_CONFIG_DIR",
+    required=True,
+    prompt=True,
+    type=click.Path(exists=True),
+    help="The filepath to the bootstrap config file.",
+)
+@click.option(
     "--signature_reward",
     default="100",
     help="The reward for witnesses providing a signature.",
@@ -50,26 +59,32 @@ from sidechain_cli.utils import (
 @click.option(
     "-v",
     "--verbose",
-    is_flag=True,
-    help="Whether or not to print more verbose information.",
+    help="Whether or not to print more verbose information. Also supports `-vv`.",
+    count=True,
 )
-def create_bridge(
+@click.pass_context
+def setup_bridge(
+    ctx: click.Context,
     name: str,
     chains: Tuple[str, str],
     witnesses: List[str],
+    bootstrap: str,
     signature_reward: str,
-    verbose: bool = True,
+    verbose: int = 0,
 ) -> None:
     """
     Keep track of a bridge between a locking chain and issuing chain.
     \f
 
     Args:
+        ctx: The click context.
         name: The name of the bridge (used for differentiation purposes).
         chains: The two chains that the bridge goes between.
         witnesses: The witness server(s) that monitor the bridge.
+        bootstrap: The filepath to the bootstrap config file.
         signature_reward: The reward for witnesses providing a signature.
-        verbose: Whether or not to print more verbose information.
+        verbose: Whether or not to print more verbose information. Add more v's for
+            more verbosity.
     """  # noqa: D301
     # check name
     if check_bridge_exists(name):
@@ -120,47 +135,14 @@ def create_bridge(
         click.echo(pformat(bridge_data))
     add_bridge(bridge_data)
 
-
-@click.command(name="build")
-@click.option(
-    "--bridge", required=True, prompt=True, type=str, help="The bridge to build."
-)
-@click.option(
-    "--bootstrap",
-    envvar="XCHAIN_CONFIG_DIR",
-    required=True,
-    prompt=True,
-    type=click.Path(exists=True),
-    help="The filepath to the bootstrap config file.",
-)
-@click.option(
-    "-v",
-    "--verbose",
-    help="Whether or not to print more verbose information. Also supports `-vv`.",
-    count=True,
-)
-@click.pass_context
-def setup_bridge(
-    ctx: click.Context, bridge: str, bootstrap: str, verbose: int = 0
-) -> None:
-    """
-    Set up a bridge between a locking chain and issuing chain.
-    \f
-
-    Args:
-        ctx: The click context.
-        bridge: The bridge to build.
-        bootstrap: The filepath to the bootstrap config file.
-        verbose: Whether or not to print more verbose information. Add more v's for
-            more verbosity.
-    """  # noqa: D301
     # get bootstrap if using env var
     if bootstrap == os.getenv("XCHAIN_CONFIG_DIR"):
         bootstrap = os.path.join(bootstrap, "bridge_bootstrap.json")
 
-    bridge_config = get_config().get_bridge(bridge)
     with open(bootstrap) as f:
         bootstrap_config = json.load(f)
+
+    bridge_config = BridgeConfig.from_dict(cast(Dict[str, Any], bridge_data))
 
     chain1 = get_config().get_chain(bridge_config.chains[0])
     client1 = chain1.get_client()
