@@ -33,6 +33,7 @@ class TestBridgeTransfer:
         fund_result2 = runner.invoke(
             main,
             [
+                "bridge",
                 "create-account",
                 "--chain",
                 "locking_chain",
