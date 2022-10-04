@@ -163,6 +163,8 @@ def start_server(name: str, exe: str, config: str, verbose: bool = False) -> Non
     type=click.Path(exists=True),
     help="The filepath to the witnessd executable.",
 )
+@click.option("--rippled-only", is_flag=True, help="Only start up the rippled servers.")
+@click.option("--witness-only", is_flag=True, help="Only start up the witness servers.")
 @click.option(
     "-v",
     "--verbose",
@@ -175,6 +177,8 @@ def start_all_servers(
     config_dir: str,
     rippled_exe: str,
     witnessd_exe: str,
+    rippled_only: bool = False,
+    witness_only: bool = False,
     verbose: bool = False,
 ) -> None:
     """
@@ -188,11 +192,18 @@ def start_all_servers(
         config_dir: The filepath to the config folder.
         rippled_exe: The filepath to the rippled executable.
         witnessd_exe: The filepath to the witnessd executable.
+        rippled_only: Only start up the rippled servers.
+        witness_only: Only start up the witness servers.
         verbose: Whether or not to print more verbose information.
     """  # noqa: D301
     if not os.path.isdir(config_dir):
         click.echo(f"Error: {config_dir} is not a directory.")
         return
+    if not rippled_only and not witness_only:
+        all_chains = True
+    else:
+        all_chains = False
+
     chains = []
     witnesses = []
     for name in os.listdir(config_dir):
@@ -208,14 +219,20 @@ def start_all_servers(
                 continue
 
     # TODO: simplify this logic once the witness can start up without the chains
-    for name, config in chains:
-        ctx.invoke(
-            start_server, name=name, exe=rippled_exe, config=config, verbose=verbose
-        )
-    for name, config in witnesses:
-        ctx.invoke(
-            start_server, name=name, exe=witnessd_exe, config=config, verbose=verbose
-        )
+    if rippled_only or all_chains:
+        for name, config in chains:
+            ctx.invoke(
+                start_server, name=name, exe=rippled_exe, config=config, verbose=verbose
+            )
+    if witness_only or all_chains:
+        for name, config in witnesses:
+            ctx.invoke(
+                start_server,
+                name=name,
+                exe=witnessd_exe,
+                config=config,
+                verbose=verbose,
+            )
 
 
 @click.command(name="stop")
