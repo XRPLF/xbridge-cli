@@ -40,6 +40,7 @@ class TestCreateAccount:
         runner_result = runner.invoke(
             main,
             [
+                "bridge",
                 "create-account",
                 "--chain",
                 "locking_chain",
