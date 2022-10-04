@@ -1,24 +1,27 @@
 import pytest
+from click.testing import CliRunner
 from xrpl.account import does_account_exist, get_balance
+from xrpl.wallet import Wallet
 
 from sidechain_cli.main import main
 from sidechain_cli.utils import get_config
 
 
-@pytest.mark.usefixtures("runner", "create_bridge")
+@pytest.mark.usefixtures("create_bridge")
 class TestCreateAccount:
-    def test_create_account(self, runner):
+    def test_create_account(self):
+        runner = CliRunner()
         bridge_config = get_config().get_bridge("test_bridge")
 
-        send_account = "raFcdz1g8LWJDJWJE2ZKLRGdmUmsTyxaym"
-        account_to_create = "rfTi2cbUVbt3xputSqyhgKc1nXFvi7cnvu"
+        send_wallet = Wallet.create()
+        wallet_to_create = Wallet.create()
 
         # initialize account
         fund_result1 = runner.invoke(
             main,
             [
                 "fund",
-                f"--account={send_account}",
+                f"--account={send_wallet.classic_address}",
                 "--chain=locking_chain",
             ],
         )
@@ -26,8 +29,13 @@ class TestCreateAccount:
 
         locking_client = get_config().get_chain("locking_chain").get_client()
         issuing_client = get_config().get_chain("issuing_chain").get_client()
-        initial_balance_locking = get_balance(send_account, locking_client)
-        assert does_account_exist(account_to_create, issuing_client) is False
+        initial_balance_locking = get_balance(
+            send_wallet.classic_address, locking_client
+        )
+        assert (
+            does_account_exist(wallet_to_create.classic_address, issuing_client)
+            is False
+        )
 
         runner_result = runner.invoke(
             main,
@@ -38,14 +46,15 @@ class TestCreateAccount:
                 "--bridge",
                 "test_bridge",
                 "--from",
-                "snqs2zzXuMA71w9isKHPTrvFn1HaJ",
+                send_wallet.seed,
                 "--to",
-                f"{account_to_create}",
+                wallet_to_create.classic_address,
+                "--verbose",
             ],
         )
         assert runner_result.exit_code == 0, runner_result.output
 
-        final_balance_locking = get_balance(send_account, locking_client)
+        final_balance_locking = get_balance(send_wallet.classic_address, locking_client)
         assert (
             final_balance_locking
             == initial_balance_locking
@@ -53,4 +62,6 @@ class TestCreateAccount:
             - int(bridge_config.signature_reward)
             - 10
         )
-        assert does_account_exist(account_to_create, issuing_client) is True
+        assert (
+            does_account_exist(wallet_to_create.classic_address, issuing_client) is True
+        )

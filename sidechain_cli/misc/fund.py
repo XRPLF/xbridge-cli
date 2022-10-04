@@ -41,7 +41,15 @@ def fund_account(chain: str, account: str, verbose: bool = False) -> None:
         chain: The chain to fund an account on.
         account: The chain to fund an account on.
         verbose: Whether or not to print more verbose information.
+
+    Raises:
+        ClickException: If the chain is the issuing chain.
     """  # noqa: D301
+    if chain == "issuing_chain":
+        raise click.ClickException(
+            "Cannot fund account on issuing chain. Must use `create-account`."
+        )
+
     chain_config = get_config().get_chain(chain)
     client = chain_config.get_client()
 
