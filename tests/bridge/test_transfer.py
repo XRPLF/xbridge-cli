@@ -1,4 +1,7 @@
+import time
+
 import pytest
+from click.testing import CliRunner
 from xrpl.account import get_balance
 from xrpl.utils import xrp_to_drops
 from xrpl.wallet import Wallet
@@ -7,9 +10,10 @@ from sidechain_cli.main import main
 from sidechain_cli.utils import get_config
 
 
-@pytest.mark.usefixtures("runner", "create_bridge")
+@pytest.mark.usefixtures("create_bridge")
 class TestBridgeTransfer:
-    def test_bridge_transfer(self, runner):
+    def test_bridge_transfer(self):
+        runner = CliRunner()
         bridge_config = get_config().get_bridge("test_bridge")
 
         send_wallet = Wallet.create()
@@ -40,9 +44,11 @@ class TestBridgeTransfer:
                 receive_wallet.classic_address,
                 "--amount",
                 "10",
+                "--verbose",
             ],
         )
         assert fund_result2.exit_code == 0, fund_result2.output
+        time.sleep(0.2)
 
         locking_client = get_config().get_chain("locking_chain").get_client()
         issuing_client = get_config().get_chain("issuing_chain").get_client()

@@ -1,13 +1,15 @@
 import pytest
+from click.testing import CliRunner
 from xrpl.account import does_account_exist, get_balance
 
 from sidechain_cli.main import main
 from sidechain_cli.utils import get_config
 
 
-@pytest.mark.usefixtures("runner", "create_bridge")
+@pytest.mark.usefixtures("create_bridge")
 class TestCreateAccount:
-    def test_create_account(self, runner):
+    def test_create_account(self):
+        runner = CliRunner()
         bridge_config = get_config().get_bridge("test_bridge")
 
         send_account = "raFcdz1g8LWJDJWJE2ZKLRGdmUmsTyxaym"
@@ -44,7 +46,6 @@ class TestCreateAccount:
                 "--verbose",
             ],
         )
-        print(runner_result.output)
         assert runner_result.exit_code == 0, runner_result.output
 
         final_balance_locking = get_balance(send_account, locking_client)

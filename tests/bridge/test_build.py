@@ -2,6 +2,7 @@ import json
 import os
 
 import pytest
+from click.testing import CliRunner
 from xrpl.models import AccountObjects
 
 from sidechain_cli.main import main
@@ -9,9 +10,10 @@ from sidechain_cli.utils import get_config
 from sidechain_cli.utils.config_file import _CONFIG_FILE
 
 
-@pytest.mark.usefixtures("runner")
+@pytest.mark.usefixtures("bridge_build_setup")
 class TestBridgeBuild:
-    def test_bridge_build(self, runner):
+    def test_bridge_build(self):
+        runner = CliRunner()
         config_dir = os.path.abspath(os.getenv("XCHAIN_CONFIG_DIR"))
         with open(os.path.join(config_dir, "bridge_bootstrap.json")) as f:
             bootstrap = json.load(f)
