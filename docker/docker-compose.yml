@@ -8,11 +8,7 @@ services:
     command: "--conf /etc/opt/ripple/rippled.cfg -a"
     volumes:
       - ${XCHAIN_CONFIG_DIR}/locking_chain:/etc/opt/ripple/
-    ports:
-      - "5005:5005"
-      - "6006:6006"
-      - "6005:6005"
-      - "51235:51235"
+    network_mode: "host"
     # networks:
     #  xchain-net:
     #    ipv4_address: 10.0.0.2
@@ -24,10 +20,10 @@ services:
     volumes:
       - ${XCHAIN_CONFIG_DIR}/issuing_chain:/etc/opt/ripple/
     ports:
-      - "5006:5006"
-      - "6007:6007"
-      - "6008:6008"
-      - "51236:51236"
+      - 5006:5006
+      - 6007:6007
+      - 6008:6008
+      - 51236:51236
     # networks:
     #  xchain-net:
     #    ipv4_address: 10.0.0.2
