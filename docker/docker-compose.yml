@@ -8,6 +8,11 @@ services:
     command: "--conf /etc/opt/ripple/rippled.cfg -a"
     volumes:
       - ${XCHAIN_CONFIG_DIR}/locking_chain:/etc/opt/ripple/
+    ports:
+      - "5005:5005"
+      - "6006:6006"
+      - "6005:6005"
+      - "51235:51235"
     # networks:
     #  xchain-net:
     #    ipv4_address: 10.0.0.2
@@ -17,7 +22,12 @@ services:
     image: legleux/rippled-xbridge
     command: "--conf /etc/opt/ripple/rippled.cfg -a"
     volumes:
-      - ../../sidechain-config/issuing_chain:/etc/opt/ripple/
+      - ${XCHAIN_CONFIG_DIR}/issuing_chain:/etc/opt/ripple/
+    ports:
+      - "5006:5006"
+      - "6007:6007"
+      - "6008:6008"
+      - "51236:51236"
     # networks:
     #  xchain-net:
     #    ipv4_address: 10.0.0.2
@@ -25,37 +35,48 @@ services:
   witness0:
     container_name: witness0
     image: legleux/xbridge_witnessd
-    command: "/opt/xbridge-witness/cfg/witness.json"
+    command: "/opt/witness/witness.json"
     volumes:
-      - ../../sidechain-config/witness0:/opt/xbridge-witness/cfg/
+      - ${XCHAIN_CONFIG_DIR}/witness0:/opt/witness/
+    ports:
+      - "6010:6010"
 
   witness1:
     container_name: witness1
     image: legleux/xbridge_witnessd
-    command: "/opt/xbridge-witness/cfg/witness.json"
+    command: "/opt/witness/witness.json"
     volumes:
-      - ../../sidechain-config/witness1:/opt/xbridge-witness/cfg/
+      - ${XCHAIN_CONFIG_DIR}/witness1:/opt/witness/
+    ports:
+      - "6011:6011"
+
 
   witness2:
     container_name: witness2
     image: legleux/xbridge_witnessd
-    command: "/opt/xbridge-witness/cfg/witness.json"
+    command: "/opt/witness/witness.json"
     volumes:
-      - ../../sidechain-config/witness2:/opt/xbridge-witness/cfg/
+      - ${XCHAIN_CONFIG_DIR}/witness2:/opt/witness/
+    ports:
+      - "6012:6012"
 
   witness3:
     container_name: witness3
     image: legleux/xbridge_witnessd
-    command: "/opt/xbridge-witness/cfg/witness.json"
+    command: "/opt/witness/witness.json"
     volumes:
-      - ../../sidechain-config/witness3:/opt/xbridge-witness/cfg/
+      - ${XCHAIN_CONFIG_DIR}/witness3:/opt/witness/
+    ports:
+      - "6013:6013"
 
   witness4:
     container_name: witness4
     image: legleux/xbridge_witnessd
-    command: "/opt/xbridge-witness/cfg/witness.json"
+    command: "/opt/witness/witness.json"
     volumes:
-      - ../../sidechain-config/witness4:/opt/xbridge-witness/cfg/
+      - ${XCHAIN_CONFIG_DIR}/witness4:/opt/witness/
+    ports:
+      - "6014:6014"
 #     networks:
 #      xchain-net:
 #        ipv4_address: 10.0.0.3
