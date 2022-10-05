@@ -1,0 +1,70 @@
+
+version: "3.9"
+services:
+
+  locking_chain:
+    container_name: locking_chain
+    image: legleux/rippled-xbridge
+    command: "--conf /etc/opt/ripple/rippled.cfg -a"
+    volumes:
+      - ${XCHAIN_CONFIG_DIR}/locking_chain:/etc/opt/ripple/
+    # networks:
+    #  xchain-net:
+    #    ipv4_address: 10.0.0.2
+
+  issuing_chain:
+    container_name: issuing_chain
+    image: legleux/rippled-xbridge
+    command: "--conf /etc/opt/ripple/rippled.cfg -a"
+    volumes:
+      - ../../sidechain-config/issuing_chain:/etc/opt/ripple/
+    # networks:
+    #  xchain-net:
+    #    ipv4_address: 10.0.0.2
+
+  witness0:
+    container_name: witness0
+    image: legleux/xbridge_witnessd
+    command: "/opt/xbridge-witness/cfg/witness.json"
+    volumes:
+      - ../../sidechain-config/witness0:/opt/xbridge-witness/cfg/
+
+  witness1:
+    container_name: witness1
+    image: legleux/xbridge_witnessd
+    command: "/opt/xbridge-witness/cfg/witness.json"
+    volumes:
+      - ../../sidechain-config/witness1:/opt/xbridge-witness/cfg/
+
+  witness2:
+    container_name: witness2
+    image: legleux/xbridge_witnessd
+    command: "/opt/xbridge-witness/cfg/witness.json"
+    volumes:
+      - ../../sidechain-config/witness2:/opt/xbridge-witness/cfg/
+
+  witness3:
+    container_name: witness3
+    image: legleux/xbridge_witnessd
+    command: "/opt/xbridge-witness/cfg/witness.json"
+    volumes:
+      - ../../sidechain-config/witness3:/opt/xbridge-witness/cfg/
+
+  witness4:
+    container_name: witness4
+    image: legleux/xbridge_witnessd
+    command: "/opt/xbridge-witness/cfg/witness.json"
+    volumes:
+      - ../../sidechain-config/witness4:/opt/xbridge-witness/cfg/
+#     networks:
+#      xchain-net:
+#        ipv4_address: 10.0.0.3
+
+# networks:
+#   xchain-net:
+#     name: xchain-net
+#     driver: bridge
+#     ipam:
+#      config:
+#        - subnet: 10.0.0.0/16
+#          gateway: 10.0.0.1
