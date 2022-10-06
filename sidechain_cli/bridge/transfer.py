@@ -16,6 +16,7 @@ from xrpl.models import (
 )
 from xrpl.wallet import Wallet
 
+from sidechain_cli.exceptions import AttestationTimeoutException, SidechainCLIException
 from sidechain_cli.utils import get_config, submit_tx
 
 _ATTESTATION_TIME_LIMIT = 10  # in seconds
@@ -28,9 +29,11 @@ def _submit_tx(
     result = submit_tx(tx, client, secret, verbose)
     tx_result = result.result.get("error") or result.result.get("engine_result")
     if tx_result != "tesSUCCESS":
-        raise Exception(
-            result.result.get("error_message")
-            or result.result.get("engine_result_message")
+        raise SidechainCLIException(
+            str(
+                result.result.get("error_message")
+                or result.result.get("engine_result_message")
+            )
         )
     tx_hash = result.result["tx_json"]["hash"]
     return client.request(Tx(transaction=tx_hash))
@@ -104,24 +107,24 @@ def send_transfer(
         tutorial: Whether to slow down and explain each step.
 
     Raises:
-        Exception: If there is an error with a transaction somewhere along the way.
+        SidechainCLIException: If there is an error with a transaction somewhere along
+            the way.
+        AttestationTimeoutException: If there is a timeout when waiting for
+            attestations.
     """  # noqa: D301
     print_level = max(verbose, 2 if tutorial else 0)
     bridge_config = get_config().get_bridge(bridge)
     if src_chain not in bridge_config.chains:
-        click.secho(f"Error: {src_chain} not one of the chains in {bridge}.", fg="red")
-        return
+        raise SidechainCLIException(f"{src_chain} not one of the chains in {bridge}.")
 
     try:
         from_wallet = Wallet(from_account, 0)
     except ValueError:
-        click.secho(f"Invalid `from` seed: {from_account}", fg="red")
-        return
+        raise SidechainCLIException(f"Invalid `from` seed: {from_account}")
     try:
         to_wallet = Wallet(to_account, 0)
     except ValueError:
-        click.secho(f"Invalid `to` seed: {to_account}", fg="red")
-        return
+        raise SidechainCLIException(f"Invalid `to` seed: {to_account}")
 
     dst_chain = [chain for chain in bridge_config.chains if chain != src_chain][0]
     src_chain_config = get_config().get_chain(src_chain)
@@ -236,5 +239,4 @@ def send_transfer(
             break
 
         if time_count > _ATTESTATION_TIME_LIMIT:
-            click.secho("Error: Timeout on attestations.", fg="red")
-            return
+            raise AttestationTimeoutException()
