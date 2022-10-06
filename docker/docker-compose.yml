@@ -1,4 +1,3 @@
-
 version: "3.9"
 services:
 
@@ -14,8 +13,8 @@ services:
       - 6006:6006
       - 51235:51235
     networks:
-     xchain-net:
-       ipv4_address: 10.0.0.2
+     bridge-net:
+       ipv4_address: 10.0.2.2
 
   issuing_chain:
     container_name: issuing_chain
@@ -29,8 +28,8 @@ services:
       - 6008:6008
       - 51236:51236
     networks:
-      xchain-net:
-        ipv4_address: 10.0.0.3
+      bridge-net:
+        ipv4_address: 10.0.2.3
 
   witness0:
     container_name: witness0
@@ -41,8 +40,8 @@ services:
     ports:
       - "6010:6010"
     networks:
-      xchain-net:
-        ipv4_address: 10.0.0.4
+      bridge-net:
+        ipv4_address: 10.0.2.4
 
   witness1:
     container_name: witness1
@@ -53,8 +52,8 @@ services:
     ports:
       - "6011:6011"
     networks:
-      xchain-net:
-        ipv4_address: 10.0.0.5
+      bridge-net:
+        ipv4_address: 10.0.2.5
 
   witness2:
     container_name: witness2
@@ -65,8 +64,8 @@ services:
     ports:
       - "6012:6012"
     networks:
-      xchain-net:
-        ipv4_address: 10.0.0.6
+      bridge-net:
+        ipv4_address: 10.0.2.6
 
   witness3:
     container_name: witness3
@@ -77,8 +76,8 @@ services:
     ports:
       - "6013:6013"
     networks:
-      xchain-net:
-        ipv4_address: 10.0.0.7
+      bridge-net:
+        ipv4_address: 10.0.2.7
 
   witness4:
     container_name: witness4
@@ -89,14 +88,14 @@ services:
     ports:
       - "6014:6014"
     networks:
-      xchain-net:
-        ipv4_address: 10.0.0.8
+      bridge-net:
+        ipv4_address: 10.0.2.8
 
 networks:
-  xchain-net:
-    name: xchain-net
+  bridge-net:
+    name: bridge-net
     driver: bridge
     ipam:
      config:
-       - subnet: 10.0.0.0/16
-         gateway: 10.0.0.1
+       - subnet: 10.0.2.0/16
+         gateway: 10.0.2.1

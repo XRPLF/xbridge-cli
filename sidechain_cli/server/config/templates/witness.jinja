@@ -1,7 +1,11 @@
 {
   "LockingChain": {
     "Endpoint": {
+      {% if is_docker %}
+      "IP": "10.0.2.2",
+      {% else %}
       "IP": "127.0.0.1",
+      {% endif %}
       "Port": {{ locking_chain_port }}
     },
     "TxnSubmit": {
@@ -14,7 +18,9 @@
   },
   "IssuingChain": {
     "Endpoint": {
-      {% if is_linux %}
+      {% if is_docker %}
+      "IP": "10.0.2.3",
+      {% elif is_linux %}
       "IP": "127.0.0.2",
       {% else %}
       "IP": "127.0.0.1",
@@ -30,7 +36,7 @@
     "RewardAccount": "{{ issuing_reward_account }}"
   },
   "RPCEndpoint": {
-    {% if is_linux %}
+    {% if is_linux and not is_docker %}
     "IP": "127.0.0.3",
     {% else %}
     "IP": "127.0.0.1",

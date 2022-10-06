@@ -241,6 +241,7 @@ def generate_witness_config(
         "dst_door": dst_door,
         "dst_issue": "XRP",
         "is_linux": platform == "linux" or platform == "linux2",
+        "is_docker": docker,
     }
     # add the witness.json file
     _generate_template(
