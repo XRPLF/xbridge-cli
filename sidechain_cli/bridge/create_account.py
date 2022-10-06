@@ -18,6 +18,7 @@ from xrpl.models import (
 from xrpl.utils import drops_to_xrp, xrp_to_drops
 from xrpl.wallet import Wallet
 
+from sidechain_cli.exceptions import AttestationTimeoutException, SidechainCLIException
 from sidechain_cli.utils import get_config, submit_tx
 
 _ATTESTATION_TIME_LIMIT = 10  # in seconds
@@ -108,7 +109,10 @@ def create_xchain_account(
             more verbosity.
 
     Raises:
-        ClickException: Amount is less than the minimum account reserve.
+        SidechainCLIException: Min create account isn't set or amount is less than the
+            minimum account reserve, or timeout on attestations.
+        AttestationTimeoutException: If there is a timeout when waiting for
+            attestations.
     """  # noqa: D301
     bridge_config = get_config().get_bridge(bridge)
     from_chain_config = get_config().get_chain(from_chain)
@@ -121,19 +125,17 @@ def create_xchain_account(
     ]
 
     if min_create_account_amount is None:
-        click.secho(
-            "Error: Cannot create a cross-chain account if the create account amount "
-            "is not set.",
-            fg="red",
+        raise SidechainCLIException(
+            "Cannot create a cross-chain account if the create account amount "
+            "is not set."
         )
-        return
 
     if amount is None:
         create_amount = min_create_account_amount
     else:
         create_amount_xrp = drops_to_xrp(min_create_account_amount)
         if amount < create_amount_xrp:
-            raise click.ClickException(
+            raise SidechainCLIException(
                 f"Amount must be greater than account reserve of {create_amount_xrp} "
                 "XRP."
             )
@@ -202,8 +204,7 @@ def create_xchain_account(
             break
 
         if time_count > _ATTESTATION_TIME_LIMIT:
-            click.secho("Error: Timeout on attestations.", fg="red")
-            return
+            raise AttestationTimeoutException()
 
     if verbose > 0:
         click.echo(pformat(to_client.request(AccountInfo(account=to_account)).result))
