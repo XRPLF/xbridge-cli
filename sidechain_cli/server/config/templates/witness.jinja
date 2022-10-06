@@ -2,7 +2,7 @@
   "LockingChain": {
     "Endpoint": {
       {% if is_docker %}
-      "IP": "10.0.2.2",
+      "IP": "192.168.176.2",
       {% else %}
       "IP": "127.0.0.1",
       {% endif %}
@@ -19,7 +19,7 @@
   "IssuingChain": {
     "Endpoint": {
       {% if is_docker %}
-      "IP": "10.0.2.3",
+      "IP": "192.168.176.3",
       {% elif is_linux %}
       "IP": "127.0.0.2",
       {% else %}

@@ -14,7 +14,7 @@ services:
       - 51235:51235
     networks:
      bridge-net:
-       ipv4_address: 10.0.2.2
+       ipv4_address: 192.168.176.2
 
   issuing_chain:
     container_name: issuing_chain
@@ -29,7 +29,7 @@ services:
       - 51236:51236
     networks:
       bridge-net:
-        ipv4_address: 10.0.2.3
+        ipv4_address: 192.168.176.3
 
   witness0:
     container_name: witness0
@@ -41,7 +41,7 @@ services:
       - "6010:6010"
     networks:
       bridge-net:
-        ipv4_address: 10.0.2.4
+        ipv4_address: 192.168.176.4
 
   witness1:
     container_name: witness1
@@ -53,7 +53,7 @@ services:
       - "6011:6011"
     networks:
       bridge-net:
-        ipv4_address: 10.0.2.5
+        ipv4_address: 192.168.176.5
 
   witness2:
     container_name: witness2
@@ -65,7 +65,7 @@ services:
       - "6012:6012"
     networks:
       bridge-net:
-        ipv4_address: 10.0.2.6
+        ipv4_address: 192.168.176.6
 
   witness3:
     container_name: witness3
@@ -77,7 +77,7 @@ services:
       - "6013:6013"
     networks:
       bridge-net:
-        ipv4_address: 10.0.2.7
+        ipv4_address: 192.168.176.7
 
   witness4:
     container_name: witness4
@@ -89,13 +89,13 @@ services:
       - "6014:6014"
     networks:
       bridge-net:
-        ipv4_address: 10.0.2.8
+        ipv4_address: 192.168.176.8
 
 networks:
   bridge-net:
     name: bridge-net
     driver: bridge
     ipam:
-     config:
-       - subnet: 10.0.2.0/16
-         gateway: 10.0.2.1
+      config:
+        - subnet: 192.168.176.0/20
+          gateway: 192.168.176.1
