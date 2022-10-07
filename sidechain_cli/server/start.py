@@ -244,8 +244,8 @@ def start_all_servers(
     type=click.Path(exists=True),
     help="The folder in which config files are storeds.",
 )
-# @click.option("--rippled-only", is_flag=True, help="Only start up the rippled servers.")
-# @click.option("--witness-only", is_flag=True, help="Only start up the witness servers.")
+@click.option("--rippled-only", is_flag=True, help="Only start up the rippled servers.")
+@click.option("--witness-only", is_flag=True, help="Only start up the witness servers.")
 @click.option(
     "-v",
     "--verbose",
@@ -256,8 +256,8 @@ def start_all_servers(
 def start_docker(
     ctx: click.Context,
     config_dir: str,
-    # rippled_only: bool = False,
-    # witness_only: bool = False,
+    rippled_only: bool = False,
+    witness_only: bool = False,
     verbose: bool = False,
 ) -> None:
     """
@@ -269,6 +269,8 @@ def start_docker(
     Args:
         ctx: The click context.
         config_dir: The filepath to the config folder.
+        rippled_only: Only start up the rippled servers.
+        witness_only: Only start up the witness servers.
         verbose: Whether or not to print more verbose information.
     """  # noqa: D301
     if not os.path.isdir(config_dir):
@@ -293,9 +295,17 @@ def start_docker(
         "docker",
         "compose",
         "-f",
-        os.path.join(os.getcwd(), "docker", "docker-compose.yml"),
+        os.path.join(
+            os.path.realpath(__file__), "..", "..", "..", "docker", "docker-compose.yml"
+        ),
         "up",
     ]
+    if rippled_only:
+        for name, _ in chains:
+            to_run.append(name)
+    elif witness_only:
+        for name, _ in witnesses:
+            to_run.append(name)
 
     # create output file for easier debug purposes
     output_file = f"{get_config_folder()}/docker.out"
@@ -318,35 +328,37 @@ def start_docker(
             click.echo(f.read())
         return
 
-    for name, config in chains:
-        config_object = RippledConfig(file_name=config)
-        chain_data: ChainData = {
-            "name": name,
-            "type": "rippled",
-            "rippled": "docker",
-            "config": config,
-            "pid": pid,
-            "ws_ip": config_object.port_ws_admin_local.ip,
-            "ws_port": int(config_object.port_ws_admin_local.port),
-            "http_ip": config_object.port_rpc_admin_local.ip,
-            "http_port": int(config_object.port_rpc_admin_local.port),
-        }
-        # add chain to config file
-        add_chain(chain_data)
-    for name, config in witnesses:
-        with open(config) as f:
-            config_json = json.load(f)
-        witness_data: WitnessData = {
-            "name": name,
-            "type": "witness",
-            "witnessd": "docker",
-            "config": config,
-            "pid": pid,
-            "ip": config_json["RPCEndpoint"]["IP"],
-            "rpc_port": config_json["RPCEndpoint"]["Port"],
-        }
-        # add witness to config file
-        add_witness(witness_data)
+    if not witness_only:
+        for name, config in chains:
+            config_object = RippledConfig(file_name=config)
+            chain_data: ChainData = {
+                "name": name,
+                "type": "rippled",
+                "rippled": "docker",
+                "config": config,
+                "pid": pid,
+                "ws_ip": config_object.port_ws_admin_local.ip,
+                "ws_port": int(config_object.port_ws_admin_local.port),
+                "http_ip": config_object.port_rpc_admin_local.ip,
+                "http_port": int(config_object.port_rpc_admin_local.port),
+            }
+            # add chain to config file
+            add_chain(chain_data)
+    if not rippled_only:
+        for name, config in witnesses:
+            with open(config) as f:
+                config_json = json.load(f)
+            witness_data: WitnessData = {
+                "name": name,
+                "type": "witness",
+                "witnessd": "docker",
+                "config": config,
+                "pid": pid,
+                "ip": config_json["RPCEndpoint"]["IP"],
+                "rpc_port": config_json["RPCEndpoint"]["Port"],
+            }
+            # add witness to config file
+            add_witness(witness_data)
 
 
 @click.command(name="stop")
