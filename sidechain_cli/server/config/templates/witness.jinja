@@ -36,7 +36,9 @@
     "RewardAccount": "{{ issuing_reward_account }}"
   },
   "RPCEndpoint": {
-    {% if is_linux and not is_docker %}
+    {% if is_docker %}
+    "IP": "0.0.0.0",
+    {% elif is_linux %}
     "IP": "127.0.0.3",
     {% else %}
     "IP": "127.0.0.1",
