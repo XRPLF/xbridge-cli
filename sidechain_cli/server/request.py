@@ -33,14 +33,25 @@ def request_server(
         args: The arguments for the RPC command.
         verbose: Whether or not to print more verbose information.
     """  # noqa: D301
+    arg_string = " ".join([command, *args])
     if verbose:
-        arg_string = " ".join(args)
-        click.echo(f"{name}: {command} {arg_string}")
+        click.echo(f"{name}: {arg_string}")
     config = get_config()
     server = config.get_server(name)
 
     if isinstance(server, ChainConfig):  # is a rippled node
-        to_run = [server.rippled, "--conf", server.config, command, *args]
+        if server.rippled == "docker":
+            to_run = [
+                "docker",
+                "exec",
+                "-it",
+                name,
+                "bash",
+                "-c",
+                f'""/opt/rippled/bin/rippled {arg_string}""',
+            ]
+        else:
+            to_run = [server.rippled, "--conf", server.config, command, *args]
         click.echo(subprocess.check_output(to_run))
     else:  # is a witness node
         click.echo("Cannot query witness nodes from the command line right now.")
