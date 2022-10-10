@@ -20,7 +20,7 @@ from xrpl.wallet import Wallet
 
 from sidechain_cli.utils import get_config, submit_tx
 
-_ATTESTATION_TIME_LIMIT = 4  # in seconds
+_ATTESTATION_TIME_LIMIT = 10  # in seconds
 _WAIT_STEP_LENGTH = 0.05
 
 
