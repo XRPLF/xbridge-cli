@@ -364,20 +364,61 @@ def stop_server(
             # TODO: stop the server with a CLI command
             # to_run = [server.rippled, "--conf", server.config, "stop"]
             # subprocess.call(to_run, stdout=fout, stderr=subprocess.STDOUT)
-            pid = server.pid
-            try:
-                os.kill(pid, signal.SIGINT)
-            except ProcessLookupError:
-                pass  # process already died somehow
+            if server.rippled == "docker":
+                to_run = [
+                    "docker",
+                    "compose",
+                    "-f",
+                    os.path.join(
+                        os.path.realpath(__file__),
+                        "..",
+                        "..",
+                        "..",
+                        "docker",
+                        "docker-compose.yml",
+                    ),
+                    "stop",
+                    server.name,
+                ]
+                subprocess.run(
+                    to_run, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+                )
+            else:
+                pid = server.pid
+                try:
+                    os.kill(pid, signal.SIGINT)
+                except ProcessLookupError:
+                    pass  # process already died somehow
         else:
             # TODO: stop the server with a CLI command
             # to_run = [server.witnessd, "--config", server.config, "stop"]
             # subprocess.call(to_run, stdout=fout, stderr=subprocess.STDOUT)
-            pid = server.pid
-            try:
-                os.kill(pid, signal.SIGINT)
-            except ProcessLookupError:
-                pass  # process already died somehow
+            server = cast(WitnessConfig, server)
+            if server.witnessd == "docker":
+                to_run = [
+                    "docker",
+                    "compose",
+                    "-f",
+                    os.path.join(
+                        os.path.realpath(__file__),
+                        "..",
+                        "..",
+                        "..",
+                        "docker",
+                        "docker-compose.yml",
+                    ),
+                    "stop",
+                    server.name,
+                ]
+                subprocess.run(
+                    to_run, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+                )
+            else:
+                pid = server.pid
+                try:
+                    os.kill(pid, signal.SIGINT)
+                except ProcessLookupError:
+                    pass  # process already died somehow
         if verbose:
             click.echo(f"Stopped {server.name}")
 
