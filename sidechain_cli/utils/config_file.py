@@ -71,6 +71,7 @@ class ServerConfig(ConfigItem):
     type: Union[Literal["rippled"], Literal["witness"]]
     pid: int
     exe: str
+    config: str
 
     def is_docker(self: ServerConfig) -> bool:
         """
@@ -86,7 +87,6 @@ class ServerConfig(ConfigItem):
 class ChainConfig(ServerConfig):
     """Object representing the config for a chain."""
 
-    config: str
     ws_ip: str
     ws_port: int
     http_ip: str
@@ -125,7 +125,6 @@ class ChainConfig(ServerConfig):
 class WitnessConfig(ServerConfig):
     """Object representing the config for a witness."""
 
-    config: str
     ip: str
     rpc_port: int
 

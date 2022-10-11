@@ -14,7 +14,6 @@ from sidechain_cli.utils import (
     ChainData,
     RippledConfig,
     ServerConfig,
-    WitnessConfig,
     WitnessData,
     add_chain,
     add_witness,
@@ -360,65 +359,41 @@ def stop_server(
 
     # fout = open(os.devnull, "w")
     for server in servers:
-        if isinstance(server, ChainConfig):
-            # TODO: stop the server with a CLI command
+        if server.is_docker():
+            to_run = [
+                "docker",
+                "compose",
+                "-f",
+                os.path.join(
+                    os.path.realpath(__file__),
+                    "..",
+                    "..",
+                    "..",
+                    "docker",
+                    "docker-compose.yml",
+                ),
+                "stop",
+                server.name,
+            ]
+            subprocess.run(to_run, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        elif isinstance(server, ChainConfig):
+            # TODO: stop the rippled server with a CLI command
             # to_run = [server.rippled, "--conf", server.config, "stop"]
             # subprocess.call(to_run, stdout=fout, stderr=subprocess.STDOUT)
-            if server.rippled == "docker":
-                to_run = [
-                    "docker",
-                    "compose",
-                    "-f",
-                    os.path.join(
-                        os.path.realpath(__file__),
-                        "..",
-                        "..",
-                        "..",
-                        "docker",
-                        "docker-compose.yml",
-                    ),
-                    "stop",
-                    server.name,
-                ]
-                subprocess.run(
-                    to_run, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
-                )
-            else:
-                pid = server.pid
-                try:
-                    os.kill(pid, signal.SIGINT)
-                except ProcessLookupError:
-                    pass  # process already died somehow
+            pid = server.pid
+            try:
+                os.kill(pid, signal.SIGINT)
+            except ProcessLookupError:
+                pass  # process already died somehow
         else:
-            # TODO: stop the server with a CLI command
+            # TODO: stop the witnessd server with a CLI command
             # to_run = [server.witnessd, "--config", server.config, "stop"]
             # subprocess.call(to_run, stdout=fout, stderr=subprocess.STDOUT)
-            server = cast(WitnessConfig, server)
-            if server.witnessd == "docker":
-                to_run = [
-                    "docker",
-                    "compose",
-                    "-f",
-                    os.path.join(
-                        os.path.realpath(__file__),
-                        "..",
-                        "..",
-                        "..",
-                        "docker",
-                        "docker-compose.yml",
-                    ),
-                    "stop",
-                    server.name,
-                ]
-                subprocess.run(
-                    to_run, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
-                )
-            else:
-                pid = server.pid
-                try:
-                    os.kill(pid, signal.SIGINT)
-                except ProcessLookupError:
-                    pass  # process already died somehow
+            pid = server.pid
+            try:
+                os.kill(pid, signal.SIGINT)
+            except ProcessLookupError:
+                pass  # process already died somehow
         if verbose:
             click.echo(f"Stopped {server.name}")
 
@@ -468,20 +443,10 @@ def restart_server(
 
     ctx.invoke(stop_server, name=name, stop_all=restart_all, verbose=verbose)
     for server in servers:
-        if isinstance(server, ChainConfig):
-            ctx.invoke(
-                start_server,
-                name=server.name,
-                exe=server.rippled,
-                config=server.config,
-                verbose=verbose,
-            )
-        else:
-            assert isinstance(server, WitnessConfig)
-            ctx.invoke(
-                start_server,
-                name=server.name,
-                exe=server.witnessd,
-                config=server.config,
-                verbose=verbose,
-            )
+        ctx.invoke(
+            start_server,
+            name=server.name,
+            exe=server.exe,
+            config=server.config,
+            verbose=verbose,
+        )
