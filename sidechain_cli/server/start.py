@@ -113,7 +113,9 @@ def start_server(name: str, exe: str, config: str, verbose: bool = False) -> Non
     if verbose:
         click.echo(f"Starting {server_type} server {name}...")
 
-    if is_rippled:
+    if exe == "docker":
+        to_run = ["docker", "compose", "-f", _DOCKER_COMPOSE_FILE, "up", name]
+    elif is_rippled:
         to_run = [exe, "--conf", config, "-a"]
     else:
         to_run = [exe, "--config", config, "--verbose"]
