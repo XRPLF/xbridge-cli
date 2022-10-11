@@ -9,12 +9,12 @@ class ServerData(TypedDict):
     name: str
     type: Union[Literal["rippled"], Literal["witness"]]
     pid: int
+    exe: str
 
 
 class ChainData(ServerData):
     """Helper type for chain data stored in the config file."""
 
-    rippled: str
     config: str
     ws_ip: str
     ws_port: int
@@ -25,7 +25,6 @@ class ChainData(ServerData):
 class WitnessData(ServerData):
     """Helper type for witness data stored in the config file."""
 
-    witnessd: str
     config: str
     ip: str
     rpc_port: int

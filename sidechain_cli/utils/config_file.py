@@ -70,18 +70,37 @@ class ServerConfig(ConfigItem):
     name: str
     type: Union[Literal["rippled"], Literal["witness"]]
     pid: int
+    exe: str
+
+    def is_docker(self: ServerConfig) -> bool:
+        """
+        Return whether the server is running on docker.
+
+        Returns:
+            Whether the server is running on docker.
+        """
+        return self.exe == "docker"
 
 
 @dataclass
 class ChainConfig(ServerConfig):
     """Object representing the config for a chain."""
 
-    rippled: str
     config: str
     ws_ip: str
     ws_port: int
     http_ip: str
     http_port: int
+
+    @property
+    def rippled(self: ChainConfig) -> str:
+        """
+        Get the rippled executable. Alias for `self.exe`.
+
+        Returns:
+            `self.exe`.
+        """
+        return self.exe
 
     def get_client(self: ChainConfig) -> JsonRpcClient:
         """
@@ -106,10 +125,19 @@ class ChainConfig(ServerConfig):
 class WitnessConfig(ServerConfig):
     """Object representing the config for a witness."""
 
-    witnessd: str
     config: str
     ip: str
     rpc_port: int
+
+    @property
+    def witnessd(self: WitnessConfig) -> str:
+        """
+        Get the witnessd executable. Alias for `self.exe`.
+
+        Returns:
+            `self.exe`.
+        """
+        return self.exe
 
     def get_config(self: WitnessConfig) -> Dict[str, Any]:
         """

@@ -114,7 +114,7 @@ def start_server(name: str, exe: str, config: str, verbose: bool = False) -> Non
         chain_data: ChainData = {
             "name": name,
             "type": "rippled",
-            "rippled": exe,
+            "exe": exe,
             "config": config,
             "pid": pid,
             "ws_ip": config_object.port_ws_admin_local.ip,
@@ -128,7 +128,7 @@ def start_server(name: str, exe: str, config: str, verbose: bool = False) -> Non
         witness_data: WitnessData = {
             "name": name,
             "type": "witness",
-            "witnessd": exe,
+            "exe": exe,
             "config": config,
             "pid": pid,
             "ip": config_json["RPCEndpoint"]["IP"],
@@ -255,7 +255,7 @@ def start_all_servers(
                 chain_data: ChainData = {
                     "name": name,
                     "type": "rippled",
-                    "rippled": "docker",
+                    "exe": "docker",
                     "config": config,
                     "pid": pid,
                     "ws_ip": config_object.port_ws_admin_local.ip,
@@ -301,7 +301,7 @@ def start_all_servers(
                 witness_data: WitnessData = {
                     "name": name,
                     "type": "witness",
-                    "witnessd": "docker",
+                    "exe": "docker",
                     "config": config,
                     "pid": pid,
                     "ip": config_json["RPCEndpoint"]["IP"],
