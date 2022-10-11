@@ -433,10 +433,24 @@ def restart_server(
 
     ctx.invoke(stop_server, name=name, stop_all=restart_all, verbose=verbose)
     for server in servers:
-        ctx.invoke(
-            start_server,
-            name=server.name,
-            exe=server.exe,
-            config=server.config,
-            verbose=verbose,
-        )
+        if server.is_docker():
+            subprocess.run(
+                [
+                    "docker",
+                    "compose",
+                    "-f",
+                    _DOCKER_COMPOSE_FILE,
+                    "start",
+                    server.name,
+                ],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
+        else:
+            ctx.invoke(
+                start_server,
+                name=server.name,
+                exe=server.exe,
+                config=server.config,
+                verbose=verbose,
+            )

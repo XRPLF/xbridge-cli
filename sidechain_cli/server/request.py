@@ -40,7 +40,7 @@ def request_server(
     server = config.get_server(name)
 
     if isinstance(server, ChainConfig):  # is a rippled node
-        if server.rippled == "docker":
+        if server.is_docker():
             to_run = [
                 "docker",
                 "exec",
