@@ -23,6 +23,17 @@ from sidechain_cli.utils import (
     remove_server,
 )
 
+_DOCKER_COMPOSE_FILE = os.path.abspath(
+    os.path.join(
+        os.path.realpath(__file__),
+        "..",
+        "..",
+        "..",
+        "docker",
+        "docker-compose.yml",
+    )
+)
+
 
 def _run_process(to_run: List[str], out_file: str) -> Tuple[int, str]:
     # create output file for easier debug purposes
@@ -234,14 +245,7 @@ def start_all_servers(
                 "docker",
                 "compose",
                 "-f",
-                os.path.join(
-                    os.path.realpath(__file__),
-                    "..",
-                    "..",
-                    "..",
-                    "docker",
-                    "docker-compose.yml",
-                ),
+                _DOCKER_COMPOSE_FILE,
                 "up",
             ]
             name_list = [name for (name, _) in chains]
@@ -279,14 +283,7 @@ def start_all_servers(
                 "docker",
                 "compose",
                 "-f",
-                os.path.join(
-                    os.path.realpath(__file__),
-                    "..",
-                    "..",
-                    "..",
-                    "docker",
-                    "docker-compose.yml",
-                ),
+                _DOCKER_COMPOSE_FILE,
                 "up",
             ]
             name_list = [name for (name, _) in witnesses]
@@ -364,14 +361,7 @@ def stop_server(
                 "docker",
                 "compose",
                 "-f",
-                os.path.join(
-                    os.path.realpath(__file__),
-                    "..",
-                    "..",
-                    "..",
-                    "docker",
-                    "docker-compose.yml",
-                ),
+                _DOCKER_COMPOSE_FILE,
                 "stop",
                 server.name,
             ]
