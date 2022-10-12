@@ -6,7 +6,12 @@
     <link rel="shortcut icon" href="https://livenet.xrpl.org/favicon.ico" type="image/x-icon" />
     <div class="explorer">
       <div class="url-bar">
-        <div>Locking Chain:</div>
+        <div class="chain-name">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path fill-rule="evenodd" clip-rule="evenodd" d="M9 8.67363V7C9 5.34315 10.3431 4 12 4C13.6569 4 15 5.34315 15 7V8.67363C14.0907 8.24169 13.0736 8 12 8C10.9264 8 9.90926 8.24169 9 8.67363ZM7 10.101V7C7 4.23858 9.23858 2 12 2C14.7614 2 17 4.23858 17 7V10.101C18.2372 11.3636 19 13.0927 19 15C19 18.866 15.866 22 12 22C8.13401 22 5 18.866 5 15C5 13.0927 5.76281 11.3636 7 10.101ZM7 15C7 17.7614 9.23858 20 12 20C14.7614 20 17 17.7614 17 15C17 12.2386 14.7614 10 12 10C9.23858 10 7 12.2386 7 15ZM12.5855 17.9429C12.3961 17.9804 12.2004 18 12 18C11.7996 18 11.6039 17.9804 11.4145 17.9429L11.6086 16.9619C11.7344 16.9868 11.8651 17 12 17C12.1349 17 12.2656 16.9868 12.3914 16.9619L12.5855 17.9429ZM10.3332 17.4947L10.8895 16.6637C10.6709 16.5174 10.4826 16.3291 10.3363 16.1105L9.5053 16.6668C9.72433 16.994 10.006 17.2757 10.3332 17.4947ZM9.0571 15.5855L10.0381 15.3914C10.0132 15.2656 10 15.1349 10 15C10 14.8651 10.0132 14.7344 10.0381 14.6086L9.0571 14.4145C9.01964 14.6039 9 14.7996 9 15C9 15.2004 9.01964 15.3961 9.0571 15.5855ZM9.5053 13.3332L10.3363 13.8895C10.4826 13.6709 10.6709 13.4826 10.8895 13.3363L10.3332 12.5053C10.006 12.7243 9.72433 13.006 9.5053 13.3332ZM11.4145 12.0571C11.6039 12.0196 11.7996 12 12 12C12.2004 12 12.3961 12.0196 12.5855 12.0571L12.3914 13.0381C12.2656 13.0132 12.1349 13 12 13C11.8651 13 11.7344 13.0132 11.6086 13.0381L11.4145 12.0571ZM13.6668 12.5053L13.1105 13.3363C13.3291 13.4826 13.5174 13.6709 13.6637 13.8895L14.4947 13.3332C14.2757 13.006 13.994 12.7243 13.6668 12.5053ZM14.9429 14.4145L13.9619 14.6086C13.9868 14.7344 14 14.8651 14 15C14 15.1349 13.9868 15.2656 13.9619 15.3914L14.9429 15.5855C14.9804 15.3961 15 15.2004 15 15C15 14.7996 14.9804 14.6039 14.9429 14.4145ZM14.4947 16.6668L13.6637 16.1105C13.5174 16.3291 13.3291 16.5174 13.1105 16.6637L13.6668 17.4947C13.994 17.2757 14.2757 16.994 14.4947 16.6668Z" fill="black"/>
+          </svg>
+          Locking Chain:
+        </div>
         <input type="url" value="localhost:6006" id="left_input">
         <button type="button" id="left_button">Submit</button>
       </div>
@@ -14,7 +19,12 @@
     </div>
     <div class="explorer">
       <div class="url-bar">
-        <div>Issuing Chain:</div>
+        <div class="chain-name">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path fill-rule="evenodd" clip-rule="evenodd" d="M16 4V8H20V4H16ZM15 2C14.4477 2 14 2.44772 14 3V9C14 9.55228 14.4477 10 15 10H21C21.5523 10 22 9.55228 22 9V3C22 2.44772 21.5523 2 21 2H15ZM4 12C4 13.6569 5.34315 15 7 15C8.65685 15 10 13.6569 10 12C10 10.3431 8.65685 9 7 9C5.34315 9 4 10.3431 4 12ZM7 7C4.23858 7 2 9.23858 2 12C2 14.7614 4.23858 17 7 17C9.76142 17 12 14.7614 12 12C12 9.23858 9.76142 7 7 7ZM15.8266 20.0312L17.9375 16.375L20.0484 20.0312H15.8266ZM17.0715 13.875C17.4564 13.2083 18.4186 13.2083 18.8035 13.875L22.6465 20.5313C23.0314 21.1979 22.5503 22.0312 21.7805 22.0312H14.0945C13.3247 22.0312 12.8436 21.1979 13.2285 20.5312L17.0715 13.875Z" fill="black"/>
+          </svg>
+          Issuing Chain:
+        </div>
         <input type="url" value="localhost:6008" id="right_input">
         <button type="button" id="right_button">Submit</button>
       </div>
@@ -22,10 +32,15 @@
     </div>
 
 
-    <link href='https://fonts.googleapis.com/css?family=Work Sans' rel='stylesheet'>
+    <link href='https://fonts.googleapis.com/css?family=Work Sans:400,500,600' rel='stylesheet' type='text/css'>
     <style>
+      * {
+        font-family: 'Work Sans';
+        font-style: normal;
+        font-size: 14px;
+      }
+
       body {
-        font-family: "Work Sans", sans-serif;
         padding: 0 20px 10px;
         background: #fafafa;
         display: flex;
@@ -39,13 +54,18 @@
         width: 100%;
       }
 
-      h1 {
-        font-weight: bold;
+      .chain-name {
+        font-weight: 500;
+        font-size: 14px;
+        color: #000000;
+        white-space: nowrap;
+        gap: 10px;
+        display: flex;
+        align-items: center;
       }
 
       button {
-        font-weight: bold;
-        font-family: "Work Sans", sans-serif;
+        font-weight: 600;
         background: #7919FF;
         border-radius: 4px;
         width: 73px;
@@ -54,24 +74,20 @@
         border: none;
       }
 
-      td {
-        vertical-align: middle;
-      }
-
       iframe {
-        overflow:hidden;
-        height:100%;
-        width:100%;
+        overflow: hidden;
+        height: 100%;
+        width: 100%;
         border-radius: 4px;
       }
 
       .url-bar {
         display: flex;
         width: 70%;
-        gap: 10px;
+        gap: 16px;
         padding: 24px;
         align-items: center;
-        justify-content: center;
+        margin: 0 auto;
       }
 
       .url-bar input {
@@ -82,6 +98,8 @@
         height: 40px;
         padding: 12px 20px;
         border: none;
+        font-weight: 400;
+        color: #111112;
       }
     </style>
 
