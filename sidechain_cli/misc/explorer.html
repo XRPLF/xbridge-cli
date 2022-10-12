@@ -2,16 +2,69 @@
   <head>
     <title>XRPL Sidechain CLI Explorer</title>
   </head>
-  <table width="100%" height="100%" style="margin:0px;padding:0px;overflow:hidden">
+  <table width="100%" height="100%">
     <tr>
       <td>
-        <div align="center" style="font-size:10px;">localhost:6006</div>
-        <iframe src="http://sidechain.dev.explorer.xpring.dev/localhost:6006" frameborder="0" style="overflow:hidden;height:100%;width:100%"></iframe>
+        <input type="url" align="center" value="localhost:6006" id="left_input">
+        <button type="button" value="Submit" id="left_button"></button>
+        <iframe id="left_iframe" src="http://sidechain.dev.explorer.xpring.dev/localhost:6006" frameborder="0"></iframe>
       </td>
       <td>
-        <div align="center" style="font-size:10px;">localhost:6008</div>
-        <iframe src="http://sidechain.dev.explorer.xpring.dev/localhost:6008" frameborder="0" style="overflow:hidden;height:100%;width:100%"></iframe>
+        <input type="url" align="center" value="localhost:6008" id="right_input">
+        <button type="button" value="Submit" id="right_button"></button>
+        <iframe id="right_iframe" src="http://sidechain.dev.explorer.xpring.dev/localhost:6008" frameborder="0"></iframe>
       </td>
     </tr>
   </table>
+  <style>
+    table {
+      margin:0px;
+      padding:0px;
+      overflow:hidden;
+    }
+
+    iframe {
+      overflow:hidden;
+      height:100%;
+      width:100%;
+    }
+  </style>
+  <script>
+    // Grab the element by ID
+    document.getElementById("left_input")
+      // Add the event listener to "input"
+      .addEventListener("input", handleLeftInput);
+    // Grab the element by ID
+    document.getElementById("right_input")
+      // Add the event listener to "input"
+      .addEventListener("input", handleRightInput);
+
+    function handleLeftInput(event){
+      // Grab iframe by ID
+      let iframe = document.getElementById("left_iframe");
+      // Update the source
+
+      // First grab the input that was typed into
+      let input = event.target;
+      // Next get the value of that input
+      let newUrl = input.value;
+
+      // Now update the "src" property of the iframe
+      iframe.src = `http://sidechain.dev.explorer.xpring.dev/${newUrl}`;
+    }
+
+    function handleRightInput(event){
+      // Grab iframe by ID
+      let iframe = document.getElementById("right_iframe");
+      // Update the source
+
+      // First grab the input that was typed into
+      let input = event.target;
+      // Next get the value of that input
+      let newUrl = input.value;
+
+      // Now update the "src" property of the iframe
+      iframe.src = `http://sidechain.dev.explorer.xpring.dev/${newUrl}`;
+    }
+  </script>
 </html>
