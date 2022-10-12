@@ -103,17 +103,28 @@
     </style>
 
     <script>
-      document.getElementById("left_button").addEventListener("click", handleButton);
-      document.getElementById("right_button").addEventListener("click", handleButton);
 
-      function handleButton(event){
+      document.getElementById("left_button").addEventListener("click", onButtonClick);
+      document.getElementById("right_button").addEventListener("click", onButtonClick);
+
+      document.getElementById("left_input").addEventListener("keypress", onInputEnter);
+      document.getElementById("right_input").addEventListener("keypress", onInputEnter);
+
+      function onInputEnter(event) {
+        const inputId = event.target.id;
+        const position = inputId.substring(0, inputId.indexOf("_"));
+        if (event.key === "Enter") {
+          document.getElementById(`${position}_button`).click();
+        }
+      }
+
+      function onButtonClick(event){
         const buttonId = event.target.id;
         const position = buttonId.substring(0, buttonId.indexOf("_"));
         const iframe = document.getElementById(`${position}_iframe`);
         const input = document.getElementById(`${position}_input`);
         const newUrl = input.value;
         iframe.src = `http://sidechain.dev.explorer.xpring.dev/${newUrl}`;
-        console.log("update")
       }
     </script>
   </body>
