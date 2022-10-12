@@ -19,11 +19,13 @@
         "envvar",
         "fout",
         "getenv",
+        "legleux",
         "noqa",
         "pformat",
         "pytest",
         "secho",
         "witnessd",
+        "xbridge",
         "xchain"
     ],
 }

@@ -37,22 +37,23 @@ def _generate_template(
 
 # generate a standalone rippled.cfg file
 def _generate_standalone_config(
-    *,
-    ports: Ports,
-    cfg_type: str,
-    config_dir: str,
+    *, ports: Ports, cfg_type: str, config_dir: str, docker: bool = False
 ) -> None:
     abs_config_dir = os.path.abspath(config_dir)
-    sub_dir = f"{abs_config_dir}/{cfg_type}"
-
-    for path in ["", "/db"]:
-        dirpath = Path(sub_dir + path)
-        if dirpath.exists():
-            if dirpath.is_dir():
-                shutil.rmtree(dirpath)
-            else:
-                os.remove(dirpath)
-        dirpath.mkdir(parents=True)
+    if docker:
+        sub_dir = "/var/lib/rippled"
+        cfg_dir = f"{abs_config_dir}/{cfg_type}"
+    else:
+        sub_dir = f"{abs_config_dir}/{cfg_type}"
+        cfg_dir = sub_dir
+        for path in ["", "/db"]:
+            dirpath = Path(sub_dir + path)
+            if dirpath.exists():
+                if dirpath.is_dir():
+                    shutil.rmtree(dirpath)
+                else:
+                    os.remove(dirpath)
+            dirpath.mkdir(parents=True)
 
     template_data = {
         "sub_dir": sub_dir,
@@ -63,28 +64,35 @@ def _generate_standalone_config(
     _generate_template(
         "rippled.jinja",
         template_data,
-        os.path.join(sub_dir, "rippled.cfg"),
+        os.path.join(cfg_dir, "rippled.cfg"),
     )
 
 
-def _generate_rippled_configs(config_dir: str) -> Tuple[int, int]:
+def _generate_rippled_configs(config_dir: str, docker: bool = False) -> Tuple[int, int]:
     """
     Generate the rippled config files.
 
     Args:
         config_dir: The directory to use for the config files.
+        docker: Whether the config files are for a docker setup.
 
     Returns:
         The locking chain and issuing chain WS ports.
     """
     locking_ports = Ports.generate(0)
     _generate_standalone_config(
-        ports=locking_ports, cfg_type="locking_chain", config_dir=config_dir
+        ports=locking_ports,
+        cfg_type="locking_chain",
+        config_dir=config_dir,
+        docker=docker,
     )
 
     issuing_ports = Ports.generate(1)
     _generate_standalone_config(
-        ports=issuing_ports, cfg_type="issuing_chain", config_dir=config_dir
+        ports=issuing_ports,
+        cfg_type="issuing_chain",
+        config_dir=config_dir,
+        docker=docker,
     )
 
     return locking_ports.ws_public_port, issuing_ports.ws_public_port
@@ -101,6 +109,11 @@ def _generate_rippled_configs(config_dir: str) -> Tuple[int, int]:
     "--name",
     default="witness",
     help="The name of the witness server. Used for the folder name.",
+)
+@click.option(
+    "--docker",
+    is_flag=True,
+    help="Whether the config files are for a docker setup.",
 )
 @click.option(
     "--mc_port",
@@ -172,6 +185,7 @@ def generate_witness_config(
     issuing_reward_account: str,
     src_door: str,
     signing_seed: str,
+    docker: bool = True,
     dst_door: str = "rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh",
     verbose: bool = False,
 ) -> None:
@@ -192,19 +206,25 @@ def generate_witness_config(
         locking_reward_account: The reward account for the witness on the locking chain.
         locking_reward_seed: The seed for the locking chain reward account.
         issuing_reward_account: The reward account for the witness on the issuing chain.
+        docker: Whether the config files are for a docker setup.
         issuing_reward_seed: The seed for the issuing chain reward account.
         verbose: Whether or not to print more verbose information.
     """  # noqa: D301
     abs_config_dir = os.path.abspath(config_dir)
-    sub_dir = f"{abs_config_dir}/{name}"
-    for path in ["", "/db"]:
-        dirpath = Path(sub_dir + path)
-        if dirpath.exists():
-            if dirpath.is_dir():
-                shutil.rmtree(dirpath)
-            else:
-                os.remove(dirpath)
-        dirpath.mkdir(parents=True)
+    if docker:
+        sub_dir = "/opt/witness"
+        cfg_dir = f"{abs_config_dir}/{name}"
+    else:
+        sub_dir = f"{abs_config_dir}/{name}"
+        cfg_dir = sub_dir
+        for path in ["", "/db"]:
+            dirpath = Path(sub_dir + path)
+            if dirpath.exists():
+                if dirpath.is_dir():
+                    shutil.rmtree(dirpath)
+                else:
+                    os.remove(dirpath)
+            dirpath.mkdir(parents=True)
 
     template_data = {
         "locking_chain_port": locking_chain_port,
@@ -221,12 +241,13 @@ def generate_witness_config(
         "dst_door": dst_door,
         "dst_issue": "XRP",
         "is_linux": platform == "linux" or platform == "linux2",
+        "is_docker": docker,
     }
     # add the witness.json file
     _generate_template(
         "witness.jinja",
         template_data,
-        os.path.join(sub_dir, "witness.json"),
+        os.path.join(cfg_dir, "witness.json"),
     )
 
 
@@ -339,6 +360,9 @@ def generate_bootstrap(
     help="The number of witness configs to generate.",
 )
 @click.option(
+    "--docker", is_flag=True, help="Whether the config files are for a docker setup."
+)
+@click.option(
     "-v",
     "--verbose",
     is_flag=True,
@@ -346,7 +370,11 @@ def generate_bootstrap(
 )
 @click.pass_context
 def generate_all_configs(
-    ctx: click.Context, config_dir: str, num_witnesses: int = 5, verbose: bool = False
+    ctx: click.Context,
+    config_dir: str,
+    num_witnesses: int = 5,
+    docker: bool = False,
+    verbose: bool = False,
 ) -> None:
     """
     Generate the rippled and witness configs.
@@ -355,12 +383,13 @@ def generate_all_configs(
         ctx: The click context.
         config_dir: The directory to use for the config files.
         num_witnesses: The number of witnesses configs to generate.
+        docker: Whether the config files are for a docker setup.
         verbose: Whether or not to print more verbose information.
     """
     # TODO: add support for external networks
     abs_config_dir = os.path.abspath(config_dir)
 
-    mc_port, sc_port = _generate_rippled_configs(abs_config_dir)
+    mc_port, sc_port = _generate_rippled_configs(abs_config_dir, docker)
     src_door = Wallet.create(CryptoAlgorithm.SECP256K1)
     reward_accounts = []
     signing_accounts = []
@@ -386,6 +415,7 @@ def generate_all_configs(
             locking_reward_account=witness_reward_wallet.classic_address,
             issuing_reward_seed=witness_reward_wallet.seed,
             issuing_reward_account=witness_reward_wallet.classic_address,
+            docker=docker,
         )
     ctx.invoke(
         generate_bootstrap,

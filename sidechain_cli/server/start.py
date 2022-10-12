@@ -5,7 +5,7 @@ import os
 import signal
 import subprocess
 import time
-from typing import List, Optional, cast
+from typing import List, Optional, Tuple, cast
 
 import click
 
@@ -14,7 +14,6 @@ from sidechain_cli.utils import (
     ChainData,
     RippledConfig,
     ServerConfig,
-    WitnessConfig,
     WitnessData,
     add_chain,
     add_witness,
@@ -23,6 +22,40 @@ from sidechain_cli.utils import (
     get_config_folder,
     remove_server,
 )
+
+_DOCKER_COMPOSE_FILE = os.path.abspath(
+    os.path.join(
+        os.path.realpath(__file__),
+        "..",
+        "..",
+        "..",
+        "docker",
+        "docker-compose.yml",
+    )
+)
+
+
+def _run_process(to_run: List[str], out_file: str) -> Tuple[int, str]:
+    # create output file for easier debug purposes
+    output_file = f"{get_config_folder()}/{out_file}.out"
+    if not os.path.exists(output_file):
+        # initialize file if it doesn't exist
+        with open(output_file, "w") as f:
+            f.write("")
+    fout = open(output_file, "w")
+
+    process = subprocess.Popen(
+        to_run, stdout=fout, stderr=subprocess.STDOUT, close_fds=True
+    )
+
+    # check if server actually started up correctly
+    time.sleep(0.5)
+    if process.poll() is not None:
+        with open(output_file) as f:
+            click.echo(f.read())
+        raise click.ClickException("Process did not start up correctly.")
+
+    return process.pid, output_file
 
 
 @click.command(name="start")
@@ -80,37 +113,20 @@ def start_server(name: str, exe: str, config: str, verbose: bool = False) -> Non
     if verbose:
         click.echo(f"Starting {server_type} server {name}...")
 
-    if is_rippled:
+    if exe == "docker":
+        to_run = ["docker", "compose", "-f", _DOCKER_COMPOSE_FILE, "up", name]
+    elif is_rippled:
         to_run = [exe, "--conf", config, "-a"]
     else:
         to_run = [exe, "--config", config, "--verbose"]
 
-    # create output file for easier debug purposes
-    output_file = f"{get_config_folder()}/{name}.out"
-    if not os.path.exists(output_file):
-        # initialize file if it doesn't exist
-        with open(output_file, "w") as f:
-            f.write("")
-    fout = open(output_file, "w")
-
-    process = subprocess.Popen(
-        to_run, stdout=fout, stderr=subprocess.STDOUT, close_fds=True
-    )
-    pid = process.pid
-
-    # check if server actually started up correctly
-    time.sleep(0.5)
-    if process.poll() is not None:
-        click.echo("ERROR")
-        with open(output_file) as f:
-            click.echo(f.read())
-        return
+    pid, output_file = _run_process(to_run, name)
 
     if is_rippled:
         chain_data: ChainData = {
             "name": name,
             "type": "rippled",
-            "rippled": exe,
+            "exe": exe,
             "config": config,
             "pid": pid,
             "ws_ip": config_object.port_ws_admin_local.ip,
@@ -124,7 +140,7 @@ def start_server(name: str, exe: str, config: str, verbose: bool = False) -> Non
         witness_data: WitnessData = {
             "name": name,
             "type": "witness",
-            "witnessd": exe,
+            "exe": exe,
             "config": config,
             "pid": pid,
             "ip": config_json["RPCEndpoint"]["IP"],
@@ -163,6 +179,7 @@ def start_server(name: str, exe: str, config: str, verbose: bool = False) -> Non
     type=click.Path(exists=True),
     help="The filepath to the witnessd executable.",
 )
+@click.option("--docker", is_flag=True, help="Use executables from Docker.")
 @click.option("--rippled-only", is_flag=True, help="Only start up the rippled servers.")
 @click.option("--witness-only", is_flag=True, help="Only start up the witness servers.")
 @click.option(
@@ -177,6 +194,7 @@ def start_all_servers(
     config_dir: str,
     rippled_exe: str,
     witnessd_exe: str,
+    docker: bool = False,
     rippled_only: bool = False,
     witness_only: bool = False,
     verbose: bool = False,
@@ -192,6 +210,7 @@ def start_all_servers(
         config_dir: The filepath to the config folder.
         rippled_exe: The filepath to the rippled executable.
         witnessd_exe: The filepath to the witnessd executable.
+        docker: Use executables from Docker.
         rippled_only: Only start up the rippled servers.
         witness_only: Only start up the witness servers.
         verbose: Whether or not to print more verbose information.
@@ -203,6 +222,9 @@ def start_all_servers(
         all_chains = True
     else:
         all_chains = False
+    if docker:
+        rippled_exe = "docker"
+        witnessd_exe = "docker"
 
     chains = []
     witnesses = []
@@ -220,19 +242,80 @@ def start_all_servers(
 
     # TODO: simplify this logic once the witness can start up without the chains
     if rippled_only or all_chains:
-        for name, config in chains:
-            ctx.invoke(
-                start_server, name=name, exe=rippled_exe, config=config, verbose=verbose
-            )
+        if rippled_exe == "docker":
+            to_run = [
+                "docker",
+                "compose",
+                "-f",
+                _DOCKER_COMPOSE_FILE,
+                "up",
+            ]
+            name_list = [name for (name, _) in chains]
+            to_run.extend(name_list)
+
+            pid, output_file = _run_process(to_run, name)
+
+            for name, config in chains:
+                config_object = RippledConfig(file_name=config)
+                chain_data: ChainData = {
+                    "name": name,
+                    "type": "rippled",
+                    "exe": "docker",
+                    "config": config,
+                    "pid": pid,
+                    "ws_ip": config_object.port_ws_admin_local.ip,
+                    "ws_port": int(config_object.port_ws_admin_local.port),
+                    "http_ip": config_object.port_rpc_admin_local.ip,
+                    "http_port": int(config_object.port_rpc_admin_local.port),
+                }
+                # add chain to config file
+                add_chain(chain_data)
+        else:
+            for name, config in chains:
+                ctx.invoke(
+                    start_server,
+                    name=name,
+                    exe=rippled_exe,
+                    config=config,
+                    verbose=verbose,
+                )
     if witness_only or all_chains:
-        for name, config in witnesses:
-            ctx.invoke(
-                start_server,
-                name=name,
-                exe=witnessd_exe,
-                config=config,
-                verbose=verbose,
-            )
+        if witnessd_exe == "docker":
+            to_run = [
+                "docker",
+                "compose",
+                "-f",
+                _DOCKER_COMPOSE_FILE,
+                "up",
+            ]
+            name_list = [name for (name, _) in witnesses]
+            to_run.extend(name_list)
+
+            pid, output_file = _run_process(to_run, name)
+
+            for name, config in witnesses:
+                with open(config) as f:
+                    config_json = json.load(f)
+                witness_data: WitnessData = {
+                    "name": name,
+                    "type": "witness",
+                    "exe": "docker",
+                    "config": config,
+                    "pid": pid,
+                    "ip": config_json["RPCEndpoint"]["IP"],
+                    "rpc_port": config_json["RPCEndpoint"]["Port"],
+                }
+                # add witness to config file
+                add_witness(witness_data)
+        else:
+            for name, config in witnesses:
+                ctx.invoke(
+                    start_server,
+                    name=name,
+                    exe=witnessd_exe,
+                    config=config,
+                    verbose=verbose,
+                )
 
 
 @click.command(name="stop")
@@ -275,8 +358,18 @@ def stop_server(
 
     # fout = open(os.devnull, "w")
     for server in servers:
-        if isinstance(server, ChainConfig):
-            # TODO: stop the server with a CLI command
+        if server.is_docker():
+            to_run = [
+                "docker",
+                "compose",
+                "-f",
+                _DOCKER_COMPOSE_FILE,
+                "stop",
+                server.name,
+            ]
+            subprocess.run(to_run, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        elif isinstance(server, ChainConfig):
+            # TODO: stop the rippled server with a CLI command
             # to_run = [server.rippled, "--conf", server.config, "stop"]
             # subprocess.call(to_run, stdout=fout, stderr=subprocess.STDOUT)
             pid = server.pid
@@ -285,7 +378,7 @@ def stop_server(
             except ProcessLookupError:
                 pass  # process already died somehow
         else:
-            # TODO: stop the server with a CLI command
+            # TODO: stop the witnessd server with a CLI command
             # to_run = [server.witnessd, "--config", server.config, "stop"]
             # subprocess.call(to_run, stdout=fout, stderr=subprocess.STDOUT)
             pid = server.pid
@@ -342,20 +435,24 @@ def restart_server(
 
     ctx.invoke(stop_server, name=name, stop_all=restart_all, verbose=verbose)
     for server in servers:
-        if isinstance(server, ChainConfig):
-            ctx.invoke(
-                start_server,
-                name=server.name,
-                exe=server.rippled,
-                config=server.config,
-                verbose=verbose,
+        if server.is_docker():
+            subprocess.run(
+                [
+                    "docker",
+                    "compose",
+                    "-f",
+                    _DOCKER_COMPOSE_FILE,
+                    "start",
+                    server.name,
+                ],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
             )
         else:
-            assert isinstance(server, WitnessConfig)
             ctx.invoke(
                 start_server,
                 name=server.name,
-                exe=server.witnessd,
+                exe=server.exe,
                 config=server.config,
                 verbose=verbose,
             )
