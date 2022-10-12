@@ -15,7 +15,7 @@ class TestServer:
         lines = server_list.output.split("\n")
         assert lines[0] == "Chains:"
         assert re.match(
-            r"^ +name +\| +pid +\| +rippled +\| +config +\| +ws_ip +\| +ws_port +\| +"
+            r"^ +name +\| +pid +\| +exe +\| +config +\| +ws_ip +\| +ws_port +\| +"
             r"http_ip +\| +http_port *$",
             lines[1],
         )
@@ -36,7 +36,7 @@ class TestServer:
 
         assert lines[6] == "Witnesses:"
         assert re.match(
-            r"^ +name +\| +pid +\| +witnessd +\| +config +\| *ip *\| *rpc_port *$",
+            r"^ +name +\| +pid +\| +exe +\| +config +\| *ip *\| *rpc_port *$",
             lines[7],
         )
         assert re.match(r"^-+\+-+\+-+\+-+\+-+\+-+$", lines[8])
