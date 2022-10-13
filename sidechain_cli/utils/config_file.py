@@ -12,6 +12,7 @@ from typing import Any, Dict, List, Literal, Tuple, Type, TypeVar, Union, cast
 from xrpl.clients import JsonRpcClient
 from xrpl.models import IssuedCurrency, XChainBridge
 
+from sidechain_cli.exceptions import SidechainCLIException
 from sidechain_cli.utils.rippled_config import RippledConfig
 from sidechain_cli.utils.types import Currency
 
@@ -261,12 +262,12 @@ class ConfigFile:
             The WitnessConfig object corresponding to that witness.
 
         Raises:
-            Exception: if there is no witness with that name.
+            SidechainCLIException: if there is no witness with that name.
         """
         for witness in self.witnesses:
             if witness.name == name:
                 return witness
-        raise Exception(f"No witness with name {name}.")
+        raise SidechainCLIException(f"No witness with name {name}.")
 
     def get_server(self: ConfigFile, name: str) -> ServerConfig:
         """

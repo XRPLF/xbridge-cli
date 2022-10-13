@@ -28,6 +28,7 @@ from xrpl.models.transactions.xchain_add_attestation import (
 )
 from xrpl.wallet import Wallet
 
+from sidechain_cli.exceptions import SidechainCLIException
 from sidechain_cli.utils import (
     BridgeData,
     add_bridge,
@@ -131,18 +132,16 @@ def setup_bridge(
             more verbosity.
 
     Raises:
-        ClickException: If an account on the locking chain doesn't exist (namely, the
-            witness reward or submit accounts or the door account).
+        SidechainCLIException: If an account on the locking chain doesn't exist
+            (namely, the witness reward or submit accounts or the door account).
     """  # noqa: D301
     # check name
     if check_bridge_exists(name):
-        click.echo(f"Bridge named {name} already exists.")
-        return
+        raise SidechainCLIException(f"Bridge named {name} already exists.")
     # validate chains
     for chain in chains:
         if not check_chain_exists(chain):
             click.echo(f"Chain {chain} is not running.")
-            return
 
     if bootstrap == os.getenv("XCHAIN_CONFIG_DIR"):
         bootstrap = os.path.join(bootstrap, "bridge_bootstrap.json")
@@ -164,7 +163,7 @@ def setup_bridge(
     )
 
     if bridge_obj.issuing_chain_issue == "XRP" and funding_seed is None:
-        raise click.ClickException("Must include `funding_seed` for XRP-XRP bridge.")
+        raise SidechainCLIException("Must include `funding_seed` for XRP-XRP bridge.")
 
     locking_endpoint = bootstrap_config["LockingChain"]["Endpoint"]
     locking_url = f"http://{locking_endpoint['IP']}:{locking_endpoint['JsonRPCPort']}"
@@ -187,12 +186,12 @@ def setup_bridge(
     # check locking chain for accounts that should already exist
     for account in accounts_locking_check:
         if not does_account_exist(account, locking_client):
-            raise click.ClickException(
+            raise SidechainCLIException(
                 f"Account {account} does not exist on the locking chain."
             )
     # make sure issuing door account exists
     if not does_account_exist(issuing_door, issuing_client):
-        raise click.ClickException(
+        raise SidechainCLIException(
             f"Issuing chain door {issuing_door} does not exist on the locking chain."
         )
     if bridge_obj.issuing_chain_issue != "XRP":
@@ -202,7 +201,7 @@ def setup_bridge(
         # bridges
         for account in accounts_issuing_check:
             if not does_account_exist(account, issuing_client):
-                raise click.ClickException(
+                raise SidechainCLIException(
                     f"Account {account} does not exist on the issuing chain."
                 )
 
