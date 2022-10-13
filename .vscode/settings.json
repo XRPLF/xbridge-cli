@@ -19,11 +19,13 @@
         "envvar",
         "fout",
         "getenv",
+        "keypress",
         "legleux",
         "noqa",
         "pformat",
         "pytest",
         "secho",
+        "tablefmt",
         "witnessd",
         "xbridge",
         "xchain"

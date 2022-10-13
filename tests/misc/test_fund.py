@@ -1,5 +1,6 @@
 import pytest
 from xrpl.models import AccountInfo
+from xrpl.wallet import Wallet
 
 from sidechain_cli.main import main
 from sidechain_cli.utils import get_config
@@ -10,7 +11,7 @@ class TestFund:
     def test_fund(self, runner):
         client = get_config().get_chain("locking_chain").get_client()
 
-        test_account = "rHvgvEAy1npZ2kCde6mM5anjXo7Gpqxi78"
+        test_account = Wallet.create().classic_address
         initial_account_info = client.request(AccountInfo(account=test_account))
         assert initial_account_info.status.value == "error"
         assert initial_account_info.result["error"] == "actNotFound"
