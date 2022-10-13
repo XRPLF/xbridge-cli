@@ -9,6 +9,7 @@ from typing import List, Optional, Tuple, cast
 
 import click
 
+from sidechain_cli.exceptions import SidechainCLIException
 from sidechain_cli.utils import (
     ChainConfig,
     ChainData,
@@ -53,7 +54,7 @@ def _run_process(to_run: List[str], out_file: str) -> Tuple[int, str]:
     if process.poll() is not None:
         with open(output_file) as f:
             click.echo(f.read())
-        raise click.ClickException("Process did not start up correctly.")
+        raise SidechainCLIException("Process did not start up correctly.")
 
     return process.pid, output_file
 
@@ -95,6 +96,9 @@ def start_server(name: str, exe: str, config: str, verbose: bool = False) -> Non
         exe: The filepath to the executable.
         config: The filepath to the config file.
         verbose: Whether or not to print more verbose information.
+
+    Raises:
+        SidechainCLIException: If server is already running with that name/config.
     """  # noqa: D301
     exe = os.path.abspath(exe)
     config = os.path.abspath(config)
@@ -106,8 +110,7 @@ def start_server(name: str, exe: str, config: str, verbose: bool = False) -> Non
             config_json = json.load(f)
         is_rippled = False
     if check_server_exists(name, config):
-        click.echo("Error: Server already running with that name or config.")
-        return
+        raise SidechainCLIException("Server already running with that name or config.")
 
     server_type = "rippled" if is_rippled else "witness"
     if verbose:
@@ -214,10 +217,12 @@ def start_all_servers(
         rippled_only: Only start up the rippled servers.
         witness_only: Only start up the witness servers.
         verbose: Whether or not to print more verbose information.
+
+    Raises:
+        SidechainCLIException: If `config_dir` is not a directory.
     """  # noqa: D301
     if not os.path.isdir(config_dir):
-        click.echo(f"Error: {config_dir} is not a directory.")
-        return
+        raise SidechainCLIException(f"{config_dir} is not a directory.")
     if not rippled_only and not witness_only:
         all_chains = True
     else:
@@ -340,10 +345,12 @@ def stop_server(
         name: The name of the server to stop.
         stop_all: Whether to stop all of the servers.
         verbose: Whether or not to print more verbose information.
+
+    Raises:
+        SidechainCLIException: If neither a name or `--all` is specified.
     """  # noqa: D301
     if name is None and stop_all is False:
-        click.echo("Error: Must specify a name or `--all`.")
-        return
+        raise SidechainCLIException("Must specify a name or `--all`.")
     config = get_config()
     if stop_all:
         servers = cast(List[ServerConfig], config.witnesses) + cast(
@@ -419,10 +426,12 @@ def restart_server(
         name: The name of the server to restart.
         restart_all: Whether to restart all of the servers.
         verbose: Whether or not to print more verbose information.
+
+    Raises:
+        SidechainCLIException: If neither a name or `--all` is specified.
     """  # noqa: D301
     if name is None and restart_all is False:
-        click.echo("Error: Must specify a name or `--all`.")
-        return
+        raise SidechainCLIException("Must specify a name or `--all`.")
 
     config = get_config()
     if restart_all:

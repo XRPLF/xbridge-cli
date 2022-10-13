@@ -5,6 +5,7 @@ from typing import Optional, Tuple
 
 import click
 
+from sidechain_cli.exceptions import SidechainCLIException
 from sidechain_cli.utils import ChainConfig, get_config
 
 
@@ -68,8 +69,10 @@ def get_server_status(name: Optional[str] = None, query_all: bool = False) -> No
     Args:
         name: The name of the server to query.
         query_all: Whether to stop all of the servers.
+
+    Raises:
+        SidechainCLIException: If neither a name or `--all` is specified.
     """  # noqa: D301
     if name is None and query_all is False:
-        click.echo("Error: Must specify a name or `--all`.")
-        return
+        raise SidechainCLIException("Must specify a name or `--all`.")
     click.echo(f"{name} {query_all}")
