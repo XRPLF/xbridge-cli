@@ -54,7 +54,7 @@ def _run_process(to_run: List[str], out_file: str) -> Tuple[int, str]:
     if process.poll() is not None:
         with open(output_file) as f:
             click.echo(f.read())
-        raise click.ClickException("Process did not start up correctly.")
+        raise SidechainCLIException("Process did not start up correctly.")
 
     return process.pid, output_file
 

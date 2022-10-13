@@ -7,6 +7,7 @@ from xrpl.models import AccountInfo, Payment
 from xrpl.utils import xrp_to_drops
 from xrpl.wallet import Wallet
 
+from sidechain_cli.exceptions import SidechainCLIException
 from sidechain_cli.utils import get_config, submit_tx
 
 
@@ -43,10 +44,10 @@ def fund_account(chain: str, account: str, verbose: bool = False) -> None:
         verbose: Whether or not to print more verbose information.
 
     Raises:
-        ClickException: If the chain is the issuing chain.
+        SidechainCLIException: If the chain is the issuing chain.
     """  # noqa: D301
     if chain == "issuing_chain":
-        raise click.ClickException(
+        raise SidechainCLIException(
             "Cannot fund account on issuing chain. Must use `create-account`."
         )
 

@@ -2,6 +2,7 @@
 
 from typing import Any, Dict, Optional, cast
 
+from sidechain_cli.exceptions import SidechainCLIException
 from sidechain_cli.utils.config_file import (
     BridgeConfig,
     ChainConfig,
@@ -115,10 +116,10 @@ def remove_chain(name: Optional[str] = None, remove_all: bool = False) -> None:
         remove_all: Whether to remove all of the chains.
 
     Raises:
-        Exception: If `name` is `None` and `remove_all` is `False`.
+        SidechainCLIException: If `name` is `None` and `remove_all` is `False`.
     """
     if name is None and remove_all is False:
-        raise Exception(
+        raise SidechainCLIException(
             "Cannot remove chain if name is `None` and remove_all is `False`."
         )
     conf = get_config()
@@ -150,10 +151,10 @@ def remove_witness(name: Optional[str] = None, remove_all: bool = False) -> None
         remove_all: Whether to remove all of the witnesses.
 
     Raises:
-        Exception: If `name` is `None` and `remove_all` is `False`.
+        SidechainCLIException: If `name` is `None` and `remove_all` is `False`.
     """
     if name is None and remove_all is False:
-        raise Exception(
+        raise SidechainCLIException(
             "Cannot remove witness if name is `None` and remove_all is `False`."
         )
     conf = get_config()
@@ -173,10 +174,10 @@ def remove_server(name: Optional[str] = None, remove_all: bool = False) -> None:
         remove_all: Whether to remove all of the servers.
 
     Raises:
-        Exception: If `name` is `None` and `remove_all` is `False`.
+        SidechainCLIException: If `name` is `None` and `remove_all` is `False`.
     """
     if name is None and remove_all is False:
-        raise Exception(
+        raise SidechainCLIException(
             "Cannot remove server if name is `None` and remove_all is `False`."
         )
     conf = get_config()
@@ -216,10 +217,10 @@ def remove_bridge(name: Optional[str] = None, remove_all: bool = False) -> None:
         remove_all: Whether to remove all of the bridges.
 
     Raises:
-        Exception: If `name` is `None` and `remove_all` is `False`.
+        SidechainCLIException: If `name` is `None` and `remove_all` is `False`.
     """
     if name is None and remove_all is False:
-        raise Exception(
+        raise SidechainCLIException(
             "Cannot remove bridge if name is `None` and remove_all is `False`."
         )
     conf = get_config()
