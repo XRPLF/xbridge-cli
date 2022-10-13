@@ -1,5 +1,7 @@
 """CLI functions for starting/stopping a rippled node."""
 
+from __future__ import annotations
+
 import json
 import os
 import signal
@@ -8,6 +10,9 @@ import time
 from typing import List, Optional, Tuple, cast
 
 import click
+from httpx import ConnectError
+from xrpl.clients import JsonRpcClient
+from xrpl.models import ServerInfo
 
 from sidechain_cli.exceptions import SidechainCLIException
 from sidechain_cli.utils import (
@@ -35,8 +40,32 @@ _DOCKER_COMPOSE_FILE = os.path.abspath(
     )
 )
 
+_START_UP_TIME = 5  # seconds
+_WAIT_INCREMENT = 0.5  # seconds
 
-def _run_process(to_run: List[str], out_file: str) -> Tuple[int, str]:
+
+def _wait_for_rippled(
+    process: subprocess.Popen[bytes], http_ip: str, http_port: int, output_file: str
+) -> None:
+    http_url = f"http://{http_ip}:{http_port}"
+    time_waited = 0.0
+    client = JsonRpcClient(http_url)
+    while time_waited < _START_UP_TIME:
+        try:
+            client.request(ServerInfo())
+            return
+        except ConnectError:
+            time.sleep(_WAIT_INCREMENT)
+            time_waited += _WAIT_INCREMENT
+    if process.poll() is not None:
+        with open(output_file) as f:
+            click.echo(f.read())
+        raise SidechainCLIException("Process did not start up correctly.")
+
+
+def _run_process(
+    to_run: List[str], out_file: str
+) -> Tuple[subprocess.Popen[bytes], str]:
     # create output file for easier debug purposes
     output_file = f"{get_config_folder()}/{out_file}.out"
     if not os.path.exists(output_file):
@@ -49,14 +78,7 @@ def _run_process(to_run: List[str], out_file: str) -> Tuple[int, str]:
         to_run, stdout=fout, stderr=subprocess.STDOUT, close_fds=True
     )
 
-    # check if server actually started up correctly
-    time.sleep(0.5)
-    if process.poll() is not None:
-        with open(output_file) as f:
-            click.echo(f.read())
-        raise SidechainCLIException("Process did not start up correctly.")
-
-    return process.pid, output_file
+    return process, output_file
 
 
 @click.command(name="start")
@@ -86,12 +108,16 @@ def _run_process(to_run: List[str], out_file: str) -> Tuple[int, str]:
     is_flag=True,
     help="Whether or not to print more verbose information.",
 )
-def start_server(name: str, exe: str, config: str, verbose: bool = False) -> None:
+@click.pass_context
+def start_server(
+    ctx: click.Context, name: str, exe: str, config: str, verbose: bool = False
+) -> None:
     """
     Start a standalone node of rippled or a witness node.
     \f
 
     Args:
+        ctx: The click context.
         name: The name of the chain (used for differentiation purposes).
         exe: The filepath to the executable.
         config: The filepath to the config file.
@@ -123,15 +149,23 @@ def start_server(name: str, exe: str, config: str, verbose: bool = False) -> Non
     else:
         to_run = [exe, "--config", config, "--verbose"]
 
-    pid, output_file = _run_process(to_run, name)
+    process, output_file = _run_process(to_run, name)
 
     if is_rippled:
+        # check if server actually started up correctly
+        _wait_for_rippled(
+            process,
+            config_object.port_rpc_admin_local.ip,
+            int(config_object.port_rpc_admin_local.port),
+            output_file,
+        )
+
         chain_data: ChainData = {
             "name": name,
             "type": "rippled",
             "exe": exe,
             "config": config,
-            "pid": pid,
+            "pid": process.pid,
             "ws_ip": config_object.port_ws_admin_local.ip,
             "ws_port": int(config_object.port_ws_admin_local.port),
             "http_ip": config_object.port_rpc_admin_local.ip,
@@ -145,7 +179,7 @@ def start_server(name: str, exe: str, config: str, verbose: bool = False) -> Non
             "type": "witness",
             "exe": exe,
             "config": config,
-            "pid": pid,
+            "pid": process.pid,
             "ip": config_json["RPCEndpoint"]["IP"],
             "rpc_port": config_json["RPCEndpoint"]["Port"],
         }
@@ -154,7 +188,7 @@ def start_server(name: str, exe: str, config: str, verbose: bool = False) -> Non
 
     if verbose:
         click.echo(f"started {server_type} at `{exe}` with config `{config}`")
-        click.echo(f"PID: {pid}")
+        click.echo(f"PID: {process.pid}")
 
 
 @click.command(name="start-all")
@@ -258,7 +292,7 @@ def start_all_servers(
             name_list = [name for (name, _) in chains]
             to_run.extend(name_list)
 
-            pid, output_file = _run_process(to_run, name)
+            process, output_file = _run_process(to_run, name)
 
             for name, config in chains:
                 config_object = RippledConfig(file_name=config)
@@ -267,7 +301,7 @@ def start_all_servers(
                     "type": "rippled",
                     "exe": "docker",
                     "config": config,
-                    "pid": pid,
+                    "pid": process.pid,
                     "ws_ip": config_object.port_ws_admin_local.ip,
                     "ws_port": int(config_object.port_ws_admin_local.port),
                     "http_ip": config_object.port_rpc_admin_local.ip,
@@ -306,7 +340,7 @@ def start_all_servers(
                     "type": "witness",
                     "exe": "docker",
                     "config": config,
-                    "pid": pid,
+                    "pid": process.pid,
                     "ip": config_json["RPCEndpoint"]["IP"],
                     "rpc_port": config_json["RPCEndpoint"]["Port"],
                 }

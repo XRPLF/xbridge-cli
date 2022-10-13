@@ -19,6 +19,7 @@
         "envvar",
         "fout",
         "getenv",
+        "httpx",
         "keypress",
         "legleux",
         "noqa",
