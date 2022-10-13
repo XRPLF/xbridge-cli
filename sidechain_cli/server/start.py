@@ -10,7 +10,7 @@ import time
 from typing import List, Optional, Tuple, cast
 
 import click
-from httpx import ConnectError, RemoteProtocolError
+import httpx
 from xrpl.clients import JsonRpcClient
 from xrpl.models import ServerInfo
 
@@ -44,17 +44,24 @@ _START_UP_TIME = 5  # seconds
 _WAIT_INCREMENT = 0.5  # seconds
 
 
-def _wait_for_rippled(
-    process: subprocess.Popen[bytes], http_ip: str, http_port: int, output_file: str
+def _wait_for_process(
+    process: subprocess.Popen[bytes],
+    http_ip: str,
+    http_port: int,
+    output_file: str,
+    is_rippled: bool,
 ) -> None:
     http_url = f"http://{http_ip}:{http_port}"
     time_waited = 0.0
-    client = JsonRpcClient(http_url)
     while time_waited < _START_UP_TIME:
         try:
-            client.request(ServerInfo())
+            if is_rippled:
+                JsonRpcClient(http_url).request(ServerInfo())
+            else:
+                request = {"method": "server_info"}
+                httpx.post(http_url, json=request)
             return
-        except (ConnectError, RemoteProtocolError):
+        except (httpx.ConnectError, httpx.RemoteProtocolError):
             time.sleep(_WAIT_INCREMENT)
             time_waited += _WAIT_INCREMENT
     if process.poll() is not None:
@@ -153,11 +160,12 @@ def start_server(
 
     if is_rippled:
         # check if server actually started up correctly
-        _wait_for_rippled(
+        _wait_for_process(
             process,
             config_object.port_rpc_admin_local.ip,
             int(config_object.port_rpc_admin_local.port),
             output_file,
+            True,
         )
 
         chain_data: ChainData = {
@@ -174,6 +182,14 @@ def start_server(
         # add chain to config file
         add_chain(chain_data)
     else:
+        # check if server actually started up correctly
+        _wait_for_process(
+            process,
+            config_json["RPCEndpoint"]["IP"],
+            config_json["RPCEndpoint"]["Port"],
+            output_file,
+            False,
+        )
         witness_data: WitnessData = {
             "name": name,
             "type": "witness",
@@ -297,11 +313,12 @@ def start_all_servers(
             for name, config in chains:
                 config_object = RippledConfig(file_name=config)
                 # check if server actually started up correctly
-                _wait_for_rippled(
+                _wait_for_process(
                     process,
                     config_object.port_rpc_admin_local.ip,
                     int(config_object.port_rpc_admin_local.port),
                     output_file,
+                    True,
                 )
                 chain_data: ChainData = {
                     "name": name,
@@ -342,6 +359,16 @@ def start_all_servers(
             for name, config in witnesses:
                 with open(config) as f:
                     config_json = json.load(f)
+
+                # check if server actually started up correctly
+                _wait_for_process(
+                    process,
+                    config_json["RPCEndpoint"]["IP"],
+                    config_json["RPCEndpoint"]["Port"],
+                    output_file,
+                    False,
+                )
+
                 witness_data: WitnessData = {
                     "name": name,
                     "type": "witness",
