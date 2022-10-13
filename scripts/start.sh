@@ -2,6 +2,7 @@ rm ~/.config/sidechain-cli/config.json  # TODO: remove once cleanup is better
 sidechain-cli server create-config all
 sidechain-cli server start-all --rippled-only
 sidechain-cli server list
+sidechain-cli explorer
 jq .LockingChain.DoorAccount.Address $XCHAIN_CONFIG_DIR/bridge_bootstrap.json | tr -d '"' | xargs sidechain-cli fund --chain locking_chain --account
 jq '.LockingChain.WitnessSubmitAccounts[]' $XCHAIN_CONFIG_DIR/bridge_bootstrap.json | tr -d '"' | xargs -L1 sidechain-cli fund --chain locking_chain --account
 jq '.LockingChain.WitnessRewardAccounts[]' $XCHAIN_CONFIG_DIR/bridge_bootstrap.json | tr -d '"' | xargs -L1 sidechain-cli fund --chain locking_chain --account
