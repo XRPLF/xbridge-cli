@@ -10,7 +10,7 @@ import time
 from typing import List, Optional, Tuple, cast
 
 import click
-from httpx import ConnectError
+from httpx import ConnectError, RemoteProtocolError
 from xrpl.clients import JsonRpcClient
 from xrpl.models import ServerInfo
 
@@ -54,7 +54,7 @@ def _wait_for_rippled(
         try:
             client.request(ServerInfo())
             return
-        except ConnectError:
+        except (ConnectError, RemoteProtocolError):
             time.sleep(_WAIT_INCREMENT)
             time_waited += _WAIT_INCREMENT
     if process.poll() is not None:
@@ -296,6 +296,13 @@ def start_all_servers(
 
             for name, config in chains:
                 config_object = RippledConfig(file_name=config)
+                # check if server actually started up correctly
+                _wait_for_rippled(
+                    process,
+                    config_object.port_rpc_admin_local.ip,
+                    int(config_object.port_rpc_admin_local.port),
+                    output_file,
+                )
                 chain_data: ChainData = {
                     "name": name,
                     "type": "rippled",
@@ -330,7 +337,7 @@ def start_all_servers(
             name_list = [name for (name, _) in witnesses]
             to_run.extend(name_list)
 
-            pid, output_file = _run_process(to_run, name)
+            process, output_file = _run_process(to_run, name)
 
             for name, config in witnesses:
                 with open(config) as f:
