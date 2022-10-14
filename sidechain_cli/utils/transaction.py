@@ -5,12 +5,20 @@ from pprint import pformat
 import click
 from xrpl.clients.sync_client import SyncClient
 from xrpl.models import GenericRequest, Response, Transaction
-from xrpl.transaction import safe_sign_and_autofill_transaction, submit_transaction
+from xrpl.transaction import (
+    safe_sign_and_autofill_transaction,
+    send_reliable_submission,
+    submit_transaction,
+)
 from xrpl.wallet import Wallet
 
 
 def submit_tx(
-    tx: Transaction, client: SyncClient, seed: str, verbose: int = 0
+    tx: Transaction,
+    client: SyncClient,
+    seed: str,
+    verbose: int = 0,
+    is_external: bool = False,
 ) -> Response:
     """
     Submit a transaction to rippled, asking rippled to sign it as well.
@@ -20,6 +28,8 @@ def submit_tx(
         client: The client to submit it with.
         seed: The seed to sign the transaction with.
         verbose: Whether or not to print more verbose information.
+        is_external: Whether connecting to an external network (or a local admin
+            rippled).
 
     Returns:
         The response from rippled.
@@ -30,12 +40,17 @@ def submit_tx(
         )
         if verbose > 1:
             click.echo(pformat(tx.to_xrpl()))
-    signed_tx = safe_sign_and_autofill_transaction(tx, Wallet(seed, 0), client)
-    result = submit_transaction(signed_tx, client)
 
-    client.request(GenericRequest(method="ledger_accept"))
+    if is_external:
+        signed_tx = safe_sign_and_autofill_transaction(tx, Wallet(seed, 0), client)
+        result = send_reliable_submission(signed_tx, client)
+        tx_result = result.result["meta"]["TransactionResult"]
+    else:
+        signed_tx = safe_sign_and_autofill_transaction(tx, Wallet(seed, 0), client)
+        result = submit_transaction(signed_tx, client)
+        client.request(GenericRequest(method="ledger_accept"))
+        tx_result = result.result.get("error") or result.result.get("engine_result")
 
-    tx_result = result.result.get("error") or result.result.get("engine_result")
     if verbose > 0:
         text_color = "bright_green" if tx_result == "tesSUCCESS" else "bright_red"
         click.secho(f"Result: {tx_result}", fg=text_color)
