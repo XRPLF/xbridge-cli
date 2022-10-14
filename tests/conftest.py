@@ -153,9 +153,6 @@ def create_bridge():
             "bridge",
             "build",
             "--name=test_bridge",
-            "--chains",
-            "locking_chain",
-            "issuing_chain",
             "--verbose",
         ],
     )

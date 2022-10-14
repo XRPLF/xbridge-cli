@@ -18,7 +18,7 @@ def submit_tx(
     client: SyncClient,
     seed: str,
     verbose: int = 0,
-    is_external: bool = False,
+    close_ledgers: bool = True,
 ) -> Response:
     """
     Submit a transaction to rippled, asking rippled to sign it as well.
@@ -28,8 +28,8 @@ def submit_tx(
         client: The client to submit it with.
         seed: The seed to sign the transaction with.
         verbose: Whether or not to print more verbose information.
-        is_external: Whether connecting to an external network (or a local admin
-            rippled).
+        close_ledgers: Whether to close ledgers manually or wait for them to be closed
+            automatically.
 
     Returns:
         The response from rippled.
@@ -41,15 +41,15 @@ def submit_tx(
         if verbose > 1:
             click.echo(pformat(tx.to_xrpl()))
 
-    if is_external:
-        signed_tx = safe_sign_and_autofill_transaction(tx, Wallet(seed, 0), client)
-        result = send_reliable_submission(signed_tx, client)
-        tx_result = result.result["meta"]["TransactionResult"]
-    else:
+    if close_ledgers:
         signed_tx = safe_sign_and_autofill_transaction(tx, Wallet(seed, 0), client)
         result = submit_transaction(signed_tx, client)
         client.request(GenericRequest(method="ledger_accept"))
         tx_result = result.result.get("error") or result.result.get("engine_result")
+    else:
+        signed_tx = safe_sign_and_autofill_transaction(tx, Wallet(seed, 0), client)
+        result = send_reliable_submission(signed_tx, client)
+        tx_result = result.result["meta"]["TransactionResult"]
 
     if verbose > 0:
         text_color = "bright_green" if tx_result == "tesSUCCESS" else "bright_red"
