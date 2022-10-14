@@ -74,6 +74,8 @@ class TestServer:
         assert lines[14] == ""
 
     def test_list_dead_process(self, runner):
+        # TODO: remove side effects of this test case
+        # (witness2 is no longer running for subsequent tests)
         process_to_kill = "witness2"
 
         initial_list = runner.invoke(main, ["server", "list"])
