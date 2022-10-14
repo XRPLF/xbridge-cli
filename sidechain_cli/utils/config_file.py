@@ -213,7 +213,9 @@ def _get_running_processes(servers: List[S]) -> List[S]:
     return_list = []
     for server in servers:
         if psutil.pid_exists(server["pid"]):
-            return_list.append(server)
+            process = psutil.Process(pid=server["pid"])
+            if process.status() != psutil.STATUS_ZOMBIE:
+                return_list.append(server)
     return return_list
 
 
@@ -236,6 +238,7 @@ class ConfigFile:
             for witness in _get_running_processes(data["witnesses"])
         ]
         self.bridges = [BridgeConfig.from_dict(bridge) for bridge in data["bridges"]]
+        self.write_to_file()
 
     @classmethod
     def from_file(cls: Type[ConfigFile]) -> ConfigFile:
