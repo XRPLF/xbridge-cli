@@ -34,6 +34,8 @@ class TestServer:
         )
         assert lines[5] == ""
 
+        assert all([f"witness{i}" in server_list.output for i in range(5)])
+
         assert lines[6] == "Witnesses:"
         assert re.match(
             r"^ +name +\| +pid +\| +exe +\| +config +\| *ip *\| *rpc_port *$",
