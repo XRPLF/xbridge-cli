@@ -29,6 +29,7 @@ xrpl-py = "^1.7.0b0"
 httpx = "^0.18.1"
 websockets = "^10.3"
 Jinja2 = "^3.1.2"
+psutil = "^5.9.2"
 
 [tool.poetry.dev-dependencies]
 flake8 = "^5.0.4"

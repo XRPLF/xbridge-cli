@@ -24,6 +24,7 @@
         "legleux",
         "noqa",
         "pformat",
+        "psutil",
         "pytest",
         "secho",
         "tablefmt",
