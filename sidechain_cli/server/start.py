@@ -1,5 +1,7 @@
 """CLI functions for starting/stopping a rippled node."""
 
+from __future__ import annotations
+
 import json
 import os
 import signal
@@ -8,6 +10,7 @@ import time
 from typing import List, Optional, Tuple, cast
 
 import click
+import httpx
 
 from sidechain_cli.exceptions import SidechainCLIException
 from sidechain_cli.utils import (
@@ -35,8 +38,37 @@ _DOCKER_COMPOSE_FILE = os.path.abspath(
     )
 )
 
+_DOCKER_COMPOSE = ["docker", "compose", "-f", _DOCKER_COMPOSE_FILE]
 
-def _run_process(to_run: List[str], out_file: str) -> Tuple[int, str]:
+_START_UP_TIME = 5  # seconds
+_WAIT_INCREMENT = 0.5  # seconds
+
+
+def _wait_for_process(
+    process: subprocess.Popen[bytes],
+    http_ip: str,
+    http_port: int,
+    output_file: str,
+) -> None:
+    http_url = f"http://{http_ip}:{http_port}"
+    time_waited = 0.0
+    while time_waited < _START_UP_TIME:
+        try:
+            request = {"method": "server_info"}
+            httpx.post(http_url, json=request)
+            return
+        except (httpx.ConnectError, httpx.RemoteProtocolError):
+            time.sleep(_WAIT_INCREMENT)
+            time_waited += _WAIT_INCREMENT
+    if process.poll() is not None:
+        with open(output_file) as f:
+            click.echo(f.read())
+        raise SidechainCLIException("Process did not start up correctly.")
+
+
+def _run_process(
+    to_run: List[str], out_file: str
+) -> Tuple[subprocess.Popen[bytes], str]:
     # create output file for easier debug purposes
     output_file = f"{get_config_folder()}/{out_file}.out"
     if not os.path.exists(output_file):
@@ -49,14 +81,7 @@ def _run_process(to_run: List[str], out_file: str) -> Tuple[int, str]:
         to_run, stdout=fout, stderr=subprocess.STDOUT, close_fds=True
     )
 
-    # check if server actually started up correctly
-    time.sleep(0.5)
-    if process.poll() is not None:
-        with open(output_file) as f:
-            click.echo(f.read())
-        raise SidechainCLIException("Process did not start up correctly.")
-
-    return process.pid, output_file
+    return process, output_file
 
 
 @click.command(name="start")
@@ -86,12 +111,16 @@ def _run_process(to_run: List[str], out_file: str) -> Tuple[int, str]:
     is_flag=True,
     help="Whether or not to print more verbose information.",
 )
-def start_server(name: str, exe: str, config: str, verbose: bool = False) -> None:
+@click.pass_context
+def start_server(
+    ctx: click.Context, name: str, exe: str, config: str, verbose: bool = False
+) -> None:
     """
     Start a standalone node of rippled or a witness node.
     \f
 
     Args:
+        ctx: The click context.
         name: The name of the chain (used for differentiation purposes).
         exe: The filepath to the executable.
         config: The filepath to the config file.
@@ -117,21 +146,29 @@ def start_server(name: str, exe: str, config: str, verbose: bool = False) -> Non
         click.echo(f"Starting {server_type} server {name}...")
 
     if exe == "docker":
-        to_run = ["docker", "compose", "-f", _DOCKER_COMPOSE_FILE, "up", name]
+        to_run = [*_DOCKER_COMPOSE, "up", name]
     elif is_rippled:
         to_run = [exe, "--conf", config, "-a"]
     else:
         to_run = [exe, "--config", config, "--verbose"]
 
-    pid, output_file = _run_process(to_run, name)
+    process, output_file = _run_process(to_run, name)
 
     if is_rippled:
+        # check if server actually started up correctly
+        _wait_for_process(
+            process,
+            config_object.port_rpc_admin_local.ip,
+            int(config_object.port_rpc_admin_local.port),
+            output_file,
+        )
+
         chain_data: ChainData = {
             "name": name,
             "type": "rippled",
             "exe": exe,
             "config": config,
-            "pid": pid,
+            "pid": process.pid,
             "ws_ip": config_object.port_ws_admin_local.ip,
             "ws_port": int(config_object.port_ws_admin_local.port),
             "http_ip": config_object.port_rpc_admin_local.ip,
@@ -140,12 +177,19 @@ def start_server(name: str, exe: str, config: str, verbose: bool = False) -> Non
         # add chain to config file
         add_chain(chain_data)
     else:
+        # check if server actually started up correctly
+        _wait_for_process(
+            process,
+            config_json["RPCEndpoint"]["IP"],
+            config_json["RPCEndpoint"]["Port"],
+            output_file,
+        )
         witness_data: WitnessData = {
             "name": name,
             "type": "witness",
             "exe": exe,
             "config": config,
-            "pid": pid,
+            "pid": process.pid,
             "ip": config_json["RPCEndpoint"]["IP"],
             "rpc_port": config_json["RPCEndpoint"]["Port"],
         }
@@ -154,7 +198,7 @@ def start_server(name: str, exe: str, config: str, verbose: bool = False) -> Non
 
     if verbose:
         click.echo(f"started {server_type} at `{exe}` with config `{config}`")
-        click.echo(f"PID: {pid}")
+        click.echo(f"PID: {process.pid}")
 
 
 @click.command(name="start-all")
@@ -248,26 +292,26 @@ def start_all_servers(
     # TODO: simplify this logic once the witness can start up without the chains
     if rippled_only or all_chains:
         if rippled_exe == "docker":
-            to_run = [
-                "docker",
-                "compose",
-                "-f",
-                _DOCKER_COMPOSE_FILE,
-                "up",
-            ]
             name_list = [name for (name, _) in chains]
-            to_run.extend(name_list)
+            to_run = [*_DOCKER_COMPOSE, "up", *name_list]
 
-            pid, output_file = _run_process(to_run, name)
+            process, output_file = _run_process(to_run, name)
 
             for name, config in chains:
                 config_object = RippledConfig(file_name=config)
+                # check if server actually started up correctly
+                _wait_for_process(
+                    process,
+                    config_object.port_rpc_admin_local.ip,
+                    int(config_object.port_rpc_admin_local.port),
+                    output_file,
+                )
                 chain_data: ChainData = {
                     "name": name,
                     "type": "rippled",
                     "exe": "docker",
                     "config": config,
-                    "pid": pid,
+                    "pid": process.pid,
                     "ws_ip": config_object.port_ws_admin_local.ip,
                     "ws_port": int(config_object.port_ws_admin_local.port),
                     "http_ip": config_object.port_rpc_admin_local.ip,
@@ -286,27 +330,29 @@ def start_all_servers(
                 )
     if witness_only or all_chains:
         if witnessd_exe == "docker":
-            to_run = [
-                "docker",
-                "compose",
-                "-f",
-                _DOCKER_COMPOSE_FILE,
-                "up",
-            ]
             name_list = [name for (name, _) in witnesses]
-            to_run.extend(name_list)
+            to_run = [*_DOCKER_COMPOSE, "up", *name_list]
 
-            pid, output_file = _run_process(to_run, name)
+            process, output_file = _run_process(to_run, name)
 
             for name, config in witnesses:
                 with open(config) as f:
                     config_json = json.load(f)
+
+                # check if server actually started up correctly
+                _wait_for_process(
+                    process,
+                    config_json["RPCEndpoint"]["IP"],
+                    config_json["RPCEndpoint"]["Port"],
+                    output_file,
+                )
+
                 witness_data: WitnessData = {
                     "name": name,
                     "type": "witness",
                     "exe": "docker",
                     "config": config,
-                    "pid": pid,
+                    "pid": process.pid,
                     "ip": config_json["RPCEndpoint"]["IP"],
                     "rpc_port": config_json["RPCEndpoint"]["Port"],
                 }
@@ -360,21 +406,13 @@ def stop_server(
         assert name is not None
         servers = [config.get_server(name)]
     if verbose:
-        server_names = ",".join([server.name for server in servers])
+        server_names = ", ".join([server.name for server in servers])
         click.echo(f"Shutting down: {server_names}")
 
-    # fout = open(os.devnull, "w")
+    docker_servers = []
     for server in servers:
         if server.is_docker():
-            to_run = [
-                "docker",
-                "compose",
-                "-f",
-                _DOCKER_COMPOSE_FILE,
-                "stop",
-                server.name,
-            ]
-            subprocess.run(to_run, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            docker_servers.append(server.name)
         elif isinstance(server, ChainConfig):
             # TODO: stop the rippled server with a CLI command
             # to_run = [server.rippled, "--conf", server.config, "stop"]
@@ -384,6 +422,8 @@ def stop_server(
                 os.kill(pid, signal.SIGINT)
             except ProcessLookupError:
                 pass  # process already died somehow
+            if verbose:
+                click.echo(f"Stopped {server.name}")
         else:
             # TODO: stop the witnessd server with a CLI command
             # to_run = [server.witnessd, "--config", server.config, "stop"]
@@ -393,8 +433,15 @@ def stop_server(
                 os.kill(pid, signal.SIGINT)
             except ProcessLookupError:
                 pass  # process already died somehow
+            if verbose:
+                click.echo(f"Stopped {server.name}")
+
+    if len(docker_servers) > 0:
+        to_run = [*_DOCKER_COMPOSE, "stop", *docker_servers]
+        subprocess.run(to_run, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         if verbose:
-            click.echo(f"Stopped {server.name}")
+            docker_names = ", ".join([name for name in docker_servers])
+            click.echo(f"Stopped {docker_names}")
 
     remove_server(name, stop_all)
 
@@ -446,14 +493,7 @@ def restart_server(
     for server in servers:
         if server.is_docker():
             subprocess.run(
-                [
-                    "docker",
-                    "compose",
-                    "-f",
-                    _DOCKER_COMPOSE_FILE,
-                    "start",
-                    server.name,
-                ],
+                [*_DOCKER_COMPOSE, "start", server.name],
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
             )
