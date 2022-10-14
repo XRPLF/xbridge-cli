@@ -11,8 +11,6 @@ from typing import List, Optional, Tuple, cast
 
 import click
 import httpx
-from xrpl.clients import JsonRpcClient
-from xrpl.models import ServerInfo
 
 from sidechain_cli.exceptions import SidechainCLIException
 from sidechain_cli.utils import (
@@ -49,17 +47,13 @@ def _wait_for_process(
     http_ip: str,
     http_port: int,
     output_file: str,
-    is_rippled: bool,
 ) -> None:
     http_url = f"http://{http_ip}:{http_port}"
     time_waited = 0.0
     while time_waited < _START_UP_TIME:
         try:
-            if is_rippled:
-                JsonRpcClient(http_url).request(ServerInfo())
-            else:
-                request = {"method": "server_info"}
-                httpx.post(http_url, json=request)
+            request = {"method": "server_info"}
+            httpx.post(http_url, json=request)
             return
         except (httpx.ConnectError, httpx.RemoteProtocolError):
             time.sleep(_WAIT_INCREMENT)
@@ -165,7 +159,6 @@ def start_server(
             config_object.port_rpc_admin_local.ip,
             int(config_object.port_rpc_admin_local.port),
             output_file,
-            True,
         )
 
         chain_data: ChainData = {
@@ -188,7 +181,6 @@ def start_server(
             config_json["RPCEndpoint"]["IP"],
             config_json["RPCEndpoint"]["Port"],
             output_file,
-            False,
         )
         witness_data: WitnessData = {
             "name": name,
@@ -318,7 +310,6 @@ def start_all_servers(
                     config_object.port_rpc_admin_local.ip,
                     int(config_object.port_rpc_admin_local.port),
                     output_file,
-                    True,
                 )
                 chain_data: ChainData = {
                     "name": name,
@@ -366,7 +357,6 @@ def start_all_servers(
                     config_json["RPCEndpoint"]["IP"],
                     config_json["RPCEndpoint"]["Port"],
                     output_file,
-                    False,
                 )
 
                 witness_data: WitnessData = {
