@@ -176,7 +176,6 @@ def create_bridge():
 
 @pytest.fixture(scope="class")
 def bridge_build_setup():
-    print("hiiii")
     # reset CLI config file
     config_file = os.path.join(get_config_folder(), "config.json")
     os.remove(config_file)

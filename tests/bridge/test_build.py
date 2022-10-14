@@ -111,7 +111,8 @@ class TestBridgeBuild:
         ][0]
         assert len(signer_list["SignerEntries"]) == bridge_config.num_witnesses
 
-    def test_bridge_prod_build_xrp(self, runner):
+    def test_bridge_prod_build_xrp(self):
+        runner = CliRunner()
         config_dir = os.path.abspath(os.getenv("XCHAIN_CONFIG_DIR"))
         with open(os.path.join(config_dir, "bridge_bootstrap.json")) as f:
             bootstrap = json.load(f)
@@ -134,7 +135,6 @@ class TestBridgeBuild:
             )
             assert fund_result.exit_code == 0, fund_result.output
 
-        print("here")
         close_ledgers()
         thread = SetInterval(close_ledgers, 1)
 
@@ -154,10 +154,6 @@ class TestBridgeBuild:
                 "--verbose",
             ],
         )
-        print(runner_result.output)
-        import traceback
-
-        traceback.print_exception(*runner_result.exc_info)
         assert runner_result.exit_code == 0, runner_result.output
 
         thread.cancel()

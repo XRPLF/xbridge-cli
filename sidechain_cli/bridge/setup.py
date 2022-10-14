@@ -210,22 +210,6 @@ def setup_bridge(
                 f"Account {account} does not exist on the locking chain."
             )
     # make sure issuing door account exists
-    print(issuing_client, issuing_client.url)
-    from sidechain_cli.utils import get_config
-
-    issuing_pid = get_config().get_chain("issuing_chain").pid
-    import psutil
-
-    print(psutil.pid_exists(issuing_pid))
-    from sidechain_cli.server.print import print_server_output
-
-    ctx.invoke(
-        print_server_output,
-        name="issuing_chain",
-    )
-    from xrpl.models import ServerInfo
-
-    print(issuing_client.request(ServerInfo()))
     if not does_account_exist(issuing_door, issuing_client):
         raise SidechainCLIException(
             f"Issuing chain door {issuing_door} does not exist on the locking chain."
