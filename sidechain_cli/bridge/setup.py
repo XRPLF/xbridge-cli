@@ -258,7 +258,7 @@ def setup_bridge(
         locking_client,
         locking_door_seed,
         verbose,
-        _is_external_chain(chain[0]),
+        _is_external_chain(chains[0]),
     )
 
     # set up multisign on the door account
@@ -272,7 +272,7 @@ def setup_bridge(
         locking_client,
         locking_door_seed,
         verbose,
-        _is_external_chain(chain[0]),
+        _is_external_chain(chains[0]),
     )
 
     # disable the master key
@@ -284,7 +284,7 @@ def setup_bridge(
         locking_client,
         locking_door_seed,
         verbose,
-        _is_external_chain(chain[0]),
+        _is_external_chain(chains[0]),
     )
 
     ###################################################################################
@@ -302,7 +302,7 @@ def setup_bridge(
         issuing_client,
         issuing_door_seed,
         verbose,
-        _is_external_chain(chain[1]),
+        _is_external_chain(chains[1]),
     )
 
     if bridge_obj.issuing_chain_issue == "XRP":
@@ -323,7 +323,7 @@ def setup_bridge(
             issuing_client,
             issuing_door_seed,
             verbose,
-            _is_external_chain(chain[1]),
+            _is_external_chain(chains[1]),
         )
 
         # helper function for submittion the attestations
@@ -343,7 +343,7 @@ def setup_bridge(
                 issuing_client,
                 issuing_door_seed,
                 verbose,
-                _is_external_chain(chain[1]),
+                _is_external_chain(chains[1]),
             )
 
         assert funding_seed is not None  # for typing purposes - checked earlier
@@ -367,7 +367,7 @@ def setup_bridge(
                 locking_client,
                 funding_seed,
                 verbose,
-                _is_external_chain(chain[0]),
+                _is_external_chain(chains[0]),
             )
 
             # set up the attestation for the commit
@@ -406,7 +406,7 @@ def setup_bridge(
         issuing_client,
         issuing_door_seed,
         verbose,
-        _is_external_chain(chain[1]),
+        _is_external_chain(chains[1]),
     )
 
     # disable the master key
@@ -418,7 +418,7 @@ def setup_bridge(
         issuing_client,
         issuing_door_seed,
         verbose,
-        _is_external_chain(chain[1]),
+        _is_external_chain(chains[1]),
     )
 
     # add bridge to CLI config
