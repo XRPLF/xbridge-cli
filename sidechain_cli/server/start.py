@@ -157,16 +157,17 @@ def start_server(
         to_run = [exe, "--config", config, "--verbose"]
 
     process, output_file = _run_process(to_run, name)
-    # check if server actually started up correctly
-    _wait_for_process(
-        process,
-        config_object.port_rpc_admin_local.ip,
-        int(config_object.port_rpc_admin_local.port),
-        output_file,
-        is_rippled,
-    )
 
     if is_rippled:
+        # check if server actually started up correctly
+        _wait_for_process(
+            process,
+            config_object.port_rpc_admin_local.ip,
+            int(config_object.port_rpc_admin_local.port),
+            output_file,
+            True,
+        )
+
         chain_data: ChainData = {
             "name": name,
             "type": "rippled",
@@ -181,6 +182,14 @@ def start_server(
         # add chain to config file
         add_chain(chain_data)
     else:
+        # check if server actually started up correctly
+        _wait_for_process(
+            process,
+            config_json["RPCEndpoint"]["IP"],
+            config_json["RPCEndpoint"]["Port"],
+            output_file,
+            False,
+        )
         witness_data: WitnessData = {
             "name": name,
             "type": "witness",

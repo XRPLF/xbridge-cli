@@ -23,6 +23,9 @@ def pytest_configure(config):
     before performing collection and entering the run test loop.
     """
     global home_dir, config_dir, mocked_vars
+    runner = CliRunner()
+    runner.invoke(main, ["server", "stop", "--all"])
+
     config_dir = tempfile.TemporaryDirectory()
     env_vars = unittest.mock.patch.dict(
         os.environ,
