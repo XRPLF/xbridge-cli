@@ -38,6 +38,8 @@ _DOCKER_COMPOSE_FILE = os.path.abspath(
     )
 )
 
+_DOCKER_COMPOSE = ["docker", "compose", "-f", _DOCKER_COMPOSE_FILE]
+
 _START_UP_TIME = 5  # seconds
 _WAIT_INCREMENT = 0.5  # seconds
 
@@ -144,7 +146,7 @@ def start_server(
         click.echo(f"Starting {server_type} server {name}...")
 
     if exe == "docker":
-        to_run = ["docker", "compose", "-f", _DOCKER_COMPOSE_FILE, "up", name]
+        to_run = [*_DOCKER_COMPOSE, "up", name]
     elif is_rippled:
         to_run = [exe, "--conf", config, "-a"]
     else:
@@ -290,15 +292,8 @@ def start_all_servers(
     # TODO: simplify this logic once the witness can start up without the chains
     if rippled_only or all_chains:
         if rippled_exe == "docker":
-            to_run = [
-                "docker",
-                "compose",
-                "-f",
-                _DOCKER_COMPOSE_FILE,
-                "up",
-            ]
             name_list = [name for (name, _) in chains]
-            to_run.extend(name_list)
+            to_run = [*_DOCKER_COMPOSE, "up", *name_list]
 
             process, output_file = _run_process(to_run, name)
 
@@ -335,15 +330,8 @@ def start_all_servers(
                 )
     if witness_only or all_chains:
         if witnessd_exe == "docker":
-            to_run = [
-                "docker",
-                "compose",
-                "-f",
-                _DOCKER_COMPOSE_FILE,
-                "up",
-            ]
             name_list = [name for (name, _) in witnesses]
-            to_run.extend(name_list)
+            to_run = [*_DOCKER_COMPOSE, "up", *name_list]
 
             process, output_file = _run_process(to_run, name)
 
@@ -418,21 +406,13 @@ def stop_server(
         assert name is not None
         servers = [config.get_server(name)]
     if verbose:
-        server_names = ",".join([server.name for server in servers])
+        server_names = ", ".join([server.name for server in servers])
         click.echo(f"Shutting down: {server_names}")
 
-    # fout = open(os.devnull, "w")
+    docker_servers = []
     for server in servers:
         if server.is_docker():
-            to_run = [
-                "docker",
-                "compose",
-                "-f",
-                _DOCKER_COMPOSE_FILE,
-                "stop",
-                server.name,
-            ]
-            subprocess.run(to_run, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            docker_servers.append(server.name)
         elif isinstance(server, ChainConfig):
             # TODO: stop the rippled server with a CLI command
             # to_run = [server.rippled, "--conf", server.config, "stop"]
@@ -442,6 +422,8 @@ def stop_server(
                 os.kill(pid, signal.SIGINT)
             except ProcessLookupError:
                 pass  # process already died somehow
+            if verbose:
+                click.echo(f"Stopped {server.name}")
         else:
             # TODO: stop the witnessd server with a CLI command
             # to_run = [server.witnessd, "--config", server.config, "stop"]
@@ -451,8 +433,15 @@ def stop_server(
                 os.kill(pid, signal.SIGINT)
             except ProcessLookupError:
                 pass  # process already died somehow
+            if verbose:
+                click.echo(f"Stopped {server.name}")
+
+    if len(docker_servers) > 0:
+        to_run = [*_DOCKER_COMPOSE, "stop", *docker_servers]
+        subprocess.run(to_run, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         if verbose:
-            click.echo(f"Stopped {server.name}")
+            docker_names = ", ".join([name for name in docker_servers])
+            click.echo(f"Stopped {docker_names}")
 
     remove_server(name, stop_all)
 
@@ -504,14 +493,7 @@ def restart_server(
     for server in servers:
         if server.is_docker():
             subprocess.run(
-                [
-                    "docker",
-                    "compose",
-                    "-f",
-                    _DOCKER_COMPOSE_FILE,
-                    "start",
-                    server.name,
-                ],
+                [*_DOCKER_COMPOSE, "start", server.name],
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
             )
