@@ -13,10 +13,12 @@ import psutil
 from xrpl.clients import JsonRpcClient
 from xrpl.models import IssuedCurrency, XChainBridge
 
+import docker
 from sidechain_cli.exceptions import SidechainCLIException
 from sidechain_cli.utils.rippled_config import RippledConfig
 from sidechain_cli.utils.types import Currency, ServerData
 
+_DOCKER_CLIENT = docker.from_env()
 _HOME = str(Path.home())
 
 CONFIG_FOLDER = os.path.join(_HOME, ".config", "sidechain-cli")
@@ -212,10 +214,16 @@ S = TypeVar("S", bound="ServerData")
 def _get_running_processes(servers: List[S]) -> List[S]:
     return_list = []
     for server in servers:
-        if psutil.pid_exists(server["pid"]):
-            process = psutil.Process(pid=server["pid"])
-            if process.status() != psutil.STATUS_ZOMBIE:
-                return_list.append(server)
+        if not psutil.pid_exists(server["pid"]):
+            continue
+        process = psutil.Process(pid=server["pid"])
+        if process.status() == psutil.STATUS_ZOMBIE:
+            continue
+        if server["exe"] == "docker":
+            container = _DOCKER_CLIENT.containers.get(server["name"])
+            if container.status != "running":
+                continue
+        return_list.append(server)
     return return_list
 
 
