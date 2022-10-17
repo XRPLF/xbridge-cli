@@ -7,8 +7,10 @@ from sidechain_cli.misc.explorer import launch_explorer
 from sidechain_cli.misc.fund import fund_account
 from sidechain_cli.server import server
 
+CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 
-@click.group()
+
+@click.group(context_settings=CONTEXT_SETTINGS)
 def main() -> None:
     """The Sidechain Command-Line Interface. Do everything with sidechains."""
     pass
