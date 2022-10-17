@@ -9,13 +9,16 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Literal, Tuple, Type, TypeVar, Union, cast
 
+import psutil
 from xrpl.clients import JsonRpcClient
 from xrpl.models import IssuedCurrency, XChainBridge
 
+import docker
 from sidechain_cli.exceptions import SidechainCLIException
 from sidechain_cli.utils.rippled_config import RippledConfig
-from sidechain_cli.utils.types import Currency
+from sidechain_cli.utils.types import Currency, ServerData
 
+_DOCKER_CLIENT = docker.from_env()
 _HOME = str(Path.home())
 
 CONFIG_FOLDER = os.path.join(_HOME, ".config", "sidechain-cli")
@@ -205,6 +208,25 @@ class BridgeConfig(ConfigItem):
         }
 
 
+S = TypeVar("S", bound="ServerData")
+
+
+def _get_running_processes(servers: List[S]) -> List[S]:
+    return_list = []
+    for server in servers:
+        if not psutil.pid_exists(server["pid"]):
+            continue
+        process = psutil.Process(pid=server["pid"])
+        if process.status() == psutil.STATUS_ZOMBIE:
+            continue
+        if server["exe"] == "docker":
+            container = _DOCKER_CLIENT.containers.get(server["name"])
+            if container.status != "running":
+                continue
+        return_list.append(server)
+    return return_list
+
+
 class ConfigFile:
     """Helper class for working with the config file."""
 
@@ -215,11 +237,16 @@ class ConfigFile:
         Args:
             data: The dictionary with the config data.
         """
-        self.chains = [ChainConfig.from_dict(chain) for chain in data["chains"]]
+        self.chains = [
+            ChainConfig.from_dict(chain)
+            for chain in _get_running_processes(data["chains"])
+        ]
         self.witnesses = [
-            WitnessConfig.from_dict(witness) for witness in data["witnesses"]
+            WitnessConfig.from_dict(witness)
+            for witness in _get_running_processes(data["witnesses"])
         ]
         self.bridges = [BridgeConfig.from_dict(bridge) for bridge in data["bridges"]]
+        self.write_to_file()
 
     @classmethod
     def from_file(cls: Type[ConfigFile]) -> ConfigFile:

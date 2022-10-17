@@ -1,10 +1,14 @@
 import json
 import os
 import re
+import signal
+import time
 
+import psutil
 import pytest
 
 from sidechain_cli.main import main
+from sidechain_cli.utils import get_config
 from sidechain_cli.utils.config_file import CONFIG_FOLDER
 
 
@@ -33,6 +37,8 @@ class TestServer:
             lines[4],
         )
         assert lines[5] == ""
+
+        assert all([f"witness{i}" in server_list.output for i in range(5)])
 
         assert lines[6] == "Witnesses:"
         assert re.match(
@@ -66,6 +72,41 @@ class TestServer:
             lines[13],
         )
         assert lines[14] == ""
+
+    def test_list_dead_process(self, runner):
+        # TODO: remove side effects of this test case
+        # (witness2 is no longer running for subsequent tests)
+        process_to_kill = "witness2"
+
+        initial_list = runner.invoke(main, ["server", "list"])
+        assert process_to_kill in initial_list.output
+
+        witness = get_config().get_witness(process_to_kill)
+        os.kill(witness.pid, signal.SIGINT)
+        time.sleep(0.2)  # wait for process to die
+
+        process = psutil.Process(pid=witness.pid)
+        assert (
+            not psutil.pid_exists(witness.pid)
+            or process.status() == psutil.STATUS_ZOMBIE
+        )
+
+        final_list = runner.invoke(main, ["server", "list"])
+        assert process_to_kill not in final_list.output
+
+        with open(os.path.join(CONFIG_FOLDER, "config.json")) as f:
+            config_file = json.load(f)
+
+        assert (
+            len(
+                [
+                    witness
+                    for witness in config_file["witnesses"]
+                    if witness["name"] == process_to_kill
+                ]
+            )
+            == 0
+        )
 
     def test_print_rippled(self, runner):
         server_list = runner.invoke(
