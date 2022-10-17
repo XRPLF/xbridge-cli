@@ -170,6 +170,15 @@ class BridgeConfig(ConfigItem):
     signature_reward: str
     create_account_amounts: Tuple[str, str]
 
+    def get_clients(self: BridgeConfig) -> Tuple[JsonRpcClient, JsonRpcClient]:
+        """
+        Get the clients for the chains associated with the bridge.
+
+        Returns:
+            The clients for the chains associated with the bridge.
+        """
+        return (JsonRpcClient(self.chains[0]), JsonRpcClient(self.chains[1]))
+
     def get_bridge(self: BridgeConfig) -> XChainBridge:
         """
         Get the XChainBridge object associated with the bridge.

@@ -19,7 +19,7 @@ from xrpl.utils import drops_to_xrp, xrp_to_drops
 from xrpl.wallet import Wallet
 
 from sidechain_cli.exceptions import AttestationTimeoutException, SidechainCLIException
-from sidechain_cli.utils import get_config, submit_tx
+from sidechain_cli.utils import get_config, is_external_chain, submit_tx
 
 _ATTESTATION_TIME_LIMIT = 10  # in seconds
 _WAIT_STEP_LENGTH = 0.05
@@ -115,13 +115,26 @@ def create_xchain_account(
             attestations.
     """  # noqa: D301
     bridge_config = get_config().get_bridge(bridge)
-    from_chain_config = get_config().get_chain(from_chain)
-    from_client = from_chain_config.get_client()
-    to_chain = [chain for chain in bridge_config.chains if chain != from_chain][0]
-    to_chain_config = get_config().get_chain(to_chain)
-    to_client = to_chain_config.get_client()
+    locking_client, issuing_client = bridge_config.get_clients()
+    if is_external_chain(from_chain):
+        from_url = from_chain
+    else:
+        from_config = get_config().get_chain(from_chain)
+        from_url = f"http://{from_config.http_ip}:{from_config.http_port}"
+    if locking_client.url == from_url:
+        from_client = locking_client
+        to_client = issuing_client
+        from_locking = True
+    elif issuing_client.url == from_url:
+        from_client = issuing_client
+        to_client = locking_client
+        from_locking = False
+    else:
+        raise SidechainCLIException(
+            f"{from_chain} is not one of the chains in {bridge}."
+        )
     min_create_account_amount = bridge_config.create_account_amounts[
-        bridge_config.chains.index(from_chain)
+        0 if from_locking else 1
     ]
 
     if min_create_account_amount is None:

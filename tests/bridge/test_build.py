@@ -65,7 +65,7 @@ class TestBridgeBuild:
 
         expected_result = {
             "name": "test_bridge",
-            "chains": ["locking_chain", "issuing_chain"],
+            "chains": ["http://0.0.0.0:5005", "http://0.0.0.0:5006"],
             "num_witnesses": 5,
             "door_accounts": [
                 bootstrap["LockingChain"]["DoorAccount"]["Address"],
@@ -150,9 +150,27 @@ class TestBridgeBuild:
                 "--verbose",
             ],
         )
+        thread.cancel()
         assert runner_result.exit_code == 0, runner_result.output
 
-        thread.cancel()
+        # check that the bridge was added properly to the CLI config file
+        with open(_CONFIG_FILE) as f:
+            config_result = json.load(f)
+
+        expected_result = {
+            "name": "test_bridge",
+            "chains": ["http://0.0.0.0:5005", "http://0.0.0.0:5006"],
+            "num_witnesses": 5,
+            "door_accounts": [
+                bootstrap["LockingChain"]["DoorAccount"]["Address"],
+                bootstrap["IssuingChain"]["DoorAccount"]["Address"],
+            ],
+            "xchain_currencies": ["XRP", "XRP"],
+            "signature_reward": "100",
+            "create_account_amounts": ["5000000", "5000000"],
+        }
+
+        assert config_result["bridges"][0] == expected_result
 
         locking_client = JsonRpcClient(locking_url)
         issuing_client = JsonRpcClient(issuing_url)

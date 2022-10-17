@@ -70,10 +70,6 @@ def _sign_attestation(
     return signed_attestation
 
 
-def _is_external_chain(chain: str) -> bool:
-    return "http" in chain or "ws" in chain
-
-
 @click.command(name="build")
 @click.option(
     "--name",

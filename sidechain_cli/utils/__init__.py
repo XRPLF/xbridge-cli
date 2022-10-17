@@ -21,6 +21,7 @@ from sidechain_cli.utils.config_utils import (
     remove_server,
     remove_witness,
 )
+from sidechain_cli.utils.misc import is_external_chain
 from sidechain_cli.utils.rippled_config import RippledConfig
 from sidechain_cli.utils.transaction import submit_tx
 from sidechain_cli.utils.types import (
@@ -44,6 +45,7 @@ __all__ = [
     "remove_chain",
     "remove_server",
     "remove_witness",
+    "is_external_chain",
     "submit_tx",
     "BridgeData",
     "ChainData",

@@ -17,7 +17,7 @@ from xrpl.models import (
 from xrpl.wallet import Wallet
 
 from sidechain_cli.exceptions import AttestationTimeoutException, SidechainCLIException
-from sidechain_cli.utils import get_config, submit_tx
+from sidechain_cli.utils import get_config, is_external_chain, submit_tx
 
 _ATTESTATION_TIME_LIMIT = 10  # in seconds
 _WAIT_STEP_LENGTH = 0.05
@@ -114,8 +114,22 @@ def send_transfer(
     """  # noqa: D301
     print_level = max(verbose, 2 if tutorial else 0)
     bridge_config = get_config().get_bridge(bridge)
-    if src_chain not in bridge_config.chains:
-        raise SidechainCLIException(f"{src_chain} not one of the chains in {bridge}.")
+    locking_client, issuing_client = bridge_config.get_clients()
+    if is_external_chain(src_chain):
+        from_url = src_chain
+    else:
+        from_config = get_config().get_chain(src_chain)
+        from_url = f"http://{from_config.http_ip}:{from_config.http_port}"
+    if locking_client.url == from_url:
+        src_client = locking_client
+        dst_client = issuing_client
+    elif issuing_client.url == from_url:
+        src_client = issuing_client
+        dst_client = locking_client
+    else:
+        raise SidechainCLIException(
+            f"{src_chain} is not one of the chains in {bridge}."
+        )
 
     try:
         from_wallet = Wallet(from_account, 0)
@@ -125,12 +139,6 @@ def send_transfer(
         to_wallet = Wallet(to_account, 0)
     except ValueError:
         raise SidechainCLIException(f"Invalid `to` seed: {to_account}")
-
-    dst_chain = [chain for chain in bridge_config.chains if chain != src_chain][0]
-    src_chain_config = get_config().get_chain(src_chain)
-    dst_chain_config = get_config().get_chain(dst_chain)
-    src_client = src_chain_config.get_client()
-    dst_client = dst_chain_config.get_client()
 
     bridge_obj = bridge_config.get_bridge()
 
