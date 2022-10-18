@@ -30,8 +30,8 @@ jobs:
           path: ~/.local
           key: dotlocal-${{ runner.os }}-${{ hashFiles('.github/workflows/unit_test.yml') }}
 
-      - name: Install Poetry
-        uses: snok/install-poetry@v1
+      - name: Install poetry
+        run: pipx install poetry
 
       - name: Retrieve poetry dependencies from cache
         uses: actions/setup-python@v4
