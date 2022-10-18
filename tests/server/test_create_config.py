@@ -1,10 +1,13 @@
 import os
 
+from click.testing import CliRunner
+
 from sidechain_cli.main import main
 
 
 class TestBasicCreation:
-    def test_create_config(self, runner):
+    def test_create_config(self):
+        runner = CliRunner()
         tempdir = os.getenv("XCHAIN_CONFIG_DIR")
         create_result = runner.invoke(main, ["server", "create-config", "all"])
         assert create_result.exit_code == 0
