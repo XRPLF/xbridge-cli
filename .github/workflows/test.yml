@@ -46,4 +46,4 @@ jobs:
         env:
           RIPPLED_EXE: docker
           WITNESSD_EXE: docker
-          GITHUB_CI: True
+          GITHUB_CI: "True"

@@ -36,6 +36,7 @@ def pytest_configure(config):
         env_vars.start()
         mocked_vars.append(env_vars)
 
+    print(os.environ)
     if os.getenv("GITHUB_CI") != "True":
         home_dir = tempfile.TemporaryDirectory()
         config_var = unittest.mock.patch(
