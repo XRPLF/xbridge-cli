@@ -10,9 +10,10 @@ import pytest
 from click.testing import CliRunner
 
 from sidechain_cli.main import main
+from sidechain_cli.utils import get_config_folder
 
 config_dir: Optional[tempfile.TemporaryDirectory] = None
-home_dir: Optional[tempfile.TemporaryDirectory] = None
+mocked_home_dir: Optional[tempfile.TemporaryDirectory] = None
 mocked_vars: List[Any] = []
 
 
@@ -21,7 +22,7 @@ def pytest_configure(config):
     Called after the Session object has been created and
     before performing collection and entering the run test loop.
     """
-    global home_dir, config_dir, mocked_vars
+    global mocked_home_dir, config_dir, mocked_vars
     runner = CliRunner()
     runner.invoke(main, ["server", "stop", "--all"])
 
@@ -36,17 +37,16 @@ def pytest_configure(config):
         env_vars.start()
         mocked_vars.append(env_vars)
 
-    print(os.environ)
     if os.getenv("GITHUB_CI") != "True":
-        home_dir = tempfile.TemporaryDirectory()
+        mocked_home_dir = tempfile.TemporaryDirectory()
         config_var = unittest.mock.patch(
             "sidechain_cli.utils.config_file.CONFIG_FOLDER",
-            home_dir.name,
+            mocked_home_dir.name,
         )
         config_var.start()
         mocked_vars.append(config_var)
 
-        config_file = os.path.join(home_dir.name, "config.json")
+        config_file = os.path.join(mocked_home_dir.name, "config.json")
         with open(config_file, "w") as f:
             data: Dict[str, List[Any]] = {"chains": [], "witnesses": [], "bridges": []}
             json.dump(data, f, indent=4)
@@ -72,7 +72,7 @@ def pytest_unconfigure(config):
 @pytest.fixture(scope="class")
 def runner():
     # reset CLI config file
-    config_file = os.path.join(home_dir.name, "config.json")
+    config_file = os.path.join(get_config_folder(), "config.json")
     os.remove(config_file)
     with open(config_file, "w") as f:
         data = {"chains": [], "witnesses": [], "bridges": []}
@@ -98,7 +98,7 @@ def runner():
 @pytest.fixture(scope="class")
 def create_bridge():
     # reset CLI config file
-    config_file = os.path.join(home_dir.name, "config.json")
+    config_file = os.path.join(get_config_folder(), "config.json")
     os.remove(config_file)
     with open(config_file, "w") as f:
         data = {"chains": [], "witnesses": [], "bridges": []}
@@ -168,7 +168,7 @@ def create_bridge():
 @pytest.fixture(scope="class")
 def bridge_build_setup():
     # reset CLI config file
-    config_file = os.path.join(home_dir.name, "config.json")
+    config_file = os.path.join(get_config_folder(), "config.json")
     os.remove(config_file)
     with open(config_file, "w") as f:
         data = {"chains": [], "witnesses": [], "bridges": []}
