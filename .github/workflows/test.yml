@@ -1,0 +1,55 @@
+name: Test
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    paths-ignore:
+      - 'docs/**'
+      - '**.md'
+      - '.vscode/**'
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python 3.x
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+
+      - name: Display Python version
+        run: |
+          python -c "import sys; print(sys.version)"
+
+      - name: Install poetry
+        run: pipx install poetry
+
+      - name: Retrieve poetry dependencies from cache
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+          cache: 'poetry'
+
+      - name: Install poetry dependencies
+        run: poetry install
+
+      - name: Test docker-compose
+      - run: docker compose -f docker/docker-compose.yml up
+
+      # - name: Run tests
+      #   run: |
+      #     poetry run sidechain-cli server create-config all
+      #     poetry run coverage run -m unittest discover tests
+      #   env:
+      #     RIPPLED_EXE: ./rippled/my_build/rippled
+      #     # version of rippled to run on the sidechain
+      #     WITNESSD_EXE: ./xbridge_witness/my_build/xbridge_witnessd
+      #     # directory to store all the sidechain config stuff in
+      #     XCHAIN_CONFIG_DIR: ./sidechain-config
