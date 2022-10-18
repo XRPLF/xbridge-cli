@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "xrpl-sidechain-cli"
-version = "1.0.0-beta.0"
+version = "1.0.0b1"
 description = "A CLI that helps you set up an XRPL sidechain."
 readme = "README.md"
 repository = "https://github.com/xpring-eng/sidechain-cli"
