@@ -42,7 +42,7 @@ jobs:
 
       - name: Run tests
         run: |
-          poetry run coverage run -m pytest tests/misc/test_explorer.py
+          poetry run coverage run -m pytest tests/misc -svv
         env:
           RIPPLED_EXE: docker
           WITNESSD_EXE: docker
