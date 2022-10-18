@@ -24,10 +24,10 @@ jobs:
         run: |
           python -c "import sys; print(sys.version)"
 
-      - name: Load cached $HOME/.local
+      - name: Load cached .local
         uses: actions/cache@v3
         with:
-          path: ~/.local
+          path: /home/runner/.local
           key: dotlocal-${{ runner.os }}-${{ hashFiles('.github/workflows/unit_test.yml') }}
 
       - name: Install poetry
