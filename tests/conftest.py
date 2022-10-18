@@ -26,7 +26,9 @@ def pytest_configure(config):
     runner = CliRunner()
     runner.invoke(main, ["server", "stop", "--all"])
 
+    print("before everything")
     if os.getenv("RIPPLED_EXE") != "docker" and os.getenv("WITNESSD_EXE") != "docker":
+        print("shouldn't get this 1")
         config_dir = tempfile.TemporaryDirectory()
         env_vars = unittest.mock.patch.dict(
             os.environ,
@@ -37,7 +39,10 @@ def pytest_configure(config):
         env_vars.start()
         mocked_vars.append(env_vars)
 
+    print("before mocking the other stuff")
+    print(os.getenv("GITHUB_CI"), type(os.getenv("GITHUB_CI")))
     if os.getenv("GITHUB_CI") != "True":
+        print("shouldn't get this 2")
         mocked_home_dir = tempfile.TemporaryDirectory()
         config_var = unittest.mock.patch(
             "sidechain_cli.utils.config_file.CONFIG_FOLDER",
@@ -56,6 +61,8 @@ def pytest_configure(config):
         )
         config_var2.start()
         mocked_vars.append(config_var2)
+
+    print("done with setup")
 
 
 def pytest_unconfigure(config):
