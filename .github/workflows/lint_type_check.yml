@@ -28,7 +28,7 @@ jobs:
         uses: actions/cache@v3
         with:
           path: /home/runner/.local
-          key: dotlocal-${{ runner.os }}-${{ hashFiles('.github/workflows/lint_type_check.yml') }}
+          key: dotlocal-${{ hashFiles('.github/workflows/lint_type_check.yml') }}
 
       - name: Install poetry
         run: |
