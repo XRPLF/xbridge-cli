@@ -36,24 +36,25 @@ def pytest_configure(config):
         env_vars.start()
         mocked_vars.append(env_vars)
 
-    home_dir = tempfile.TemporaryDirectory()
-    config_var = unittest.mock.patch(
-        "sidechain_cli.utils.config_file.CONFIG_FOLDER",
-        home_dir.name,
-    )
-    config_var.start()
-    mocked_vars.append(config_var)
+    if os.getenv("GITHUB_CI") != "True":
+        home_dir = tempfile.TemporaryDirectory()
+        config_var = unittest.mock.patch(
+            "sidechain_cli.utils.config_file.CONFIG_FOLDER",
+            home_dir.name,
+        )
+        config_var.start()
+        mocked_vars.append(config_var)
 
-    config_file = os.path.join(home_dir.name, "config.json")
-    with open(config_file, "w") as f:
-        data: Dict[str, List[Any]] = {"chains": [], "witnesses": [], "bridges": []}
-        json.dump(data, f, indent=4)
-    config_var2 = unittest.mock.patch(
-        "sidechain_cli.utils.config_file._CONFIG_FILE",
-        config_file,
-    )
-    config_var2.start()
-    mocked_vars.append(config_var2)
+        config_file = os.path.join(home_dir.name, "config.json")
+        with open(config_file, "w") as f:
+            data: Dict[str, List[Any]] = {"chains": [], "witnesses": [], "bridges": []}
+            json.dump(data, f, indent=4)
+        config_var2 = unittest.mock.patch(
+            "sidechain_cli.utils.config_file._CONFIG_FILE",
+            config_file,
+        )
+        config_var2.start()
+        mocked_vars.append(config_var2)
 
 
 def pytest_unconfigure(config):
