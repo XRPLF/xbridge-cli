@@ -1,6 +1,5 @@
 import json
 import os
-import shutil
 import tempfile
 import time
 import unittest
@@ -26,14 +25,16 @@ def pytest_configure(config):
     runner = CliRunner()
     runner.invoke(main, ["server", "stop", "--all"])
 
-    config_dir = tempfile.TemporaryDirectory()
-    env_vars = unittest.mock.patch.dict(
-        os.environ,
-        {
-            "XCHAIN_CONFIG_DIR": config_dir.name,
-        },
-    )
-    env_vars.start()
+    if os.getenv("RIPPLED_EXE") != "docker" and os.getenv("WITNESSD_EXE") != "docker":
+        config_dir = tempfile.TemporaryDirectory()
+        env_vars = unittest.mock.patch.dict(
+            os.environ,
+            {
+                "XCHAIN_CONFIG_DIR": config_dir.name,
+            },
+        )
+        env_vars.start()
+        mocked_vars.append(env_vars)
 
     home_dir = tempfile.TemporaryDirectory()
     config_var = unittest.mock.patch(
@@ -41,6 +42,7 @@ def pytest_configure(config):
         home_dir.name,
     )
     config_var.start()
+    mocked_vars.append(config_var)
 
     config_file = os.path.join(home_dir.name, "config.json")
     with open(config_file, "w") as f:
@@ -50,9 +52,8 @@ def pytest_configure(config):
         "sidechain_cli.utils.config_file._CONFIG_FILE",
         config_file,
     )
-
     config_var2.start()
-    mocked_vars.extend([env_vars, config_var, config_var2])
+    mocked_vars.append(config_var2)
 
 
 def pytest_unconfigure(config):
@@ -60,10 +61,10 @@ def pytest_unconfigure(config):
     Called after whole test run finished, right before
     returning the exit status to the system.
     """
+    global mocked_vars
     for var in mocked_vars:
         var.stop()
-    shutil.rmtree(home_dir.name)
-    shutil.rmtree(config_dir.name)
+    mocked_vars = []
 
 
 @pytest.fixture(scope="class")

@@ -295,7 +295,7 @@ def start_all_servers(
             name_list = [name for (name, _) in chains]
             to_run = [*_DOCKER_COMPOSE, "up", *name_list]
 
-            process, output_file = _run_process(to_run, name)
+            process, output_file = _run_process(to_run, "docker-rippled")
 
             for name, config in chains:
                 config_object = RippledConfig(file_name=config)
@@ -333,7 +333,7 @@ def start_all_servers(
             name_list = [name for (name, _) in witnesses]
             to_run = [*_DOCKER_COMPOSE, "up", *name_list]
 
-            process, output_file = _run_process(to_run, name)
+            process, output_file = _run_process(to_run, "docker-witness")
 
             for name, config in witnesses:
                 with open(config) as f:
