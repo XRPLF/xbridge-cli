@@ -57,7 +57,7 @@ def _wait_for_process(
             request = {"method": "server_info"}
             httpx.post(http_url, json=request)
             return
-        except (httpx.ConnectError, httpx.RemoteProtocolError):
+        except (httpx.ConnectError, httpx.RemoteProtocolError, httpx.ReadError):
             time.sleep(_WAIT_INCREMENT)
             time_waited += _WAIT_INCREMENT
     if process.poll() is not None:
