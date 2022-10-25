@@ -17,6 +17,13 @@ mocked_home_dir: Optional[tempfile.TemporaryDirectory] = None
 mocked_vars: List[Any] = []
 
 
+def _is_docker():
+    """Whether tests are running on docker."""
+    return (
+        os.getenv("RIPPLED_EXE") == "docker" and os.getenv("WITNESSD_EXE") == "docker"
+    )
+
+
 def pytest_configure(config):
     """
     Called after the Session object has been created and
@@ -27,7 +34,7 @@ def pytest_configure(config):
     runner.invoke(main, ["server", "stop", "--all"])
 
     print("before everything")
-    if os.getenv("RIPPLED_EXE") != "docker" and os.getenv("WITNESSD_EXE") != "docker":
+    if not _is_docker():
         print("shouldn't get this 1")
         config_dir = tempfile.TemporaryDirectory()
         env_vars = unittest.mock.patch.dict(
@@ -88,7 +95,10 @@ def runner():
     cli_runner = CliRunner()
 
     # create config files
-    result = cli_runner.invoke(main, ["server", "create-config", "all", "--docker"])
+    params = ["server", "create-config", "all"]
+    if _is_docker():
+        params.append("--docker")
+    result = cli_runner.invoke(main, params)
     assert result.exit_code == 0
 
     # start servers
@@ -114,7 +124,10 @@ def create_bridge():
     cli_runner = CliRunner()
 
     # create config files
-    result = cli_runner.invoke(main, ["server", "create-config", "all"])
+    params = ["server", "create-config", "all"]
+    if _is_docker():
+        params.append("--docker")
+    result = cli_runner.invoke(main, params)
     assert result.exit_code == 0
 
     # start rippled servers
