@@ -88,7 +88,7 @@ def runner():
     cli_runner = CliRunner()
 
     # create config files
-    result = cli_runner.invoke(main, ["server", "create-config", "all"])
+    result = cli_runner.invoke(main, ["server", "create-config", "all", "--docker"])
     assert result.exit_code == 0
 
     import subprocess
