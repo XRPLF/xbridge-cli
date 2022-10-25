@@ -44,7 +44,7 @@ def _generate_standalone_config(
         sub_dir = "/var/lib/rippled"
         cfg_dir = f"{abs_config_dir}/{cfg_type}"
         for path in [""]:
-            dirpath = Path(sub_dir + path)
+            dirpath = Path(cfg_dir + path)
             if dirpath.exists():
                 if dirpath.is_dir():
                     shutil.rmtree(dirpath)
