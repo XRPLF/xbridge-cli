@@ -17,63 +17,63 @@ mocked_home_dir: Optional[tempfile.TemporaryDirectory] = None
 mocked_vars: List[Any] = []
 
 
-# def pytest_configure(config):
-#     """
-#     Called after the Session object has been created and
-#     before performing collection and entering the run test loop.
-#     """
-#     global mocked_home_dir, config_dir, mocked_vars
-#     runner = CliRunner()
-#     runner.invoke(main, ["server", "stop", "--all"])
+def pytest_configure(config):
+    """
+    Called after the Session object has been created and
+    before performing collection and entering the run test loop.
+    """
+    global mocked_home_dir, config_dir, mocked_vars
+    runner = CliRunner()
+    runner.invoke(main, ["server", "stop", "--all"])
 
-#     print("before everything")
-#     if os.getenv("RIPPLED_EXE") != "docker" and os.getenv("WITNESSD_EXE") != "docker":
-#         print("shouldn't get this 1")
-#         config_dir = tempfile.TemporaryDirectory()
-#         env_vars = unittest.mock.patch.dict(
-#             os.environ,
-#             {
-#                 "XCHAIN_CONFIG_DIR": config_dir.name,
-#             },
-#         )
-#         env_vars.start()
-#         mocked_vars.append(env_vars)
+    print("before everything")
+    if os.getenv("RIPPLED_EXE") != "docker" and os.getenv("WITNESSD_EXE") != "docker":
+        print("shouldn't get this 1")
+        config_dir = tempfile.TemporaryDirectory()
+        env_vars = unittest.mock.patch.dict(
+            os.environ,
+            {
+                "XCHAIN_CONFIG_DIR": config_dir.name,
+            },
+        )
+        env_vars.start()
+        mocked_vars.append(env_vars)
 
-#     print("before mocking the other stuff")
-#     print(os.getenv("GITHUB_CI"), type(os.getenv("GITHUB_CI")))
-#     if os.getenv("GITHUB_CI") != "True":
-#         print("shouldn't get this 2")
-#         mocked_home_dir = tempfile.TemporaryDirectory()
-#         config_var = unittest.mock.patch(
-#             "sidechain_cli.utils.config_file.CONFIG_FOLDER",
-#             mocked_home_dir.name,
-#         )
-#         config_var.start()
-#         mocked_vars.append(config_var)
+    print("before mocking the other stuff")
+    print(os.getenv("GITHUB_CI"), type(os.getenv("GITHUB_CI")))
+    if os.getenv("GITHUB_CI") != "True":
+        print("shouldn't get this 2")
+        mocked_home_dir = tempfile.TemporaryDirectory()
+        config_var = unittest.mock.patch(
+            "sidechain_cli.utils.config_file.CONFIG_FOLDER",
+            mocked_home_dir.name,
+        )
+        config_var.start()
+        mocked_vars.append(config_var)
 
-#         config_file = os.path.join(mocked_home_dir.name, "config.json")
-#         with open(config_file, "w") as f:
-#             data: Dict[str, List[Any]] = {"chains": [], "witnesses": [], "bridges": []}
-#             json.dump(data, f, indent=4)
-#         config_var2 = unittest.mock.patch(
-#             "sidechain_cli.utils.config_file._CONFIG_FILE",
-#             config_file,
-#         )
-#         config_var2.start()
-#         mocked_vars.append(config_var2)
+        config_file = os.path.join(mocked_home_dir.name, "config.json")
+        with open(config_file, "w") as f:
+            data: Dict[str, List[Any]] = {"chains": [], "witnesses": [], "bridges": []}
+            json.dump(data, f, indent=4)
+        config_var2 = unittest.mock.patch(
+            "sidechain_cli.utils.config_file._CONFIG_FILE",
+            config_file,
+        )
+        config_var2.start()
+        mocked_vars.append(config_var2)
 
-#     print("done with setup")
+    print("done with setup")
 
 
-# def pytest_unconfigure(config):
-#     """
-#     Called after whole test run finished, right before
-#     returning the exit status to the system.
-#     """
-#     global mocked_vars
-#     for var in mocked_vars:
-#         var.stop()
-#     mocked_vars = []
+def pytest_unconfigure(config):
+    """
+    Called after whole test run finished, right before
+    returning the exit status to the system.
+    """
+    global mocked_vars
+    for var in mocked_vars:
+        var.stop()
+    mocked_vars = []
 
 
 @pytest.fixture(scope="class")
