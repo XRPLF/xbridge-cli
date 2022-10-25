@@ -222,6 +222,14 @@ def generate_witness_config(
     if docker:
         sub_dir = "/opt/witness"
         cfg_dir = f"{abs_config_dir}/{name}"
+        for path in [""]:
+            dirpath = Path(cfg_dir + path)
+            if dirpath.exists():
+                if dirpath.is_dir():
+                    shutil.rmtree(dirpath)
+                else:
+                    os.remove(dirpath)
+            dirpath.mkdir(parents=True)
     else:
         sub_dir = f"{abs_config_dir}/{name}"
         cfg_dir = sub_dir
