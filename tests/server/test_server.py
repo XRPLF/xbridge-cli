@@ -131,14 +131,15 @@ class TestServer:
             with open(os.path.join(CONFIG_FOLDER, "issuing_chain.out"), "r") as f:
                 expected1 = f.read()
 
-        config_dir = os.path.abspath(os.getenv("XCHAIN_CONFIG_DIR"))
-        with open(os.path.join(config_dir, "issuing_chain", "debug.log")) as f:
-            expected2 = f.read()
-
         assert server_list.output == expected1
 
-        lines = server_list.output.split("\n")
-        assert "\n".join(lines[3:]) in expected2
+        if os.getenv("RIPPLED_EXE") != "docker":
+            config_dir = os.path.abspath(os.getenv("XCHAIN_CONFIG_DIR"))
+            with open(os.path.join(config_dir, "issuing_chain", "debug.log")) as f:
+                expected2 = f.read()
+
+            lines = server_list.output.split("\n")
+            assert "\n".join(lines[3:]) in expected2
 
     def test_print_witness(self, runner):
         server_list = runner.invoke(main, ["server", "print", "--name", "witness0"])
