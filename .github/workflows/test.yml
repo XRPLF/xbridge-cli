@@ -46,7 +46,6 @@ jobs:
 
       - name: Run tests
         run: |
-          pwd
           poetry run coverage run -m pytest tests/misc -svv
         env:
           RIPPLED_EXE: docker
