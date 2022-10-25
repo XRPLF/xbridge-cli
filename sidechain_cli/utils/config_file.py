@@ -18,7 +18,6 @@ from sidechain_cli.exceptions import SidechainCLIException
 from sidechain_cli.utils.rippled_config import RippledConfig
 from sidechain_cli.utils.types import Currency, ServerData
 
-_DOCKER_CLIENT = docker.from_env()
 _HOME = str(Path.home())
 
 CONFIG_FOLDER = os.path.join(_HOME, ".config", "sidechain-cli")
@@ -220,7 +219,8 @@ def _get_running_processes(servers: List[S]) -> List[S]:
         if process.status() == psutil.STATUS_ZOMBIE:
             continue
         if server["exe"] == "docker":
-            container = _DOCKER_CLIENT.containers.get(server["name"])
+            docker_client = docker.from_env()
+            container = docker_client.containers.get(server["name"])
             if container.status != "running":
                 continue
         return_list.append(server)
