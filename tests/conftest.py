@@ -89,10 +89,12 @@ def runner():
 
     # create config files
     result = cli_runner.invoke(main, ["server", "create-config", "all", "--docker"])
+    print(result.output)
+    import traceback
+    traceback.print_exception(*result.exc_info)
     assert result.exit_code == 0
 
     import subprocess
-
     subprocess.call(["ls", os.path.join(os.getenv("XCHAIN_CONFIG_DIR"), "witness0")])
     with open(os.path.join(os.getenv("XCHAIN_CONFIG_DIR"), "witness0", "witness.json")) as f:
         print(os.path.join(os.getenv("XCHAIN_CONFIG_DIR"), "witness0", "witness.json"))
@@ -103,7 +105,6 @@ def runner():
     start_result = cli_runner.invoke(main, ["server", "start-all", "--verbose"])
     print(start_result.output)
     import traceback
-
     traceback.print_exception(*start_result.exc_info)
     assert start_result.exit_code == 0, start_result.output
 
