@@ -126,7 +126,9 @@ class TestServer:
             main, ["server", "print", "--name", "issuing_chain"]
         )
         if os.getenv("RIPPLED_EXE") == "docker":
-            expected1 = subprocess.check_output(["docker", "logs", "issuing_chain"])
+            expected1 = subprocess.check_output(
+                ["docker", "logs", "issuing_chain"]
+            ).decode("utf-8")
         else:
             with open(os.path.join(CONFIG_FOLDER, "issuing_chain.out"), "r") as f:
                 expected1 = f.read()
@@ -145,7 +147,9 @@ class TestServer:
         server_list = runner.invoke(main, ["server", "print", "--name", "witness0"])
 
         if os.getenv("RIPPLED_EXE") == "docker":
-            expected = subprocess.check_output(["docker", "logs", "witness0"])
+            expected = subprocess.check_output(["docker", "logs", "witness0"]).decode(
+                "utf-8"
+            )
         else:
             with open(os.path.join(CONFIG_FOLDER, "witness0.out"), "r") as f:
                 expected = f.read()
