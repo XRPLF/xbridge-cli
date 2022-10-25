@@ -94,7 +94,8 @@ def runner():
     import subprocess
 
     subprocess.call(["ls", os.path.join(os.getenv("XCHAIN_CONFIG_DIR"), "witness0")])
-    with open(os.path.join(os.getenv("XCHAIN_CONFIG_DIR"), "witness0", "db")) as f:
+    with open(os.path.join(os.getenv("XCHAIN_CONFIG_DIR"), "witness0", "witness.json")) as f:
+        print(os.path.join(os.getenv("XCHAIN_CONFIG_DIR"), "witness0", "witness.json"))
         from pprint import pprint
         pprint(json.load(f))
 
