@@ -43,8 +43,10 @@ jobs:
 
       - name: Run tests
         run: |
+          pwd
           poetry run coverage run -m pytest tests/misc -svv
         env:
           RIPPLED_EXE: docker
           WITNESSD_EXE: docker
+          XCHAIN_CONFIG_DIR: /home/runner/work/sidechain-config
           GITHUB_CI: "True"
