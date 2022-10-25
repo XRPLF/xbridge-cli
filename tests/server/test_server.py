@@ -166,7 +166,7 @@ class TestServer:
 
     def test_request(self, runner):
         result = runner.invoke(
-            main, ["server", "request", "--name", "locking_chain", "ping"]
+            main, ["server", "request", "--name", "issuing_chain", "ping"]
         )
         import traceback
 
