@@ -93,6 +93,10 @@ def runner():
 
     # start servers
     start_result = cli_runner.invoke(main, ["server", "start-all", "--verbose"])
+    print(start_result.output)
+    import traceback
+
+    traceback.print_exc(*start_result.exc_info)
     assert start_result.exit_code == 0, start_result.output
 
     yield cli_runner
