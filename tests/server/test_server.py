@@ -22,8 +22,8 @@ class TestServer:
         lines = server_list.output.split("\n")
         assert lines[0] == "Chains:"
         assert re.match(
-            r"^ +name +\| +pid +\| +exe +\| +config +\| +ws_ip +\| +ws_port +\| +"
-            r"http_ip +\| +http_port *$",
+            r"^ +name +\| +pid +\| +exe +\| +config +\| +http_ip +\| +http_port +\| +"
+            r"ws_ip +\| +ws_port *$",
             lines[1],
         )
         assert re.match(r"^-+\+-+\+-+\+-+\+-+\+-+\+-+\+-+$", lines[2])
@@ -45,7 +45,7 @@ class TestServer:
 
         assert lines[6] == "Witnesses:"
         assert re.match(
-            r"^ +name +\| +pid +\| +exe +\| +config +\| *ip *\| *rpc_port *$",
+            r"^ +name +\| +pid +\| +exe +\| +config +\| *http_ip *\| *http_port *$",
             lines[7],
         )
         assert re.match(r"^-+\+-+\+-+\+-+\+-+\+-+$", lines[8])
@@ -169,6 +169,7 @@ class TestServer:
             main, ["server", "request", "--name", "locking_chain", "ping"]
         )
         import traceback
+
         traceback.print_exception(*result.exc_info)
         assert result.exit_code == 0
 
