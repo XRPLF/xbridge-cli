@@ -8,6 +8,7 @@ import time
 import psutil
 import pytest
 
+import docker
 from sidechain_cli.main import main
 from sidechain_cli.server.start import _DOCKER_COMPOSE
 from sidechain_cli.utils import get_config
@@ -86,16 +87,22 @@ class TestServer:
         if os.getenv("WITNESSD_EXE") == "docker":
             to_run = [*_DOCKER_COMPOSE, "stop", process_to_kill]
             subprocess.run(to_run, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            docker_client = docker.from_env()
+            try:
+                container = docker_client.containers.get(process_to_kill)
+                assert container.status != "running"
+            except docker.errors.NotFound:
+                assert True
         else:
             witness = get_config().get_witness(process_to_kill)
             os.kill(witness.pid, signal.SIGINT)
-        time.sleep(0.2)  # wait for process to die
 
-        process = psutil.Process(pid=witness.pid)
-        assert (
-            not psutil.pid_exists(witness.pid)
-            or process.status() == psutil.STATUS_ZOMBIE
-        )
+            process = psutil.Process(pid=witness.pid)
+            assert (
+                not psutil.pid_exists(witness.pid)
+                or process.status() == psutil.STATUS_ZOMBIE
+            )
+        time.sleep(0.2)  # wait for process to die
 
         final_list = runner.invoke(main, ["server", "list"])
         assert process_to_kill not in final_list.output
@@ -119,7 +126,7 @@ class TestServer:
             main, ["server", "print", "--name", "issuing_chain"]
         )
         if os.getenv("RIPPLED_EXE") == "docker":
-            expected1 = subprocess.check_output("docker", "logs", "issuing_chain")
+            expected1 = subprocess.check_output(["docker", "logs", "issuing_chain"])
         else:
             with open(os.path.join(CONFIG_FOLDER, "issuing_chain.out"), "r") as f:
                 expected1 = f.read()
@@ -137,7 +144,7 @@ class TestServer:
         server_list = runner.invoke(main, ["server", "print", "--name", "witness0"])
 
         if os.getenv("RIPPLED_EXE") == "docker":
-            expected = subprocess.check_output("docker", "logs", "witness0")
+            expected = subprocess.check_output(["docker", "logs", "witness0"])
         else:
             with open(os.path.join(CONFIG_FOLDER, "witness0.out"), "r") as f:
                 expected = f.read()
