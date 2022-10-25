@@ -91,6 +91,10 @@ def runner():
     result = cli_runner.invoke(main, ["server", "create-config", "all"])
     assert result.exit_code == 0
 
+    import subprocess
+
+    subprocess.call(["ls", os.getenv("XCHAIN_CONFIG_DIR")])
+
     # start servers
     start_result = cli_runner.invoke(main, ["server", "start-all", "--verbose"])
     print(start_result.output)
