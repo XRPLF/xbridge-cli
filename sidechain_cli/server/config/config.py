@@ -43,6 +43,14 @@ def _generate_standalone_config(
     if docker:
         sub_dir = "/var/lib/rippled"
         cfg_dir = f"{abs_config_dir}/{cfg_type}"
+        for path in [""]:
+            dirpath = Path(sub_dir + path)
+            if dirpath.exists():
+                if dirpath.is_dir():
+                    shutil.rmtree(dirpath)
+                else:
+                    os.remove(dirpath)
+            dirpath.mkdir(parents=True)
     else:
         sub_dir = f"{abs_config_dir}/{cfg_type}"
         cfg_dir = sub_dir
