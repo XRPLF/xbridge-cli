@@ -9,11 +9,10 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Literal, Tuple, Type, TypeVar, Union, cast
 
-import psutil
+import httpx
 from xrpl.clients import JsonRpcClient
 from xrpl.models import IssuedCurrency, XChainBridge
 
-import docker
 from sidechain_cli.exceptions import SidechainCLIException
 from sidechain_cli.utils.rippled_config import RippledConfig
 from sidechain_cli.utils.types import Currency, ServerData
@@ -75,6 +74,8 @@ class ServerConfig(ConfigItem):
     pid: int
     exe: str
     config: str
+    http_ip: str
+    http_port: int
 
     def is_docker(self: ServerConfig) -> bool:
         """
@@ -92,8 +93,6 @@ class ChainConfig(ServerConfig):
 
     ws_ip: str
     ws_port: int
-    http_ip: str
-    http_port: int
 
     @property
     def rippled(self: ChainConfig) -> str:
@@ -127,9 +126,6 @@ class ChainConfig(ServerConfig):
 @dataclass
 class WitnessConfig(ServerConfig):
     """Object representing the config for a witness."""
-
-    ip: str
-    rpc_port: int
 
     @property
     def witnessd(self: WitnessConfig) -> str:
@@ -213,20 +209,19 @@ S = TypeVar("S", bound="ServerData")
 def _get_running_processes(servers: List[S]) -> List[S]:
     return_list = []
     for server in servers:
-        if not psutil.pid_exists(server["pid"]):
+        http_url = f"http://{server['http_ip']}:{server['http_port']}"
+        try:
+            request = {"method": "server_info"}
+            httpx.post(http_url, json=request)
+            return_list.append(server)
             continue
-        process = psutil.Process(pid=server["pid"])
-        if process.status() == psutil.STATUS_ZOMBIE:
+        except (
+            httpx.ConnectError,
+            httpx.RemoteProtocolError,
+            httpx.ReadError,
+            httpx.WriteError,
+        ):
             continue
-        if server["exe"] == "docker":
-            docker_client = docker.from_env()
-            try:
-                container = docker_client.containers.get(server["name"])
-            except docker.errors.NotFound:
-                continue
-            if container.status != "running":
-                continue
-        return_list.append(server)
     return return_list
 
 
