@@ -94,6 +94,9 @@ def runner():
     import subprocess
 
     subprocess.call(["ls", os.path.join(os.getenv("XCHAIN_CONFIG_DIR"), "witness0")])
+    with open(os.path.join(os.getenv("XCHAIN_CONFIG_DIR"), "witness0", "db")) as f:
+        from pprint import pprint
+        pprint(json.load(f))
 
     # start servers
     start_result = cli_runner.invoke(main, ["server", "start-all", "--verbose"])
