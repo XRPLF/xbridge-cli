@@ -43,7 +43,7 @@ def _generate_standalone_config(
     if docker:
         sub_dir = "/var/lib/rippled"
         cfg_dir = f"{abs_config_dir}/{cfg_type}"
-        paths_to_create = [""]
+        paths_to_create = ["", "/db"]
     else:
         sub_dir = f"{abs_config_dir}/{cfg_type}"
         cfg_dir = sub_dir
@@ -217,7 +217,7 @@ def generate_witness_config(
     if docker:
         sub_dir = "/opt/witness"
         cfg_dir = f"{abs_config_dir}/{name}"
-        paths_to_create = [""]
+        paths_to_create = ["", "/db"]
     else:
         sub_dir = f"{abs_config_dir}/{name}"
         cfg_dir = sub_dir
