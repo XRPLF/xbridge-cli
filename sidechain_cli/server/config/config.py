@@ -31,7 +31,7 @@ def _generate_template(
 ) -> None:
     template = JINJA_ENV.get_template(template_name)
 
-    with open(filename, "w") as f:
+    with open(filename, "w+") as f:
         f.write(template.render(template_data))
 
 
