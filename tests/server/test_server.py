@@ -168,6 +168,8 @@ class TestServer:
         result = runner.invoke(
             main, ["server", "request", "--name", "locking_chain", "ping"]
         )
+        import traceback
+        traceback.print_exception(*result.exc_info)
         assert result.exit_code == 0
 
         expected = {"result": {"role": "admin", "status": "success"}}
