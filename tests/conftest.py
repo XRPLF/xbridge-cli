@@ -93,7 +93,7 @@ def runner():
 
     import subprocess
 
-    subprocess.call(["ls", os.getenv("XCHAIN_CONFIG_DIR")])
+    subprocess.call(["ls", os.path.join(os.getenv("XCHAIN_CONFIG_DIR"), "witness0")])
 
     # start servers
     start_result = cli_runner.invoke(main, ["server", "start-all", "--verbose"])
