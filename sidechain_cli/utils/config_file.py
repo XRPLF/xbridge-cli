@@ -220,7 +220,10 @@ def _get_running_processes(servers: List[S]) -> List[S]:
             continue
         if server["exe"] == "docker":
             docker_client = docker.from_env()
-            container = docker_client.containers.get(server["name"])
+            try:
+                container = docker_client.containers.get(server["name"])
+            except docker.errors.NotFound:
+                continue
             if container.status != "running":
                 continue
         return_list.append(server)
