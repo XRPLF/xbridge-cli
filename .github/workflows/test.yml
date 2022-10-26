@@ -47,6 +47,7 @@ jobs:
       - name: Run tests
         run: |
           poetry run coverage run -m pytest tests
+          poetry run coverage report
         env:
           RIPPLED_EXE: docker
           WITNESSD_EXE: docker
