@@ -50,6 +50,7 @@ jobs:
         run: poetry install
 
       - name: Run tests
+        id: runTests
         run: |
           poetry run coverage run -m pytest tests
           poetry run coverage report
@@ -58,3 +59,29 @@ jobs:
           WITNESSD_EXE: docker
           XCHAIN_CONFIG_DIR: /home/runner/work/sidechain-config
           GITHUB_CI: "True"
+
+      - name: Debug Test Failure
+        if: always() && steps.runTests.outcome == 'failure'
+        run: |
+          echo "locking_chain"
+          docker logs locking_chain
+          echo "issuing_chain"
+          docker logs issuing_chain
+        env:
+          XCHAIN_CONFIG_DIR: /home/runner/work/sidechain-config
+
+      - name: Debug Test Failure 2
+        if: always() && steps.runTests.outcome == 'failure'
+        run: |
+          echo "witness0"
+          docker logs witness0
+          echo "witness1"
+          docker logs witness1
+          echo "witness2"
+          docker logs witness2
+          echo "witness3"
+          docker logs witness3
+          echo "witness4"
+          docker logs witness4
+        env:
+          XCHAIN_CONFIG_DIR: /home/runner/work/sidechain-config
