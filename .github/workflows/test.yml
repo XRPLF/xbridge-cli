@@ -61,7 +61,7 @@ jobs:
           XCHAIN_CONFIG_DIR: /home/runner/work/sidechain-config
           GITHUB_CI: "True"
 
-      - name: Debug Test Failure
+      - name: Debug Test Failure (Chain Outputs)
         if: always() && steps.runTests.outcome == 'failure'
         run: |
           echo "locking_chain"
@@ -71,7 +71,7 @@ jobs:
         env:
           XCHAIN_CONFIG_DIR: /home/runner/work/sidechain-config
 
-      - name: Debug Test Failure 2
+      - name: Debug Test Failure (Witness Outputs)
         if: always() && steps.runTests.outcome == 'failure'
         run: |
           echo "witness0"
