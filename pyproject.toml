@@ -58,7 +58,7 @@ source = ["sidechain_cli"]
 
 [tool.coverage.report]
 show_missing = true
-fail_under = 80
+fail_under = 75
 precision = 2
 
 [build-system]
