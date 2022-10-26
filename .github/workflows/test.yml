@@ -20,6 +20,7 @@ jobs:
         # we have to use 3.7.1 to get around openssl issues
         # TODO: add 3.7 once xrpl-py has been updated
         python-version: ['3.8', '3.9', '3.10', '3.11']
+      fail-fast: false
 
     steps:
       - name: Checkout code
