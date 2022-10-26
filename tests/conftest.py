@@ -1,7 +1,6 @@
 import json
 import os
 import tempfile
-import time
 import unittest
 import unittest.mock
 from typing import Any, Dict, List, Optional
@@ -33,9 +32,7 @@ def pytest_configure(config):
     runner = CliRunner()
     runner.invoke(main, ["server", "stop", "--all"])
 
-    print("before everything")
-    if not _is_docker():
-        print("shouldn't get this 1")
+    if os.getenv("GITHUB_CI") != "True":
         config_dir = tempfile.TemporaryDirectory()
         env_vars = unittest.mock.patch.dict(
             os.environ,
@@ -46,10 +43,6 @@ def pytest_configure(config):
         env_vars.start()
         mocked_vars.append(env_vars)
 
-    print("before mocking the other stuff")
-    print(os.getenv("GITHUB_CI"), type(os.getenv("GITHUB_CI")))
-    if os.getenv("GITHUB_CI") != "True":
-        print("shouldn't get this 2")
         mocked_home_dir = tempfile.TemporaryDirectory()
         config_var = unittest.mock.patch(
             "sidechain_cli.utils.config_file.CONFIG_FOLDER",
@@ -68,8 +61,6 @@ def pytest_configure(config):
         )
         config_var2.start()
         mocked_vars.append(config_var2)
-
-    print("done with setup")
 
 
 def pytest_unconfigure(config):
@@ -135,7 +126,6 @@ def create_bridge():
         main, ["server", "start-all", "--rippled-only", "--verbose"]
     )
     assert start_result.exit_code == 0, start_result.output
-    time.sleep(1.5)
 
     # fund locking door
     config_dir = os.path.abspath(os.getenv("XCHAIN_CONFIG_DIR"))
@@ -176,7 +166,6 @@ def create_bridge():
         main, ["server", "start-all", "--witness-only", "--verbose"]
     )
     assert start_result.exit_code == 0, start_result.output
-    time.sleep(0.2)
 
     yield
 
@@ -205,7 +194,6 @@ def bridge_build_setup():
         main, ["server", "start-all", "--rippled-only", "--verbose"]
     )
     assert start_result.exit_code == 0, start_result.output
-    time.sleep(1.5)
 
     # fund locking door
     config_dir = os.path.abspath(os.getenv("XCHAIN_CONFIG_DIR"))
