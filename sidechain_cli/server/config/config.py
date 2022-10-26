@@ -31,7 +31,7 @@ def _generate_template(
 ) -> None:
     template = JINJA_ENV.get_template(template_name)
 
-    with open(filename, "w") as f:
+    with open(filename, "w+") as f:
         f.write(template.render(template_data))
 
 
@@ -46,14 +46,15 @@ def _generate_standalone_config(
     else:
         sub_dir = f"{abs_config_dir}/{cfg_type}"
         cfg_dir = sub_dir
-        for path in ["", "/db"]:
-            dirpath = Path(sub_dir + path)
-            if dirpath.exists():
-                if dirpath.is_dir():
-                    shutil.rmtree(dirpath)
-                else:
-                    os.remove(dirpath)
-            dirpath.mkdir(parents=True)
+
+    for path in ["", "/db"]:
+        dirpath = Path(cfg_dir + path)
+        if dirpath.exists():
+            if dirpath.is_dir():
+                shutil.rmtree(dirpath)
+            else:
+                os.remove(dirpath)
+        dirpath.mkdir(parents=True)
 
     template_data = {
         "sub_dir": sub_dir,
@@ -217,14 +218,15 @@ def generate_witness_config(
     else:
         sub_dir = f"{abs_config_dir}/{name}"
         cfg_dir = sub_dir
-        for path in ["", "/db"]:
-            dirpath = Path(sub_dir + path)
-            if dirpath.exists():
-                if dirpath.is_dir():
-                    shutil.rmtree(dirpath)
-                else:
-                    os.remove(dirpath)
-            dirpath.mkdir(parents=True)
+
+    for path in ["", "/db"]:
+        dirpath = Path(cfg_dir + path)
+        if dirpath.exists():
+            if dirpath.is_dir():
+                shutil.rmtree(dirpath)
+            else:
+                os.remove(dirpath)
+        dirpath.mkdir(parents=True)
 
     template_data = {
         "locking_chain_port": locking_chain_port,

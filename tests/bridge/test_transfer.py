@@ -1,5 +1,3 @@
-import time
-
 import pytest
 from click.testing import CliRunner
 from xrpl.account import get_balance
@@ -49,7 +47,6 @@ class TestBridgeTransfer:
             ],
         )
         assert fund_result2.exit_code == 0, fund_result2.output
-        time.sleep(0.2)
 
         locking_client = get_config().get_chain("locking_chain").get_client()
         issuing_client = get_config().get_chain("issuing_chain").get_client()

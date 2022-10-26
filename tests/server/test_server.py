@@ -2,12 +2,15 @@ import json
 import os
 import re
 import signal
+import subprocess
 import time
 
 import psutil
 import pytest
 
+import docker
 from sidechain_cli.main import main
+from sidechain_cli.server.start import _DOCKER_COMPOSE
 from sidechain_cli.utils import get_config
 from sidechain_cli.utils.config_file import CONFIG_FOLDER
 
@@ -19,8 +22,8 @@ class TestServer:
         lines = server_list.output.split("\n")
         assert lines[0] == "Chains:"
         assert re.match(
-            r"^ +name +\| +pid +\| +exe +\| +config +\| +ws_ip +\| +ws_port +\| +"
-            r"http_ip +\| +http_port *$",
+            r"^ +name +\| +pid +\| +exe +\| +config +\| +http_ip +\| +http_port +\| +"
+            r"ws_ip +\| +ws_port *$",
             lines[1],
         )
         assert re.match(r"^-+\+-+\+-+\+-+\+-+\+-+\+-+\+-+$", lines[2])
@@ -42,7 +45,7 @@ class TestServer:
 
         assert lines[6] == "Witnesses:"
         assert re.match(
-            r"^ +name +\| +pid +\| +exe +\| +config +\| *ip *\| *rpc_port *$",
+            r"^ +name +\| +pid +\| +exe +\| +config +\| *http_ip *\| *http_port *$",
             lines[7],
         )
         assert re.match(r"^-+\+-+\+-+\+-+\+-+\+-+$", lines[8])
@@ -81,15 +84,25 @@ class TestServer:
         initial_list = runner.invoke(main, ["server", "list"])
         assert process_to_kill in initial_list.output
 
-        witness = get_config().get_witness(process_to_kill)
-        os.kill(witness.pid, signal.SIGINT)
-        time.sleep(0.2)  # wait for process to die
+        if os.getenv("WITNESSD_EXE") == "docker":
+            to_run = [*_DOCKER_COMPOSE, "stop", process_to_kill]
+            subprocess.run(to_run, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            docker_client = docker.from_env()
+            try:
+                container = docker_client.containers.get(process_to_kill)
+                assert container.status != "running"
+            except docker.errors.NotFound:
+                assert True
+        else:
+            witness = get_config().get_witness(process_to_kill)
+            os.kill(witness.pid, signal.SIGINT)
 
-        process = psutil.Process(pid=witness.pid)
-        assert (
-            not psutil.pid_exists(witness.pid)
-            or process.status() == psutil.STATUS_ZOMBIE
-        )
+            process = psutil.Process(pid=witness.pid)
+            assert (
+                not psutil.pid_exists(witness.pid)
+                or process.status() == psutil.STATUS_ZOMBIE
+            )
+        time.sleep(0.2)  # wait for process to die
 
         final_list = runner.invoke(main, ["server", "list"])
         assert process_to_kill not in final_list.output
@@ -112,24 +125,36 @@ class TestServer:
         server_list = runner.invoke(
             main, ["server", "print", "--name", "issuing_chain"]
         )
-        with open(os.path.join(CONFIG_FOLDER, "issuing_chain.out"), "r") as f:
-            expected_output1 = f.read()
+        if os.getenv("RIPPLED_EXE") == "docker":
+            expected1 = subprocess.check_output(
+                ["docker", "logs", "issuing_chain"]
+            ).decode("utf-8")
+        else:
+            with open(os.path.join(CONFIG_FOLDER, "issuing_chain.out"), "r") as f:
+                expected1 = f.read()
 
-        config_dir = os.path.abspath(os.getenv("XCHAIN_CONFIG_DIR"))
-        with open(os.path.join(config_dir, "issuing_chain", "debug.log")) as f:
-            expected_output2 = f.read()
+        assert server_list.output == expected1
 
-        assert server_list.output == expected_output1
+        if os.getenv("RIPPLED_EXE") != "docker":
+            config_dir = os.path.abspath(os.getenv("XCHAIN_CONFIG_DIR"))
+            with open(os.path.join(config_dir, "issuing_chain", "debug.log")) as f:
+                expected2 = f.read()
 
-        lines = server_list.output.split("\n")
-        assert "\n".join(lines[3:]) in expected_output2
+            lines = server_list.output.split("\n")
+            assert "\n".join(lines[3:]) in expected2
 
     def test_print_witness(self, runner):
         server_list = runner.invoke(main, ["server", "print", "--name", "witness0"])
-        with open(os.path.join(CONFIG_FOLDER, "witness0.out"), "r") as f:
-            expected_output = f.read()
 
-        assert server_list.output == expected_output
+        if os.getenv("RIPPLED_EXE") == "docker":
+            expected = subprocess.check_output(["docker", "logs", "witness0"]).decode(
+                "utf-8"
+            )
+        else:
+            with open(os.path.join(CONFIG_FOLDER, "witness0.out"), "r") as f:
+                expected = f.read()
+
+        assert server_list.output == expected
 
     def test_restart_rippled(self, runner):
         result = runner.invoke(main, ["server", "restart", "--name", "locking_chain"])
@@ -141,9 +166,9 @@ class TestServer:
 
     def test_request(self, runner):
         result = runner.invoke(
-            main, ["server", "request", "--name", "locking_chain", "ping"]
+            main, ["server", "request", "--name", "issuing_chain", "ping"]
         )
-        assert result.exit_code == 0
 
         expected = {"result": {"role": "admin", "status": "success"}}
+
         assert json.loads(result.output) == expected

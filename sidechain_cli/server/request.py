@@ -42,18 +42,11 @@ def request_server(
 
     if isinstance(server, ChainConfig):  # is a rippled node
         if server.is_docker():
-            to_run = [
-                "docker",
-                "exec",
-                "-it",
-                name,
-                "bash",
-                "-c",
-                f'""/opt/rippled/bin/rippled {arg_string}""',
-            ]
+            to_run = ["docker", "exec", name, "/opt/rippled/bin/rippled"]
         else:
-            to_run = [server.rippled, "--conf", server.config, command, *args]
-        click.echo(subprocess.check_output(to_run))
+            to_run = [server.rippled, "--conf", server.config]
+        to_run.extend([command, *args])
+        click.echo(subprocess.check_output(to_run, stderr=subprocess.DEVNULL))
     else:  # is a witness node
         click.echo("Cannot query witness nodes from the command line right now.")
 

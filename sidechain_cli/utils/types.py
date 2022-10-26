@@ -11,6 +11,8 @@ class ServerData(TypedDict):
     pid: int
     exe: str
     config: str
+    http_ip: str
+    http_port: int
 
 
 class ChainData(ServerData):
@@ -18,15 +20,12 @@ class ChainData(ServerData):
 
     ws_ip: str
     ws_port: int
-    http_ip: str
-    http_port: int
 
 
 class WitnessData(ServerData):
     """Helper type for witness data stored in the config file."""
 
-    ip: str
-    rpc_port: int
+    pass
 
 
 class IssuedCurrencyDict(TypedDict):
