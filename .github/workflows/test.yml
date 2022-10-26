@@ -24,8 +24,7 @@ jobs:
         uses: actions/cache@v3
         with:
           path: /home/runner/.local
-          key: dotlocal-3.10-
-            # ${{ hashFiles('.github/workflows') }}
+          key: dotlocal-3.10-${{ hashFiles('.github/workflows') }}
 
       - name: Install poetry
         run: |
