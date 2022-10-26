@@ -168,13 +168,7 @@ class TestServer:
         result = runner.invoke(
             main, ["server", "request", "--name", "issuing_chain", "ping"]
         )
-        print("HIIIIIIIII")
-        print(result.output)
 
         expected = {"result": {"role": "admin", "status": "success"}}
-        if os.getenv("RIPPLED_EXE") == "docker":
-            lines = result.output.split("\n")
-            output = "\n".join(lines[3:])
-        else:
-            output = result.output
-        assert json.loads(output) == expected
+
+        assert json.loads(result.output) == expected

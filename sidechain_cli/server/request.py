@@ -46,7 +46,7 @@ def request_server(
         else:
             to_run = [server.rippled, "--conf", server.config]
         to_run.extend([command, *args])
-        click.echo(subprocess.check_output(to_run))
+        click.echo(subprocess.check_output(to_run, stderr=subprocess.DEVNULL))
     else:  # is a witness node
         click.echo("Cannot query witness nodes from the command line right now.")
 
