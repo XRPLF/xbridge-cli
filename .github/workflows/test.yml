@@ -24,7 +24,7 @@ jobs:
         uses: actions/cache@v3
         with:
           path: /home/runner/.local
-          key: dotlocal-3.10-${{ hashFiles('.github/workflows') }}
+          key: dotlocal-3.11-${{ hashFiles('.github/workflows') }}
 
       - name: Install poetry
         run: |
@@ -34,7 +34,7 @@ jobs:
       - name: Install Python + Retrieve Poetry dependencies from cache
         uses: actions/setup-python@v4
         with:
-          python-version: "3.10"
+          python-version: "3.11"
           cache: 'poetry'
 
       - name: Display Python version
