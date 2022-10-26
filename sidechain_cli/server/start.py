@@ -12,6 +12,7 @@ from typing import List, Optional, Tuple, cast
 import click
 import httpx
 
+import docker
 from sidechain_cli.exceptions import SidechainCLIException
 from sidechain_cli.utils import (
     ChainConfig,
@@ -46,9 +47,11 @@ _WAIT_INCREMENT = 0.5  # seconds
 
 def _wait_for_process(
     process: subprocess.Popen[bytes],
+    name: str,
     http_ip: str,
     http_port: int,
     output_file: str,
+    is_docker: bool = False,
 ) -> None:
     http_url = f"http://{http_ip}:{http_port}"
     time_waited = 0.0
@@ -56,12 +59,18 @@ def _wait_for_process(
         try:
             request = {"method": "server_info"}
             httpx.post(http_url, json=request)
+            if is_docker:
+                docker_client = docker.from_env()
+                container = docker_client.containers.get(name)
+                assert container.status == "running"
             return
         except (
             httpx.ConnectError,
             httpx.RemoteProtocolError,
             httpx.ReadError,
             httpx.WriteError,
+            docker.errors.NotFound,
+            AssertionError,
         ):
             time.sleep(_WAIT_INCREMENT)
             time_waited += _WAIT_INCREMENT
@@ -163,9 +172,11 @@ def start_server(
         # check if server actually started up correctly
         _wait_for_process(
             process,
+            name,
             config_object.port_rpc_admin_local.ip,
             int(config_object.port_rpc_admin_local.port),
             output_file,
+            exe == "docker",
         )
 
         chain_data: ChainData = {
@@ -185,9 +196,11 @@ def start_server(
         # check if server actually started up correctly
         _wait_for_process(
             process,
+            name,
             config_json["RPCEndpoint"]["IP"],
             config_json["RPCEndpoint"]["Port"],
             output_file,
+            exe == "docker",
         )
         witness_data: WitnessData = {
             "name": name,
@@ -307,9 +320,11 @@ def start_all_servers(
                 # check if server actually started up correctly
                 _wait_for_process(
                     process,
+                    name,
                     config_object.port_rpc_admin_local.ip,
                     int(config_object.port_rpc_admin_local.port),
                     output_file,
+                    rippled_exe == "docker",
                 )
                 chain_data: ChainData = {
                     "name": name,
@@ -347,9 +362,11 @@ def start_all_servers(
                 # check if server actually started up correctly
                 _wait_for_process(
                     process,
+                    name,
                     config_json["RPCEndpoint"]["IP"],
                     config_json["RPCEndpoint"]["Port"],
                     output_file,
+                    witnessd_exe == "docker",
                 )
 
                 witness_data: WitnessData = {
