@@ -208,9 +208,6 @@ def bridge_build_setup():
         + bootstrap["LockingChain"]["WitnessRewardAccounts"]
         + bootstrap["LockingChain"]["WitnessSubmitAccounts"]
     )
-    from sidechain_cli.utils import get_config
-    from pprint import pprint
-    pprint(get_config().to_dict())
     for account in accounts_locking_fund:
         fund_result = cli_runner.invoke(
             main, ["fund", f"--account={account}", "--chain=locking_chain"]
