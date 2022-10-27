@@ -96,7 +96,7 @@ class TestCreateAccount:
         )
 
         close_ledgers()
-        thread = SetInterval(close_ledgers, 1)
+        thread = SetInterval(close_ledgers, 3)
 
         runner_result = runner.invoke(
             main,

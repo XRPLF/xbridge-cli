@@ -57,9 +57,6 @@ class TestBridgeTransfer:
             receive_wallet.classic_address, issuing_client
         )
 
-        close_ledgers()
-        thread = SetInterval(close_ledgers, 3)
-
         runner_result = runner.invoke(
             main,
             [
@@ -73,7 +70,6 @@ class TestBridgeTransfer:
                 "-vv",
             ],
         )
-        thread.cancel()
         assert runner_result.exit_code == 0, runner_result.output
 
         final_balance_locking = get_balance(send_wallet.classic_address, locking_client)
@@ -131,6 +127,9 @@ class TestBridgeTransfer:
             receive_wallet.classic_address, issuing_client
         )
 
+        close_ledgers()
+        thread = SetInterval(close_ledgers, 3)
+
         runner_result = runner.invoke(
             main,
             [
@@ -145,6 +144,7 @@ class TestBridgeTransfer:
                 "--no-close-ledgers",
             ],
         )
+        thread.cancel()
         assert runner_result.exit_code == 0, runner_result.output
 
         final_balance_locking = get_balance(send_wallet.classic_address, locking_client)
