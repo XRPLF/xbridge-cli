@@ -2,7 +2,7 @@
 
 import time
 from pprint import pformat
-from typing import Optional
+from typing import Optional, Set
 
 import click
 from xrpl.clients import JsonRpcClient
@@ -15,6 +15,9 @@ from sidechain_cli.utils.config_file import BridgeConfig
 _ATTESTATION_TIME_LIMIT = 10  # in seconds
 _WAIT_STEP_LENGTH = 0.05
 
+_EXTERNAL_ATTESTATION_TIME_LIMIT = 20
+_EXTERNAL_WAIT_STEP_LENGTH = 1
+
 
 def wait_for_attestations(
     is_transfer: bool,
@@ -24,6 +27,7 @@ def wait_for_attestations(
     to_account: str,
     amount: str,
     xchain_claim_id: Optional[int] = None,
+    close_ledgers: bool = True,
     verbose: int = 0,
 ) -> None:
     """
@@ -39,6 +43,9 @@ def wait_for_attestations(
         amount: The amount that the transfer is for.
         xchain_claim_id: The XChainClaimID for a transfer (not needed for an account
             create).
+        close_ledgers: Whether to close ledgers manually (via `ledger_accept`) or wait
+            for ledgers to close automatically. A standalone node requires ledgers to
+            be closed; an external network does not support ledger closing.
         verbose: The verbosity of the output.
 
     Raises:
@@ -55,15 +62,28 @@ def wait_for_attestations(
     else:
         batch_name = "XChainCreateAccountAttestationBatch"
 
+    if close_ledgers:
+        wait_time = _WAIT_STEP_LENGTH
+        attestation_time_limit = _ATTESTATION_TIME_LIMIT
+    else:
+        wait_time = _EXTERNAL_WAIT_STEP_LENGTH
+        attestation_time_limit = _EXTERNAL_ATTESTATION_TIME_LIMIT
+
     time_count = 0.0
-    attestation_count = 0
+    attestations_seen: Set[str] = set()
     while True:
-        time.sleep(_WAIT_STEP_LENGTH)
-        open_ledger = to_client.request(
-            Ledger(ledger_index="current", transactions=True, expand=True)
-        )
-        open_txs = open_ledger.result["ledger"]["transactions"]
-        for tx in open_txs:
+        time.sleep(wait_time)
+        if close_ledgers:
+            ledger = to_client.request(
+                Ledger(ledger_index="current", transactions=True, expand=True)
+            )
+        else:
+            ledger = to_client.request(
+                Ledger(ledger_index="validated", transactions=True, expand=True)
+            )
+
+        new_txs = ledger.result["ledger"]["transactions"]
+        for tx in new_txs:
             if tx["TransactionType"] == "XChainAddAttestation":
                 batch = tx["XChainAttestationBatch"]
                 if batch["XChainBridge"] != bridge_config.to_xrpl():
@@ -82,24 +102,28 @@ def wait_for_attestations(
                     if is_transfer:
                         if element["XChainClaimID"] != xchain_claim_id:
                             continue
-                    attestation_count += 1
+                    if element["PublicKey"] in attestations_seen:
+                        # already seen this attestation, skip
+                        continue
+                    attestations_seen.add(element["PublicKey"])
                     if verbose > 1:
                         click.echo(pformat(element))
                     if verbose > 0:
                         click.secho(
-                            f"Received {attestation_count} attestations",
+                            f"Received {len(attestations_seen)} attestations",
                             fg="bright_green",
                         )
-        if len(open_txs) > 0:
-            to_client.request(GenericRequest(method="ledger_accept"))
+        if len(new_txs) > 0:  # TODO: only count attestations
+            if close_ledgers:
+                to_client.request(GenericRequest(method="ledger_accept"))
             time_count = 0
         else:
-            time_count += _WAIT_STEP_LENGTH
+            time_count += wait_time
 
         quorum = max(1, bridge_config.num_witnesses - 1)
-        if attestation_count >= quorum:
+        if len(attestations_seen) >= quorum:
             # received enough attestations for quorum
             break
 
-        if time_count > _ATTESTATION_TIME_LIMIT:
+        if time_count > attestation_time_limit:
             raise AttestationTimeoutException()

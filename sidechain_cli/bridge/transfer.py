@@ -202,5 +202,6 @@ def send_transfer(
         to_wallet.classic_address,
         amount,
         xchain_claim_id,
+        True,  # TODO: add support for close_ledgers bool
         verbose,
     )

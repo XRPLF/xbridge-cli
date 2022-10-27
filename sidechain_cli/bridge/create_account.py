@@ -160,6 +160,7 @@ def create_xchain_account(
         to_account,
         create_amount,
         None,
+        close_ledgers,
         verbose,
     )
 
