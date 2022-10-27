@@ -42,8 +42,7 @@ class TestCreateAccount:
             [
                 "bridge",
                 "create-account",
-                "--chain",
-                "locking_chain",
+                "--from_locking",
                 "--bridge",
                 "test_bridge",
                 "--from",

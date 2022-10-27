@@ -33,8 +33,7 @@ class TestBridgeTransfer:
             [
                 "bridge",
                 "create-account",
-                "--chain",
-                "locking_chain",
+                "--from_locking",
                 "--bridge",
                 "test_bridge",
                 "--from",
@@ -63,7 +62,7 @@ class TestBridgeTransfer:
                 "bridge",
                 "transfer",
                 "--bridge=test_bridge",
-                "--src_chain=locking_chain",
+                "--from_locking",
                 f"--amount={amount}",
                 f"--from={send_wallet.seed}",
                 f"--to={receive_wallet.seed}",
