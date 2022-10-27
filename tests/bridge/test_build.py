@@ -8,9 +8,9 @@ from xrpl.clients import JsonRpcClient
 from xrpl.models import AccountObjects
 
 from sidechain_cli.main import main
-from sidechain_cli.tests.utils import SetInterval, close_ledgers
 from sidechain_cli.utils import get_config
 from sidechain_cli.utils.config_file import _CONFIG_FILE
+from tests.utils import SetInterval, close_ledgers
 
 
 @pytest.mark.usefixtures("bridge_build_setup")

@@ -5,8 +5,8 @@ from xrpl.utils import xrp_to_drops
 from xrpl.wallet import Wallet
 
 from sidechain_cli.main import main
-from sidechain_cli.tests.utils import SetInterval, close_ledgers
 from sidechain_cli.utils import get_config
+from tests.utils import SetInterval, close_ledgers
 
 
 @pytest.mark.usefixtures("create_bridge")
