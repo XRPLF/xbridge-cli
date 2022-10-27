@@ -1,39 +1,16 @@
 import json
 import os
-import threading
 
 import pytest
 from click.testing import CliRunner
 from xrpl.account import does_account_exist
 from xrpl.clients import JsonRpcClient
-from xrpl.models import AccountObjects, GenericRequest
+from xrpl.models import AccountObjects
 
 from sidechain_cli.main import main
+from sidechain_cli.tests.utils import SetInterval, close_ledgers
 from sidechain_cli.utils import get_config
 from sidechain_cli.utils.config_file import _CONFIG_FILE
-
-
-class SetInterval:
-    def __init__(self, func, sec):
-        def func_wrapper():
-            self.t = threading.Timer(sec, func_wrapper)
-            self.t.start()
-            func()
-
-        self.t = threading.Timer(sec, func_wrapper)
-        self.t.start()
-
-    def cancel(self):
-        self.t.cancel()
-
-
-def close_ledgers():
-    JsonRpcClient("http://localhost:5005").request(
-        GenericRequest(method="ledger_accept")
-    )
-    JsonRpcClient("http://localhost:5006").request(
-        GenericRequest(method="ledger_accept")
-    )
 
 
 @pytest.mark.usefixtures("bridge_build_setup")
