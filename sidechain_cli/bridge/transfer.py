@@ -1,23 +1,17 @@
 """CLI command for setting up a bridge."""
 
-import time
-from pprint import pformat
-
 import click
 from xrpl.clients import JsonRpcClient
-from xrpl.models import (
-    GenericRequest,
-    Ledger,
-    Response,
-    Transaction,
-    Tx,
-    XChainCommit,
-    XChainCreateClaimID,
-)
+from xrpl.models import Response, Transaction, Tx, XChainCommit, XChainCreateClaimID
 from xrpl.wallet import Wallet
 
-from sidechain_cli.exceptions import AttestationTimeoutException, SidechainCLIException
-from sidechain_cli.utils import get_config, is_external_chain, submit_tx
+from sidechain_cli.exceptions import SidechainCLIException
+from sidechain_cli.utils import (
+    get_config,
+    is_external_chain,
+    submit_tx,
+    wait_for_attestations,
+)
 
 _ATTESTATION_TIME_LIMIT = 10  # in seconds
 _WAIT_STEP_LENGTH = 0.05
@@ -200,51 +194,13 @@ def send_transfer(
             fg="blue",
         )
 
-    # TODO: this should handle external networks better
-    time_count = 0.0
-    attestation_count = 0
-    while True:
-        time.sleep(_WAIT_STEP_LENGTH)
-        open_ledger = dst_client.request(
-            Ledger(ledger_index="current", transactions=True, expand=True)
-        )
-        open_txs = open_ledger.result["ledger"]["transactions"]
-        for tx in open_txs:
-            if tx["TransactionType"] == "XChainAddAttestation":
-                batch = tx["XChainAttestationBatch"]
-                if batch["XChainBridge"] != bridge_config.to_xrpl():
-                    # make sure attestation is for this bridge
-                    continue
-                attestations = batch["XChainClaimAttestationBatch"]
-                for attestation in attestations:
-                    element = attestation["XChainClaimAttestationBatchElement"]
-                    # check that the attestation actually matches this transfer
-                    if element["Account"] != from_wallet.classic_address:
-                        continue
-                    if element["Amount"] != amount:
-                        continue
-                    if element["Destination"] != to_wallet.classic_address:
-                        continue
-                    if element["XChainClaimID"] != xchain_claim_id:
-                        continue
-                    attestation_count += 1
-                    if print_level > 1:
-                        click.echo(pformat(element))
-                    if print_level > 0:
-                        click.secho(
-                            f"Received {attestation_count} attestations",
-                            fg="bright_green",
-                        )
-        if len(open_txs) > 0:
-            dst_client.request(GenericRequest(method="ledger_accept"))
-            time_count = 0
-        else:
-            time_count += _WAIT_STEP_LENGTH
-
-        quorum = max(1, bridge_config.num_witnesses - 1)
-        if attestation_count >= quorum:
-            # received enough attestations for quorum
-            break
-
-        if time_count > _ATTESTATION_TIME_LIMIT:
-            raise AttestationTimeoutException()
+    wait_for_attestations(
+        True,
+        bridge_config,
+        dst_client,
+        from_wallet,
+        to_wallet.classic_address,
+        amount,
+        xchain_claim_id,
+        verbose,
+    )

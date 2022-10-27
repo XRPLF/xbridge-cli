@@ -1,19 +1,15 @@
 """Create/fund an account via a cross-chain transfer."""
 
-import time
 from pprint import pformat
 from typing import Optional
 
 import click
-from xrpl.models import AccountInfo, GenericRequest, Ledger, XChainAccountCreateCommit
+from xrpl.models import AccountInfo, XChainAccountCreateCommit
 from xrpl.utils import drops_to_xrp, xrp_to_drops
 from xrpl.wallet import Wallet
 
-from sidechain_cli.exceptions import AttestationTimeoutException, SidechainCLIException
-from sidechain_cli.utils import get_config, submit_tx
-
-_ATTESTATION_TIME_LIMIT = 10  # in seconds
-_WAIT_STEP_LENGTH = 0.05
+from sidechain_cli.exceptions import SidechainCLIException
+from sidechain_cli.utils import get_config, submit_tx, wait_for_attestations
 
 
 @click.command(name="create-account")
@@ -156,51 +152,16 @@ def create_xchain_account(
             fg="blue",
         )
 
-    time_count = 0.0
-    attestation_count = 0
-    while True:
-        time.sleep(_WAIT_STEP_LENGTH)
-        open_ledger = to_client.request(
-            Ledger(ledger_index="current", transactions=True, expand=True)
-        )
-        open_txs = open_ledger.result["ledger"]["transactions"]
-        for tx in open_txs:
-            if tx["TransactionType"] == "XChainAddAttestation":
-                batch = tx["XChainAttestationBatch"]
-                if batch["XChainBridge"] != bridge_config.to_xrpl():
-                    # make sure attestation is for this bridge
-                    continue
-                attestations = batch["XChainCreateAccountAttestationBatch"]
-                for attestation in attestations:
-                    element = attestation["XChainCreateAccountAttestationBatchElement"]
-                    # check that the attestation actually matches this transfer
-                    if element["Account"] != from_wallet.classic_address:
-                        continue
-                    if element["Amount"] != create_amount:
-                        continue
-                    if element["Destination"] != to_account:
-                        continue
-                    attestation_count += 1
-                    if verbose > 1:
-                        click.echo(pformat(element))
-                    if verbose > 0:
-                        click.secho(
-                            f"Received {attestation_count} attestations",
-                            fg="bright_green",
-                        )
-        if len(open_txs) > 0:
-            to_client.request(GenericRequest(method="ledger_accept"))
-            time_count = 0
-        else:
-            time_count += _WAIT_STEP_LENGTH
-
-        quorum = max(1, bridge_config.num_witnesses - 1)
-        if attestation_count >= quorum:
-            # received enough attestations for quorum
-            break
-
-        if time_count > _ATTESTATION_TIME_LIMIT:
-            raise AttestationTimeoutException()
+    wait_for_attestations(
+        False,
+        bridge_config,
+        to_client,
+        from_wallet,
+        to_account,
+        create_amount,
+        None,
+        verbose,
+    )
 
     if verbose > 0:
         click.echo(pformat(to_client.request(AccountInfo(account=to_account)).result))

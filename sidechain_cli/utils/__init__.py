@@ -1,5 +1,6 @@
 """Util methods for the sidechain CLI."""
 
+from sidechain_cli.utils.attestations import wait_for_attestations
 from sidechain_cli.utils.config_file import (
     BridgeConfig,
     ChainConfig,
@@ -33,6 +34,7 @@ from sidechain_cli.utils.types import (
 )
 
 __all__ = [
+    "wait_for_attestations",
     "add_bridge",
     "add_chain",
     "add_witness",
