@@ -38,10 +38,8 @@ def submit_tx(
     if isinstance(txs, Transaction):
         txs = [txs]
     if verbose > 0:
-        tx_types = ', '.join([tx.transaction_type.value for tx in txs])
-        click.secho(
-            f"Submitting {tx_types} tx to {client.url}...", fg="blue"
-        )
+        tx_types = ", ".join([tx.transaction_type.value for tx in txs])
+        click.secho(f"Submitting {tx_types} tx to {client.url}...", fg="blue")
         if verbose > 1:
             for tx in txs:
                 click.echo(pformat(tx.to_xrpl()))
@@ -52,7 +50,10 @@ def submit_tx(
             signed_tx = safe_sign_and_autofill_transaction(tx, Wallet(seed, 0), client)
             results.append(submit_transaction(signed_tx, client))
         client.request(GenericRequest(method="ledger_accept"))
-        tx_results = [result.result.get("error") or result.result.get("engine_result") for result in results]
+        tx_results = [
+            result.result.get("error") or result.result.get("engine_result")
+            for result in results
+        ]
     else:
         # TODO: improve runtime when there is a batch send_reliable_submission
         results = []

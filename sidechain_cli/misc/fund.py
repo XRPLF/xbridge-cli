@@ -60,9 +60,13 @@ def fund_account(chain: str, accounts: str, verbose: bool = False) -> None:
     wallet = Wallet("snoPBrXtMeMyMHUVTgbuqAfg1SUTb", 0)
     payments = []
     for account in accounts:
-        payments.append(Payment(
-            account=wallet.classic_address, destination=account, amount=xrp_to_drops(1000)
-        ))
+        payments.append(
+            Payment(
+                account=wallet.classic_address,
+                destination=account,
+                amount=xrp_to_drops(1000),
+            )
+        )
     submit_tx(payments, client, wallet.seed)
     if verbose:
         for account in accounts:
