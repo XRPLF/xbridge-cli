@@ -1,9 +1,10 @@
 """Fund an account from the genesis account."""
 
 from pprint import pformat
+from typing import List
 
 import click
-from xrpl.models import AccountInfo, Payment
+from xrpl.models import AccountInfo, Payment, Transaction
 from xrpl.utils import xrp_to_drops
 from xrpl.wallet import Wallet
 
@@ -58,7 +59,7 @@ def fund_account(chain: str, accounts: str, verbose: bool = False) -> None:
     client = chain_config.get_client()
 
     wallet = Wallet("snoPBrXtMeMyMHUVTgbuqAfg1SUTb", 0)
-    payments = []
+    payments: List[Transaction] = []
     for account in accounts:
         payments.append(
             Payment(
