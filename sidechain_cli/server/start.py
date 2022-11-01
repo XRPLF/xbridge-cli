@@ -54,18 +54,19 @@ def _wait_for_process(
     is_docker: bool = False,
 ) -> None:
     http_url = f"http://{http_ip}:{http_port}"
-    print(http_url)
+    print(http_url, is_docker)
     time_waited = 0.0
     while time_waited < _START_UP_TIME:
         try:
             request = {"method": "server_info"}
             result = httpx.post(http_url, json=request)
+            print("yo")
             print(result.json())
             if is_docker:
                 docker_client = docker.from_env()
                 container = docker_client.containers.get(name)
+                print(container.attrs)
                 assert container.status == "running"
-                print(container.__dict__)
             return
         except (
             httpx.ConnectError,
