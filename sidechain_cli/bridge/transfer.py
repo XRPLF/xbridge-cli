@@ -21,7 +21,7 @@ def _submit_tx(
     verbose: int,
     close_ledgers: bool,
 ) -> Response:
-    result = submit_tx(tx, client, secret, verbose, close_ledgers)
+    result = submit_tx(tx, client, secret, verbose, close_ledgers)[0]
     tx_result = (
         result.result.get("error")
         or result.result.get("engine_result")
