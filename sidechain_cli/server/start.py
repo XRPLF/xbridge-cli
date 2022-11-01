@@ -59,6 +59,7 @@ def _wait_for_process(
     while time_waited < _START_UP_TIME:
         try:
             request = {"method": "server_info"}
+            print(request)
             result = httpx.post(http_url, json=request)
             print(result.json())
             if is_docker:
@@ -75,6 +76,7 @@ def _wait_for_process(
             docker.errors.NotFound,
             AssertionError,
         ):
+            print("EXCEPTIONNNNNNNNNNNNN")
             time.sleep(_WAIT_INCREMENT)
             time_waited += _WAIT_INCREMENT
     if process.poll() is not None:
