@@ -13,7 +13,7 @@ from sidechain_cli.exceptions import AttestationTimeoutException, SidechainCLIEx
 from sidechain_cli.utils.config_file import BridgeConfig
 
 _ATTESTATION_TIME_LIMIT = 10  # in seconds
-_WAIT_STEP_LENGTH = 0.05
+_WAIT_STEP_LENGTH = 1
 
 _EXTERNAL_ATTESTATION_TIME_LIMIT = 20
 _EXTERNAL_WAIT_STEP_LENGTH = 1
