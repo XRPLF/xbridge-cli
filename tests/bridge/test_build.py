@@ -104,11 +104,10 @@ class TestBridgeBuild:
             + bootstrap["LockingChain"]["WitnessRewardAccounts"]
             + bootstrap["LockingChain"]["WitnessSubmitAccounts"]
         )
-        for account in accounts_locking_fund:
-            fund_result = runner.invoke(
-                main, ["fund", f"--account={account}", "--chain=locking_chain"]
-            )
-            assert fund_result.exit_code == 0, fund_result.output
+        fund_result = runner.invoke(
+            main, ["fund", "locking_chain", *accounts_locking_fund]
+        )
+        assert fund_result.exit_code == 0, fund_result.output
 
         close_ledgers()
         thread = SetInterval(close_ledgers, 1)

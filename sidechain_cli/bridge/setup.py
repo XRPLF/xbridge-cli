@@ -16,6 +16,7 @@ from xrpl.models import (
     ServerState,
     SignerEntry,
     SignerListSet,
+    Transaction,
     XChainAccountCreateCommit,
     XChainAddAttestation,
     XChainBridge,
@@ -244,13 +245,6 @@ def setup_bridge(
         signature_reward=signature_reward,
         min_account_create_amount=str(min_create2),
     )
-    submit_tx(
-        create_tx1,
-        locking_client,
-        locking_door_seed,
-        verbose,
-        close_ledgers,
-    )
 
     # set up multisign on the door account
     signer_tx1 = SignerListSet(
@@ -258,20 +252,19 @@ def setup_bridge(
         signer_quorum=max(1, len(signer_entries) - 1),
         signer_entries=signer_entries,
     )
-    submit_tx(
-        signer_tx1,
-        locking_client,
-        locking_door_seed,
-        verbose,
-        close_ledgers,
-    )
 
     # disable the master key
     disable_master_tx1 = AccountSet(
         account=locking_door, set_flag=AccountSetFlag.ASF_DISABLE_MASTER
     )
+
+    # submit transactions
     submit_tx(
-        disable_master_tx1, locking_client, locking_door_seed, verbose, close_ledgers
+        [create_tx1, signer_tx1, disable_master_tx1],
+        locking_client,
+        locking_door_seed,
+        verbose,
+        close_ledgers,
     )
 
     ###################################################################################
@@ -334,18 +327,22 @@ def setup_bridge(
         count = 1
 
         # create the accounts
+        acct_txs: List[Transaction] = []
+        # commit the funds for the account
         for account in accounts_issuing_check:
-            # commit the funds for the account
-            acct_tx = XChainAccountCreateCommit(
-                account=funding_wallet.classic_address,
-                xchain_bridge=bridge_obj,
-                signature_reward=signature_reward,
-                destination=account,
-                amount=amount,
+            acct_txs.append(
+                XChainAccountCreateCommit(
+                    account=funding_wallet.classic_address,
+                    xchain_bridge=bridge_obj,
+                    signature_reward=signature_reward,
+                    destination=account,
+                    amount=amount,
+                )
             )
-            submit_tx(acct_tx, locking_client, funding_seed, verbose, close_ledgers)
+        submit_tx(acct_txs, locking_client, funding_seed, verbose, close_ledgers)
 
-            # set up the attestation for the commit
+        # set up the attestations for the commit
+        for account in accounts_issuing_check:
             init_attestation = XChainCreateAccountAttestationBatchElement(
                 account=funding_wallet.classic_address,
                 amount=amount,
@@ -376,14 +373,19 @@ def setup_bridge(
         signer_quorum=max(1, len(signer_entries) - 1),
         signer_entries=signer_entries,
     )
-    submit_tx(signer_tx2, issuing_client, issuing_door_seed, verbose, close_ledgers)
 
     # disable the master key
     disable_master_tx2 = AccountSet(
         account=issuing_door, set_flag=AccountSetFlag.ASF_DISABLE_MASTER
     )
+
+    # submit transactions
     submit_tx(
-        disable_master_tx2, issuing_client, issuing_door_seed, verbose, close_ledgers
+        [signer_tx2, disable_master_tx2],
+        issuing_client,
+        issuing_door_seed,
+        verbose,
+        close_ledgers,
     )
 
     # add bridge to CLI config

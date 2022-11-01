@@ -1,9 +1,10 @@
 """Fund an account from the genesis account."""
 
 from pprint import pformat
+from typing import List
 
 import click
-from xrpl.models import AccountInfo, Payment
+from xrpl.models import AccountInfo, Payment, Transaction
 from xrpl.utils import xrp_to_drops
 from xrpl.wallet import Wallet
 
@@ -12,19 +13,16 @@ from sidechain_cli.utils import get_config, submit_tx
 
 
 @click.command(name="fund")
-@click.option(
-    "--chain",
+@click.argument(
+    "chain",
     required=True,
-    prompt=True,
     type=str,
-    help="The chain to fund an account on.",
 )
-@click.option(
-    "--account",
+@click.argument(
+    "accounts",
     required=True,
-    prompt=True,
     type=str,
-    help="The account to fund.",
+    nargs=-1,
 )
 @click.option(
     "-v",
@@ -32,15 +30,17 @@ from sidechain_cli.utils import get_config, submit_tx
     is_flag=True,
     help="Whether or not to print more verbose information.",
 )
-def fund_account(chain: str, account: str, verbose: bool = False) -> None:
+def fund_account(chain: str, accounts: List[str], verbose: bool = False) -> None:
     """
+    Of the form `sidechain-cli fund CHAIN ACCOUNT1 [ACCOUNT2 ...].
+
     Fund an account from the genesis account. Only works on a normal standalone rippled
     node.
     \f
 
     Args:
         chain: The chain to fund an account on.
-        account: The chain to fund an account on.
+        accounts: The account(s) to fund.
         verbose: Whether or not to print more verbose information.
 
     Raises:
@@ -55,9 +55,16 @@ def fund_account(chain: str, account: str, verbose: bool = False) -> None:
     client = chain_config.get_client()
 
     wallet = Wallet("snoPBrXtMeMyMHUVTgbuqAfg1SUTb", 0)
-    payment = Payment(
-        account=wallet.classic_address, destination=account, amount=xrp_to_drops(1000)
-    )
-    submit_tx(payment, client, wallet.seed)
+    payments: List[Transaction] = []
+    for account in accounts:
+        payments.append(
+            Payment(
+                account=wallet.classic_address,
+                destination=account,
+                amount=xrp_to_drops(1000),
+            )
+        )
+    submit_tx(payments, client, wallet.seed)
     if verbose:
-        click.echo(pformat(client.request(AccountInfo(account=account)).result))
+        for account in accounts:
+            click.echo(pformat(client.request(AccountInfo(account=account)).result))
