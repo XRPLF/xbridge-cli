@@ -54,19 +54,15 @@ def _wait_for_process(
     is_docker: bool = False,
 ) -> None:
     http_url = f"http://{http_ip}:{http_port}"
-    print(http_url, is_docker)
     time_waited = 0.0
     while time_waited < _START_UP_TIME:
         try:
             request = {"method": "server_info"}
-            print(request)
-            result = httpx.post(http_url, json=request)
-            print(result.json())
+            httpx.post(http_url, json=request)
             if is_docker:
                 docker_client = docker.from_env()
                 container = docker_client.containers.get(name)
                 assert container.status == "running"
-                print(container.attrs)
             return
         except (
             httpx.ConnectError,
@@ -76,7 +72,6 @@ def _wait_for_process(
             docker.errors.NotFound,
             AssertionError,
         ):
-            print("EXCEPTIONNNNNNNNNNNNN")
             time.sleep(_WAIT_INCREMENT)
             time_waited += _WAIT_INCREMENT
     with open(output_file) as f:
@@ -287,7 +282,6 @@ def start_all_servers(
     Raises:
         SidechainCLIException: If `config_dir` is not a directory.
     """  # noqa: D301
-    print("hi")
     if not os.path.isdir(config_dir):
         raise SidechainCLIException(f"{config_dir} is not a directory.")
     if not rippled_only and not witness_only:
@@ -297,7 +291,6 @@ def start_all_servers(
     if docker:
         rippled_exe = "docker"
         witnessd_exe = "docker"
-    print(rippled_exe, witnessd_exe)
 
     chains = []
     witnesses = []
@@ -318,7 +311,6 @@ def start_all_servers(
         if rippled_exe == "docker":
             name_list = [name for (name, _) in chains]
             to_run = [*_DOCKER_COMPOSE, "up", *name_list]
-            print(to_run)
 
             process, output_file = _run_process(to_run, "docker-rippled")
 
