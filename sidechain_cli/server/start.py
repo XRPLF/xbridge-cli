@@ -79,10 +79,9 @@ def _wait_for_process(
             print("EXCEPTIONNNNNNNNNNNNN")
             time.sleep(_WAIT_INCREMENT)
             time_waited += _WAIT_INCREMENT
-    if process.poll() is not None:
-        with open(output_file) as f:
-            click.echo(f.read())
-        raise SidechainCLIException("Process did not start up correctly.")
+    with open(output_file) as f:
+        click.echo(f.read())
+    raise SidechainCLIException("Process did not start up correctly.")
 
 
 def _run_process(
