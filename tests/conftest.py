@@ -191,6 +191,8 @@ def bridge_build_setup():
         main, ["server", "start-all", "--rippled-only", "--verbose"]
     )
     assert start_result.exit_code == 0, start_result.output
+    print(start_result.output)
+    print(cli_runner.invoke(main, ["server", "list"]).output)
 
     # fund locking door
     config_dir = os.path.abspath(os.getenv("XCHAIN_CONFIG_DIR"))

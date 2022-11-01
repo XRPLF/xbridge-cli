@@ -53,7 +53,7 @@ jobs:
       - name: Run tests
         id: runTests
         run: |
-          poetry run coverage run -m pytest -x tests
+          poetry run coverage run -m pytest -xsvv tests
           poetry run coverage report
         env:
           RIPPLED_EXE: docker
