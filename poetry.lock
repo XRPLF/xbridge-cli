@@ -605,7 +605,7 @@ python-versions = "*"
 
 [[package]]
 name = "types-tabulate"
-version = "0.8.11"
+version = "0.9.0.0"
 description = "Typing stubs for tabulate"
 category = "dev"
 optional = false
@@ -696,7 +696,7 @@ testing = ["func-timeout", "jaraco.itertools", "pytest (>=6)", "pytest-black (>=
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7.1"
-content-hash = "3f2f3ba9f61b19aee6b198ec3589f632676ae7851f0f94d67aa61ccd9da76ad9"
+content-hash = "0549f62bff28d8bebb5bc57b41da5b2300c49e5e5a05e7f3be8b9e88c39e975e"
 
 [metadata.files]
 anyio = [
@@ -1096,8 +1096,8 @@ types-deprecated = [
     {file = "types_Deprecated-1.2.9-py3-none-any.whl", hash = "sha256:53d05621e1d75de537f5a57d93508c8df17e37c07ee60b9fb09d39e1b7586c1e"},
 ]
 types-tabulate = [
-    {file = "types-tabulate-0.8.11.tar.gz", hash = "sha256:17a5fa3b5ca453815778fc9865e8ecd0118b07b2b9faff3e2b06fe448174dd5e"},
-    {file = "types_tabulate-0.8.11-py3-none-any.whl", hash = "sha256:af811268241e8fb87b63c052c87d1e329898a93191309d5d42111372232b2e0e"},
+    {file = "types-tabulate-0.9.0.0.tar.gz", hash = "sha256:4a79474714cea156bcd2185bb9bddd8fb9d3d5227c8d0a7f21bf21caf5f60e67"},
+    {file = "types_tabulate-0.9.0.0-py3-none-any.whl", hash = "sha256:a1cc2aa52d2a9abfe0acbb361ccd49e3400794086a41626ce8784ed2e1ec0b0d"},
 ]
 typing-extensions = [
     {file = "typing_extensions-4.3.0-py3-none-any.whl", hash = "sha256:25642c956049920a5aa49edcdd6ab1e06d7e5d467fc00e0506c44ac86fbfca02"},
