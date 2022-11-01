@@ -1,52 +1,27 @@
 """Create/fund an account via a cross-chain transfer."""
 
-import time
 from pprint import pformat
 from typing import Optional
 
 import click
-from xrpl.clients import JsonRpcClient
-from xrpl.models import (
-    AccountInfo,
-    GenericRequest,
-    Ledger,
-    Response,
-    Transaction,
-    Tx,
-    XChainAccountCreateCommit,
-)
+from xrpl.models import AccountInfo, XChainAccountCreateCommit
 from xrpl.utils import drops_to_xrp, xrp_to_drops
 from xrpl.wallet import Wallet
 
-from sidechain_cli.exceptions import AttestationTimeoutException, SidechainCLIException
-from sidechain_cli.utils import get_config, submit_tx
-
-_ATTESTATION_TIME_LIMIT = 10  # in seconds
-_WAIT_STEP_LENGTH = 0.05
-
-
-def _submit_tx(
-    tx: Transaction, client: JsonRpcClient, secret: str, verbose: int
-) -> Response:
-    result = submit_tx(tx, client, secret, verbose)
-    tx_result = result.result.get("error") or result.result.get("engine_result")
-    if tx_result != "tesSUCCESS":
-        raise Exception(
-            result.result.get("error_message")
-            or result.result.get("engine_result_message")
-        )
-    tx_hash = result.result["tx_json"]["hash"]
-    return client.request(Tx(transaction=tx_hash))
+from sidechain_cli.exceptions import SidechainCLIException
+from sidechain_cli.utils import get_config, submit_tx, wait_for_attestations
 
 
 @click.command(name="create-account")
 @click.option(
-    "--chain",
-    "from_chain",
+    "--from_locking/--from_issuing",
+    "from_locking",
     required=True,
     prompt=True,
-    type=str,
-    help="The chain to fund an account from.",
+    help=(
+        "Whether funding from the locking chain or the issuing chain. "
+        "Defaults to the locking chain."
+    ),
 )
 @click.option(
     "--bridge",
@@ -81,17 +56,28 @@ def _submit_tx(
     ),
 )
 @click.option(
+    "--close-ledgers/--no-close-ledgers",
+    "close_ledgers",
+    default=True,
+    help=(
+        "Whether to close ledgers manually (via `ledger_accept`) or wait for ledgers "
+        "to close automatically. A standalone node requires ledgers to be closed; an "
+        "external network does not support ledger closing."
+    ),
+)
+@click.option(
     "-v",
     "--verbose",
     help="Whether or not to print more verbose information. Also supports `-vv`.",
     count=True,
 )
 def create_xchain_account(
-    from_chain: str,
+    from_locking: bool,
     bridge: str,
     from_seed: str,
     to_account: str,
-    amount: Optional[int],
+    amount: Optional[int] = None,
+    close_ledgers: bool = True,
     verbose: int = 0,
 ) -> None:
     """
@@ -99,12 +85,16 @@ def create_xchain_account(
     \f
 
     Args:
-        from_chain: The chain to fund an account from.
+        from_locking: Whether funding from the locking chain or the issuing chain.
+            Defaults to the locking chain.
         bridge: The bridge across which to create the account.
         from_seed: The seed of the account that the funds come from.
         to_account: The chain to fund an account on.
         amount: The amount with which to fund the account. Must be greater than the
             account reserve. Defaults to the account reserve.
+        close_ledgers: Whether to close ledgers manually (via `ledger_accept`) or wait
+            for ledgers to close automatically. A standalone node requires ledgers to
+            be closed; an external network does not support ledger closing.
         verbose: Whether or not to print more verbose information. Add more v's for
             more verbosity.
 
@@ -115,15 +105,17 @@ def create_xchain_account(
             attestations.
     """  # noqa: D301
     bridge_config = get_config().get_bridge(bridge)
-    from_chain_config = get_config().get_chain(from_chain)
-    from_client = from_chain_config.get_client()
-    to_chain = [chain for chain in bridge_config.chains if chain != from_chain][0]
-    to_chain_config = get_config().get_chain(to_chain)
-    to_client = to_chain_config.get_client()
-    min_create_account_amount = bridge_config.create_account_amounts[
-        bridge_config.chains.index(from_chain)
-    ]
+    locking_client, issuing_client = bridge_config.get_clients()
+    if from_locking:
+        from_client = locking_client
+        to_client = issuing_client
+    else:
+        from_client = issuing_client
+        to_client = locking_client
 
+    min_create_account_amount = bridge_config.create_account_amounts[
+        0 if from_locking else 1
+    ]
     if min_create_account_amount is None:
         raise SidechainCLIException(
             "Cannot create a cross-chain account if the create account amount "
@@ -151,7 +143,7 @@ def create_xchain_account(
         destination=to_account,
         amount=create_amount,
     )
-    submit_tx(fund_tx, from_client, from_wallet.seed, verbose)
+    submit_tx(fund_tx, from_client, from_wallet.seed, verbose, close_ledgers)
 
     # wait for attestations
     if verbose > 0:
@@ -160,51 +152,17 @@ def create_xchain_account(
             fg="blue",
         )
 
-    time_count = 0.0
-    attestation_count = 0
-    while True:
-        time.sleep(_WAIT_STEP_LENGTH)
-        open_ledger = to_client.request(
-            Ledger(ledger_index="current", transactions=True, expand=True)
-        )
-        open_txs = open_ledger.result["ledger"]["transactions"]
-        for tx in open_txs:
-            if tx["TransactionType"] == "XChainAddAttestation":
-                batch = tx["XChainAttestationBatch"]
-                if batch["XChainBridge"] != bridge_config.to_xrpl():
-                    # make sure attestation is for this bridge
-                    continue
-                attestations = batch["XChainCreateAccountAttestationBatch"]
-                for attestation in attestations:
-                    element = attestation["XChainCreateAccountAttestationBatchElement"]
-                    # check that the attestation actually matches this transfer
-                    if element["Account"] != from_wallet.classic_address:
-                        continue
-                    if element["Amount"] != create_amount:
-                        continue
-                    if element["Destination"] != to_account:
-                        continue
-                    attestation_count += 1
-                    if verbose > 1:
-                        click.echo(pformat(element))
-                    if verbose > 0:
-                        click.secho(
-                            f"Received {attestation_count} attestations",
-                            fg="bright_green",
-                        )
-        if len(open_txs) > 0:
-            to_client.request(GenericRequest(method="ledger_accept"))
-            time_count = 0
-        else:
-            time_count += _WAIT_STEP_LENGTH
-
-        quorum = max(1, bridge_config.num_witnesses - 1)
-        if attestation_count >= quorum:
-            # received enough attestations for quorum
-            break
-
-        if time_count > _ATTESTATION_TIME_LIMIT:
-            raise AttestationTimeoutException()
+    wait_for_attestations(
+        False,
+        bridge_config,
+        to_client,
+        from_wallet,
+        to_account,
+        create_amount,
+        None,
+        close_ledgers,
+        verbose,
+    )
 
     if verbose > 0:
         click.echo(pformat(to_client.request(AccountInfo(account=to_account)).result))

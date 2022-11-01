@@ -1,7 +1,7 @@
 {
   "LockingChain": {
     "Endpoint": {
-      "IP": "127.0.0.1",
+      "IP": "0.0.0.0",
       "JsonRPCPort": {{ locking_node_port }}
     },
     "DoorAccount": {
@@ -20,9 +20,9 @@
   "IssuingChain": {
     "Endpoint": {
       {% if is_linux %}
-      "IP": "127.0.0.2",
+      "IP": "0.0.0.0",
       {% else %}
-      "IP": "127.0.0.1",
+      "IP": "0.0.0.0",
       {% endif %}
       "JsonRPCPort": {{ issuing_node_port }}
     },

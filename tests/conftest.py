@@ -153,9 +153,6 @@ def create_bridge():
             "bridge",
             "build",
             "--name=test_bridge",
-            "--chains",
-            "locking_chain",
-            "issuing_chain",
             "--verbose",
         ],
     )
@@ -174,7 +171,7 @@ def create_bridge():
     assert stop_result.exit_code == 0, stop_result.output
 
 
-@pytest.fixture(scope="class")
+@pytest.fixture(scope="function")
 def bridge_build_setup():
     # reset CLI config file
     config_file = os.path.join(get_config_folder(), "config.json")

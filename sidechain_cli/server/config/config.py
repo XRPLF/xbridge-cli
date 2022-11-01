@@ -151,6 +151,12 @@ def _generate_rippled_configs(config_dir: str, docker: bool = False) -> Tuple[in
     help="The door account on the destination chain. Defaults to the genesis account.",
 )
 @click.option(
+    "--locking_reward_seed",
+    required=True,
+    prompt=True,
+    help="The seed for the reward account for the witness on the locking chain.",
+)
+@click.option(
     "--locking_reward_account",
     required=True,
     prompt=True,
@@ -161,6 +167,12 @@ def _generate_rippled_configs(config_dir: str, docker: bool = False) -> Tuple[in
     required=True,
     prompt=True,
     help="The seed to use for signing attestations.",
+)
+@click.option(
+    "--issuing_reward_seed",
+    required=True,
+    prompt=True,
+    help="The seed for the reward account for the witness on the issuing chain.",
 )
 @click.option(
     "--issuing_reward_account",

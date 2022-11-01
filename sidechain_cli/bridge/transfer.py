@@ -1,41 +1,45 @@
 """CLI command for setting up a bridge."""
 
-import time
-from pprint import pformat
+from typing import Any, Dict, cast
 
 import click
 from xrpl.clients import JsonRpcClient
-from xrpl.models import (
-    GenericRequest,
-    Ledger,
-    Response,
-    Transaction,
-    Tx,
-    XChainCommit,
-    XChainCreateClaimID,
-)
+from xrpl.models import Response, Transaction, Tx, XChainCommit, XChainCreateClaimID
 from xrpl.wallet import Wallet
 
-from sidechain_cli.exceptions import AttestationTimeoutException, SidechainCLIException
-from sidechain_cli.utils import get_config, submit_tx
+from sidechain_cli.exceptions import SidechainCLIException
+from sidechain_cli.utils import get_config, submit_tx, wait_for_attestations
 
 _ATTESTATION_TIME_LIMIT = 10  # in seconds
 _WAIT_STEP_LENGTH = 0.05
 
 
 def _submit_tx(
-    tx: Transaction, client: JsonRpcClient, secret: str, verbose: int
+    tx: Transaction,
+    client: JsonRpcClient,
+    secret: str,
+    verbose: int,
+    close_ledgers: bool,
 ) -> Response:
-    result = submit_tx(tx, client, secret, verbose)
-    tx_result = result.result.get("error") or result.result.get("engine_result")
+    result = submit_tx(tx, client, secret, verbose, close_ledgers)
+    tx_result = (
+        result.result.get("error")
+        or result.result.get("engine_result")
+        or result.result["meta"]["TransactionResult"]
+    )
     if tx_result != "tesSUCCESS":
+        from pprint import pprint
+
+        pprint(result.result)
         raise SidechainCLIException(
             str(
                 result.result.get("error_message")
                 or result.result.get("engine_result_message")
             )
         )
-    tx_hash = result.result["tx_json"]["hash"]
+    tx_hash = cast(Dict[str, Any], (result.result.get("tx_json") or result.result))[
+        "hash"
+    ]
     return client.request(Tx(transaction=tx_hash))
 
 
@@ -48,11 +52,14 @@ def _submit_tx(
     help="The bridge to transfer across.",
 )
 @click.option(
-    "--src_chain",
+    "--from_locking/--from_issuing",
+    "from_locking",
     required=True,
     prompt=True,
-    type=str,
-    help="The chain to transfer from.",
+    help=(
+        "Whether funding from the locking chain or the issuing chain. "
+        "Defaults to the locking chain."
+    ),
 )
 @click.option(
     "--amount", required=True, prompt=True, type=str, help="The amount to transfer."
@@ -74,6 +81,16 @@ def _submit_tx(
     help="The seed of the account to transfer to.",
 )
 @click.option(
+    "--close-ledgers/--no-close-ledgers",
+    "close_ledgers",
+    default=True,
+    help=(
+        "Whether to close ledgers manually (via `ledger_accept`) or wait for ledgers "
+        "to close automatically. A standalone node requires ledgers to be closed; an "
+        "external network does not support ledger closing."
+    ),
+)
+@click.option(
     "-v",
     "--verbose",
     count=True,
@@ -86,10 +103,11 @@ def _submit_tx(
 )
 def send_transfer(
     bridge: str,
-    src_chain: str,
+    from_locking: bool,
     amount: str,
     from_account: str,
     to_account: str,
+    close_ledgers: bool = True,
     verbose: int = 0,
     tutorial: bool = False,
 ) -> None:
@@ -99,10 +117,14 @@ def send_transfer(
 
     Args:
         bridge: The bridge to transfer across.
-        src_chain: The chain to transfer from.
+        from_locking: Whether funding from the locking chain or the issuing chain.
+            Defaults to the locking chain.
         amount: The amount to transfer.
         from_account: The seed of the account to transfer from.
         to_account: The seed of the account to transfer to.
+        close_ledgers: Whether to close ledgers manually (via `ledger_accept`) or wait
+            for ledgers to close automatically. A standalone node requires ledgers to
+            be closed; an external network does not support ledger closing.
         verbose: Whether or not to print more verbose information. Supports `-vv`.
         tutorial: Whether to slow down and explain each step.
 
@@ -114,8 +136,13 @@ def send_transfer(
     """  # noqa: D301
     print_level = max(verbose, 2 if tutorial else 0)
     bridge_config = get_config().get_bridge(bridge)
-    if src_chain not in bridge_config.chains:
-        raise SidechainCLIException(f"{src_chain} not one of the chains in {bridge}.")
+    locking_client, issuing_client = bridge_config.get_clients()
+    if from_locking:
+        src_client = locking_client
+        dst_client = issuing_client
+    else:
+        src_client = issuing_client
+        dst_client = locking_client
 
     try:
         from_wallet = Wallet(from_account, 0)
@@ -125,12 +152,6 @@ def send_transfer(
         to_wallet = Wallet(to_account, 0)
     except ValueError:
         raise SidechainCLIException(f"Invalid `to` seed: {to_account}")
-
-    dst_chain = [chain for chain in bridge_config.chains if chain != src_chain][0]
-    src_chain_config = get_config().get_chain(src_chain)
-    dst_chain_config = get_config().get_chain(dst_chain)
-    src_client = src_chain_config.get_client()
-    dst_client = dst_chain_config.get_client()
 
     bridge_obj = bridge_config.get_bridge()
 
@@ -149,7 +170,9 @@ def send_transfer(
         signature_reward=bridge_config.signature_reward,
         other_chain_source=from_wallet.classic_address,
     )
-    seq_num_result = _submit_tx(seq_num_tx, dst_client, to_wallet.seed, print_level)
+    seq_num_result = _submit_tx(
+        seq_num_tx, dst_client, to_wallet.seed, print_level, close_ledgers
+    )
 
     # extract new sequence number from metadata
     nodes = seq_num_result.result["meta"]["AffectedNodes"]
@@ -175,7 +198,7 @@ def send_transfer(
         xchain_claim_id=xchain_claim_id,
         other_chain_destination=to_wallet.classic_address,
     )
-    _submit_tx(commit_tx, src_client, from_wallet.seed, print_level)
+    submit_tx(commit_tx, src_client, from_wallet.seed, print_level, close_ledgers)
 
     # wait for attestations
     if tutorial:
@@ -192,51 +215,14 @@ def send_transfer(
             fg="blue",
         )
 
-    # TODO: this should handle external networks better
-    time_count = 0.0
-    attestation_count = 0
-    while True:
-        time.sleep(_WAIT_STEP_LENGTH)
-        open_ledger = dst_client.request(
-            Ledger(ledger_index="current", transactions=True, expand=True)
-        )
-        open_txs = open_ledger.result["ledger"]["transactions"]
-        for tx in open_txs:
-            if tx["TransactionType"] == "XChainAddAttestation":
-                batch = tx["XChainAttestationBatch"]
-                if batch["XChainBridge"] != bridge_config.to_xrpl():
-                    # make sure attestation is for this bridge
-                    continue
-                attestations = batch["XChainClaimAttestationBatch"]
-                for attestation in attestations:
-                    element = attestation["XChainClaimAttestationBatchElement"]
-                    # check that the attestation actually matches this transfer
-                    if element["Account"] != from_wallet.classic_address:
-                        continue
-                    if element["Amount"] != amount:
-                        continue
-                    if element["Destination"] != to_wallet.classic_address:
-                        continue
-                    if element["XChainClaimID"] != xchain_claim_id:
-                        continue
-                    attestation_count += 1
-                    if print_level > 1:
-                        click.echo(pformat(element))
-                    if print_level > 0:
-                        click.secho(
-                            f"Received {attestation_count} attestations",
-                            fg="bright_green",
-                        )
-        if len(open_txs) > 0:
-            dst_client.request(GenericRequest(method="ledger_accept"))
-            time_count = 0
-        else:
-            time_count += _WAIT_STEP_LENGTH
-
-        quorum = max(1, bridge_config.num_witnesses - 1)
-        if attestation_count >= quorum:
-            # received enough attestations for quorum
-            break
-
-        if time_count > _ATTESTATION_TIME_LIMIT:
-            raise AttestationTimeoutException()
+    wait_for_attestations(
+        True,
+        bridge_config,
+        dst_client,
+        from_wallet,
+        to_wallet.classic_address,
+        amount,
+        xchain_claim_id,
+        close_ledgers,
+        verbose,
+    )

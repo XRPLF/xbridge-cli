@@ -3,7 +3,7 @@
 import json
 import os
 from pprint import pformat
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import click
 from xrpl.account import does_account_exist
@@ -29,13 +29,7 @@ from xrpl.models.transactions.xchain_add_attestation import (
 from xrpl.wallet import Wallet
 
 from sidechain_cli.exceptions import SidechainCLIException
-from sidechain_cli.utils import (
-    BridgeData,
-    add_bridge,
-    check_bridge_exists,
-    check_chain_exists,
-    submit_tx,
-)
+from sidechain_cli.utils import BridgeData, add_bridge, check_bridge_exists, submit_tx
 
 _ATTESTATION_ENCODE_ORDER: List[Tuple[str, int]] = [
     ("account", 4),
@@ -84,13 +78,6 @@ def _sign_attestation(
     help="The name of the bridge (used for differentiation purposes).",
 )
 @click.option(
-    "--chains",
-    required=True,
-    nargs=2,
-    type=str,
-    help="The two chains that the bridge goes between.",
-)
-@click.option(
     "--bootstrap",
     envvar="XCHAIN_CONFIG_DIR",
     required=True,
@@ -104,6 +91,23 @@ def _sign_attestation(
     help="The reward for witnesses providing a signature.",
 )
 @click.option(
+    "--funding_seed",
+    help=(
+        "The master key of an account on the locking chain that can fund accounts on "
+        "the issuing chain. This is only needed for an XRP-XRP bridge."
+    ),
+)
+@click.option(
+    "--close-ledgers/--no-close-ledgers",
+    "close_ledgers",
+    default=True,
+    help=(
+        "Whether to close ledgers manually (via `ledger_accept`) or wait for ledgers "
+        "to close automatically. A standalone node requires ledgers to be closed; an "
+        "external network does not support ledger closing."
+    ),
+)
+@click.option(
     "-v",
     "--verbose",
     help="Whether or not to print more verbose information. Also supports `-vv`.",
@@ -113,9 +117,10 @@ def _sign_attestation(
 def setup_bridge(
     ctx: click.Context,
     name: str,
-    chains: Tuple[str, str],
     bootstrap: str,
     signature_reward: str,
+    funding_seed: Optional[str] = None,
+    close_ledgers: bool = True,
     verbose: int = 0,
 ) -> None:
     """
@@ -125,9 +130,14 @@ def setup_bridge(
     Args:
         ctx: The click context.
         name: The name of the bridge (used for differentiation purposes).
-        chains: The two chains that the bridge goes between.
         bootstrap: The filepath to the bootstrap config file.
         signature_reward: The reward for witnesses providing a signature.
+        funding_seed: The master key of an account on the locking chain that can fund
+            accounts on the issuing chain. This is only needed for an XRP-XRP bridge.
+            If not provided, uses the genesis seed.
+        close_ledgers: Whether to close ledgers manually (via `ledger_accept`) or wait
+            for ledgers to close automatically. A standalone node requires ledgers to
+            be closed; an external network does not support ledger closing.
         verbose: Whether or not to print more verbose information. Add more v's for
             more verbosity.
 
@@ -138,10 +148,6 @@ def setup_bridge(
     # check name
     if check_bridge_exists(name):
         raise SidechainCLIException(f"Bridge named {name} already exists.")
-    # validate chains
-    for chain in chains:
-        if not check_chain_exists(chain):
-            click.echo(f"Chain {chain} is not running.")
 
     if bootstrap == os.getenv("XCHAIN_CONFIG_DIR"):
         bootstrap = os.path.join(bootstrap, "bridge_bootstrap.json")
@@ -153,7 +159,6 @@ def setup_bridge(
     locking_issue = bootstrap_config["LockingChain"]["BridgeIssue"]
     issuing_door = bootstrap_config["IssuingChain"]["DoorAccount"]["Address"]
     issuing_issue = bootstrap_config["IssuingChain"]["BridgeIssue"]
-    funding_seed = "snoPBrXtMeMyMHUVTgbuqAfg1SUTb"
 
     bridge_obj = XChainBridge(
         locking_chain_door=locking_door,
@@ -162,8 +167,14 @@ def setup_bridge(
         issuing_chain_issue=issuing_issue,
     )
 
-    if bridge_obj.issuing_chain_issue == "XRP" and funding_seed is None:
-        raise SidechainCLIException("Must include `funding_seed` for XRP-XRP bridge.")
+    if funding_seed is None:
+        if bridge_obj.issuing_chain_issue == "XRP" and funding_seed is None:
+            if close_ledgers:
+                funding_seed = "snoPBrXtMeMyMHUVTgbuqAfg1SUTb"
+            else:
+                raise SidechainCLIException(
+                    "Must include `funding_seed` for external XRP-XRP bridge."
+                )
 
     locking_endpoint = bootstrap_config["LockingChain"]["Endpoint"]
     locking_url = f"http://{locking_endpoint['IP']}:{locking_endpoint['JsonRPCPort']}"
@@ -233,7 +244,13 @@ def setup_bridge(
         signature_reward=signature_reward,
         min_account_create_amount=str(min_create2),
     )
-    submit_tx(create_tx1, locking_client, locking_door_seed, verbose)
+    submit_tx(
+        create_tx1,
+        locking_client,
+        locking_door_seed,
+        verbose,
+        close_ledgers,
+    )
 
     # set up multisign on the door account
     signer_tx1 = SignerListSet(
@@ -241,13 +258,21 @@ def setup_bridge(
         signer_quorum=max(1, len(signer_entries) - 1),
         signer_entries=signer_entries,
     )
-    submit_tx(signer_tx1, locking_client, locking_door_seed, verbose)
+    submit_tx(
+        signer_tx1,
+        locking_client,
+        locking_door_seed,
+        verbose,
+        close_ledgers,
+    )
 
     # disable the master key
     disable_master_tx1 = AccountSet(
         account=locking_door, set_flag=AccountSetFlag.ASF_DISABLE_MASTER
     )
-    submit_tx(disable_master_tx1, locking_client, locking_door_seed, verbose)
+    submit_tx(
+        disable_master_tx1, locking_client, locking_door_seed, verbose, close_ledgers
+    )
 
     ###################################################################################
     # set up issuing chain
@@ -259,7 +284,7 @@ def setup_bridge(
         signature_reward=signature_reward,
         min_account_create_amount=str(min_create1),
     )
-    submit_tx(create_tx2, issuing_client, issuing_door_seed, verbose)
+    submit_tx(create_tx2, issuing_client, issuing_door_seed, verbose, close_ledgers)
 
     if bridge_obj.issuing_chain_issue == "XRP":
         # we need to create the witness reward + submission accounts via the bridge
@@ -274,7 +299,13 @@ def setup_bridge(
                 SignerEntry(account=new_wallet.classic_address, signer_weight=1)
             ],
         )
-        submit_tx(hacky_signer_tx, issuing_client, issuing_door_seed, verbose)
+        submit_tx(
+            hacky_signer_tx,
+            issuing_client,
+            issuing_door_seed,
+            verbose,
+            close_ledgers,
+        )
 
         # helper function for submittion the attestations
         def _submit_attestations(
@@ -288,7 +319,13 @@ def setup_bridge(
                     xchain_create_account_attestation_batch=attestations,
                 ),
             )
-            submit_tx(attestation_tx, issuing_client, issuing_door_seed, verbose)
+            submit_tx(
+                attestation_tx,
+                issuing_client,
+                issuing_door_seed,
+                verbose,
+                close_ledgers,
+            )
 
         assert funding_seed is not None  # for typing purposes - checked earlier
         funding_wallet = Wallet(funding_seed, 0)
@@ -306,7 +343,7 @@ def setup_bridge(
                 destination=account,
                 amount=amount,
             )
-            submit_tx(acct_tx, locking_client, funding_seed, verbose)
+            submit_tx(acct_tx, locking_client, funding_seed, verbose, close_ledgers)
 
             # set up the attestation for the commit
             init_attestation = XChainCreateAccountAttestationBatchElement(
@@ -339,18 +376,20 @@ def setup_bridge(
         signer_quorum=max(1, len(signer_entries) - 1),
         signer_entries=signer_entries,
     )
-    submit_tx(signer_tx2, issuing_client, issuing_door_seed, verbose)
+    submit_tx(signer_tx2, issuing_client, issuing_door_seed, verbose, close_ledgers)
 
     # disable the master key
     disable_master_tx2 = AccountSet(
         account=issuing_door, set_flag=AccountSetFlag.ASF_DISABLE_MASTER
     )
-    submit_tx(disable_master_tx2, issuing_client, issuing_door_seed, verbose)
+    submit_tx(
+        disable_master_tx2, issuing_client, issuing_door_seed, verbose, close_ledgers
+    )
 
     # add bridge to CLI config
     bridge_data: BridgeData = {
         "name": name,
-        "chains": chains,
+        "chains": (locking_url, issuing_url),
         "num_witnesses": len(signer_entries),
         "door_accounts": (locking_door, issuing_door),
         "xchain_currencies": (locking_issue, issuing_issue),
