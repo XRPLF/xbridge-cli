@@ -54,6 +54,7 @@ def _wait_for_process(
     is_docker: bool = False,
 ) -> None:
     http_url = f"http://{http_ip}:{http_port}"
+    print(http_url)
     time_waited = 0.0
     while time_waited < _START_UP_TIME:
         try:
@@ -285,6 +286,7 @@ def start_all_servers(
     Raises:
         SidechainCLIException: If `config_dir` is not a directory.
     """  # noqa: D301
+    print("hi")
     if not os.path.isdir(config_dir):
         raise SidechainCLIException(f"{config_dir} is not a directory.")
     if not rippled_only and not witness_only:
@@ -294,6 +296,7 @@ def start_all_servers(
     if docker:
         rippled_exe = "docker"
         witnessd_exe = "docker"
+    print(rippled_exe, witnessd_exe)
 
     chains = []
     witnesses = []
