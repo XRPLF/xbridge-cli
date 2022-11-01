@@ -16,14 +16,12 @@ from sidechain_cli.utils import get_config, submit_tx
 @click.argument(
     "chain",
     required=True,
-    prompt=True,
     type=str,
     help="The chain to fund an account on.",
 )
 @click.argument(
     "accounts",
     required=True,
-    prompt=True,
     type=str,
     nargs=-1,
     help="The account(s) to fund.",
@@ -34,7 +32,7 @@ from sidechain_cli.utils import get_config, submit_tx
     is_flag=True,
     help="Whether or not to print more verbose information.",
 )
-def fund_account(chain: str, accounts: str, verbose: bool = False) -> None:
+def fund_account(chain: str, accounts: List[str], verbose: bool = False) -> None:
     """
     Of the form `sidechain-cli fund CHAIN ACCOUNT1 [ACCOUNT2 ...].
 
