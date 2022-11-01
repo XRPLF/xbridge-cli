@@ -50,6 +50,11 @@ jobs:
       - name: Install poetry dependencies
         run: poetry install
 
+      - name: Pull images from docker
+        run: |
+          docker pull legleux/rippled-xbridge
+          docker pull legleux/xbridge_witnessd
+
       - name: Run tests
         id: runTests
         run: |
