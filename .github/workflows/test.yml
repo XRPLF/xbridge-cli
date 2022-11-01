@@ -15,6 +15,12 @@ jobs:
     name: Test
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    strategy:
+      matrix:
+        # we have to use 3.7.1 to get around openssl issues
+        # TODO: add 3.7 once xrpl-py has been updated
+        python-version: ['3.8', '3.9', '3.10', '3.11']
+      fail-fast: false
 
     steps:
       - name: Checkout code
@@ -24,7 +30,7 @@ jobs:
         uses: actions/cache@v3
         with:
           path: /home/runner/.local
-          key: dotlocal-3.10-${{ hashFiles('.github/workflows') }}
+          key: dotlocal-${{ matrix.python-version }}-${{ hashFiles('.github/workflows') }}
 
       - name: Install poetry
         run: |
@@ -34,7 +40,7 @@ jobs:
       - name: Install Python + Retrieve Poetry dependencies from cache
         uses: actions/setup-python@v4
         with:
-          python-version: "3.10"
+          python-version: "${{ matrix.python-version }}"
           cache: 'poetry'
 
       - name: Display Python version
@@ -44,12 +50,44 @@ jobs:
       - name: Install poetry dependencies
         run: poetry install
 
-      - name: Run tests
+      - name: Pull images from docker
         run: |
-          poetry run coverage run -m pytest tests
+          docker pull legleux/rippled-xbridge
+          docker pull legleux/xbridge_witnessd
+
+      - name: Run tests
+        id: runTests
+        run: |
+          poetry run coverage run -m pytest -xsvv tests
           poetry run coverage report
         env:
           RIPPLED_EXE: docker
           WITNESSD_EXE: docker
           XCHAIN_CONFIG_DIR: /home/runner/work/sidechain-config
           GITHUB_CI: "True"
+
+      - name: Debug Test Failure (Chain Outputs)
+        if: always() && steps.runTests.outcome == 'failure'
+        run: |
+          echo "locking_chain"
+          docker logs locking_chain
+          echo "issuing_chain"
+          docker logs issuing_chain
+        env:
+          XCHAIN_CONFIG_DIR: /home/runner/work/sidechain-config
+
+      - name: Debug Test Failure (Witness Outputs)
+        if: always() && steps.runTests.outcome == 'failure'
+        run: |
+          echo "witness0"
+          docker logs witness0
+          echo "witness1"
+          docker logs witness1
+          echo "witness2"
+          docker logs witness2
+          echo "witness3"
+          docker logs witness3
+          echo "witness4"
+          docker logs witness4
+        env:
+          XCHAIN_CONFIG_DIR: /home/runner/work/sidechain-config
