@@ -17,14 +17,12 @@ from sidechain_cli.utils import get_config, submit_tx
     "chain",
     required=True,
     type=str,
-    help="The chain to fund an account on.",
 )
 @click.argument(
     "accounts",
     required=True,
     type=str,
     nargs=-1,
-    help="The account(s) to fund.",
 )
 @click.option(
     "-v",
