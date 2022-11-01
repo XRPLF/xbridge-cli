@@ -58,11 +58,13 @@ def _wait_for_process(
     while time_waited < _START_UP_TIME:
         try:
             request = {"method": "server_info"}
-            httpx.post(http_url, json=request)
+            result = httpx.post(http_url, json=request)
+            print(result.json())
             if is_docker:
                 docker_client = docker.from_env()
                 container = docker_client.containers.get(name)
                 assert container.status == "running"
+                print(container.__dict__)
             return
         except (
             httpx.ConnectError,
@@ -312,6 +314,7 @@ def start_all_servers(
         if rippled_exe == "docker":
             name_list = [name for (name, _) in chains]
             to_run = [*_DOCKER_COMPOSE, "up", *name_list]
+            print(to_run)
 
             process, output_file = _run_process(to_run, "docker-rippled")
 
