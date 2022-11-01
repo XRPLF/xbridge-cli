@@ -60,13 +60,12 @@ def _wait_for_process(
         try:
             request = {"method": "server_info"}
             result = httpx.post(http_url, json=request)
-            print("yo")
             print(result.json())
             if is_docker:
                 docker_client = docker.from_env()
                 container = docker_client.containers.get(name)
-                print(container.attrs)
                 assert container.status == "running"
+                print(container.attrs)
             return
         except (
             httpx.ConnectError,
