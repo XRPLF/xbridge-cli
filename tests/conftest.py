@@ -140,11 +140,10 @@ def create_bridge():
         + bootstrap["LockingChain"]["WitnessRewardAccounts"]
         + bootstrap["LockingChain"]["WitnessSubmitAccounts"]
     )
-    for account in accounts_locking_fund:
-        fund_result = cli_runner.invoke(
-            main, ["fund", f"--account={account}", "--chain=locking_chain"]
-        )
-        assert fund_result.exit_code == 0, fund_result.output
+    fund_result = cli_runner.invoke(
+        main, ["fund", "locking_chain", *accounts_locking_fund]
+    )
+    assert fund_result.exit_code == 0, fund_result.output
 
     # build bridge
     build_result = cli_runner.invoke(
@@ -205,11 +204,10 @@ def bridge_build_setup():
         + bootstrap["LockingChain"]["WitnessRewardAccounts"]
         + bootstrap["LockingChain"]["WitnessSubmitAccounts"]
     )
-    for account in accounts_locking_fund:
-        fund_result = cli_runner.invoke(
-            main, ["fund", f"--account={account}", "--chain=locking_chain"]
-        )
-        assert fund_result.exit_code == 0, fund_result.output
+    fund_result = cli_runner.invoke(
+        main, ["fund", "locking_chain", *accounts_locking_fund]
+    )
+    assert fund_result.exit_code == 0, fund_result.output
 
     yield
 

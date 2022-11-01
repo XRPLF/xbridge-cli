@@ -16,9 +16,7 @@ class TestFund:
         assert initial_account_info.status.value == "error"
         assert initial_account_info.result["error"] == "actNotFound"
 
-        fund_result = runner.invoke(
-            main, ["fund", f"--account={test_account}", "--chain=locking_chain"]
-        )
+        fund_result = runner.invoke(main, ["fund", "locking_chain", test_account])
         assert fund_result.exit_code == 0, fund_result.output
 
         final_account_info = client.request(AccountInfo(account=test_account))
