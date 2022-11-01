@@ -64,7 +64,9 @@ def submit_tx(
             results.append(result)
             tx_results.append(result.result["meta"]["TransactionResult"])
 
-    for tx_result in tx_results:
+    for i in range(len(results)):
+        result = results[i]
+        tx_result = tx_results[i]
         if verbose > 0:
             text_color = "bright_green" if tx_result == "tesSUCCESS" else "bright_red"
             click.secho(f"Result: {tx_result}", fg=text_color)
