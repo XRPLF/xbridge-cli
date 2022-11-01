@@ -94,8 +94,8 @@ class TestBridgeTransfer:
             main,
             [
                 "fund",
-                f"--account={send_wallet.classic_address}",
-                "--chain=locking_chain",
+                "locking_chain",
+                send_wallet.classic_address,
             ],
         )
         assert fund_result1.exit_code == 0, fund_result1.output
