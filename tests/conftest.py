@@ -45,7 +45,7 @@ def pytest_configure(config):
 
         mocked_home_dir = tempfile.TemporaryDirectory()
         config_var = unittest.mock.patch(
-            "sidechain_cli.utils.config_file.CONFIG_FOLDER",
+            "sidechain_cli.utils.config_file.config_file.CONFIG_FOLDER",
             mocked_home_dir.name,
         )
         config_var.start()
@@ -56,7 +56,7 @@ def pytest_configure(config):
             data: Dict[str, List[Any]] = {"chains": [], "witnesses": [], "bridges": []}
             json.dump(data, f, indent=4)
         config_var2 = unittest.mock.patch(
-            "sidechain_cli.utils.config_file._CONFIG_FILE",
+            "sidechain_cli.utils.config_file.config_file._CONFIG_FILE",
             config_file,
         )
         config_var2.start()

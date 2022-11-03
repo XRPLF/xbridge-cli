@@ -9,8 +9,10 @@ from xrpl.models import AccountObjects
 
 from sidechain_cli.main import main
 from sidechain_cli.utils import get_config
-from sidechain_cli.utils.config_file import _CONFIG_FILE
+from sidechain_cli.utils.config_file import get_config_folder
 from tests.utils import SetInterval, close_ledgers
+
+_CONFIG_FILE = os.path.join(get_config_folder(), "config.json")
 
 
 @pytest.mark.usefixtures("bridge_build_setup")

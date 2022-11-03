@@ -12,7 +12,9 @@ import docker
 from sidechain_cli.main import main
 from sidechain_cli.server.start import _DOCKER_COMPOSE
 from sidechain_cli.utils import get_config
-from sidechain_cli.utils.config_file import CONFIG_FOLDER
+from sidechain_cli.utils.config_file import get_config_folder
+
+CONFIG_FOLDER = get_config_folder()
 
 
 @pytest.mark.usefixtures("runner")

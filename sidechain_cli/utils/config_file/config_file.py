@@ -4,18 +4,18 @@ from __future__ import annotations
 
 import json
 import os
-from abc import ABC
-from dataclasses import asdict, dataclass
+from dataclasses import asdict
 from pathlib import Path
-from typing import Any, Dict, List, Literal, Tuple, Type, TypeVar, Union, cast
+from typing import Any, Dict, List, Type
 
 import httpx
-from xrpl.clients import JsonRpcClient
-from xrpl.models import IssuedCurrency, XChainBridge
 
 from sidechain_cli.exceptions import SidechainCLIException
-from sidechain_cli.utils.rippled_config import RippledConfig
-from sidechain_cli.utils.types import Currency, ServerData
+from sidechain_cli.utils.config_file.bridge_config import BridgeConfig
+from sidechain_cli.utils.config_file.chain_config import ChainConfig
+from sidechain_cli.utils.config_file.server_config import ServerConfig
+from sidechain_cli.utils.config_file.witness_config import WitnessConfig
+from sidechain_cli.utils.types import ServerData
 
 _HOME = str(Path.home())
 
@@ -45,177 +45,7 @@ def get_config_folder() -> str:
     return CONFIG_FOLDER
 
 
-T = TypeVar("T", bound="ConfigItem")
-
-
-class ConfigItem(ABC):
-    """Abstract class representing a config item."""
-
-    @classmethod
-    def from_dict(cls: Type[T], data: Dict[str, Any]) -> T:
-        """
-        Convert a dictionary to a given config object.
-
-        Args:
-            data: The dictionary to convert.
-
-        Returns:
-            The associated config object.
-        """
-        return cls(**data)
-
-
-@dataclass
-class ServerConfig(ConfigItem):
-    """Object representing the config for a server (chain/witness)."""
-
-    name: str
-    type: Union[Literal["rippled"], Literal["witness"]]
-    pid: int
-    exe: str
-    config: str
-    http_ip: str
-    http_port: int
-
-    def is_docker(self: ServerConfig) -> bool:
-        """
-        Return whether the server is running on docker.
-
-        Returns:
-            Whether the server is running on docker.
-        """
-        return self.exe == "docker"
-
-
-@dataclass
-class ChainConfig(ServerConfig):
-    """Object representing the config for a chain."""
-
-    ws_ip: str
-    ws_port: int
-
-    @property
-    def rippled(self: ChainConfig) -> str:
-        """
-        Get the rippled executable. Alias for `self.exe`.
-
-        Returns:
-            `self.exe`.
-        """
-        return self.exe
-
-    def get_client(self: ChainConfig) -> JsonRpcClient:
-        """
-        Get a client connected to the chain. Requires that the chain be running.
-
-        Returns:
-            A JsonRpcClient that is connected to this chain.
-        """
-        return JsonRpcClient(f"http://{self.http_ip}:{self.http_port}")
-
-    def get_config(self: ChainConfig) -> RippledConfig:
-        """
-        Get the config file for this chain.
-
-        Returns:
-            The RippledConfig object for this config file.
-        """
-        return RippledConfig(file_name=self.config)
-
-
-@dataclass
-class WitnessConfig(ServerConfig):
-    """Object representing the config for a witness."""
-
-    @property
-    def witnessd(self: WitnessConfig) -> str:
-        """
-        Get the witnessd executable. Alias for `self.exe`.
-
-        Returns:
-            `self.exe`.
-        """
-        return self.exe
-
-    def get_config(self: WitnessConfig) -> Dict[str, Any]:
-        """
-        Get the config file for this witness.
-
-        Returns:
-            The JSON dictionary for this config file.
-        """
-        with open(self.config) as f:
-            return cast(Dict[str, Any], json.load(f))
-
-
-def _to_issued_currency(
-    xchain_currency: Union[Literal["XRP"], Currency]
-) -> Union[Literal["XRP"], IssuedCurrency]:
-    return (
-        cast(Literal["XRP"], "XRP")
-        if xchain_currency == "XRP"
-        else IssuedCurrency.from_dict(cast(Dict[str, Any], xchain_currency))
-    )
-
-
-@dataclass
-class BridgeConfig(ConfigItem):
-    """Object representing the config for a bridge."""
-
-    name: str
-    chains: Tuple[str, str]
-    num_witnesses: int
-    door_accounts: Tuple[str, str]
-    xchain_currencies: Tuple[Currency, Currency]
-    signature_reward: str
-    create_account_amounts: Tuple[str, str]
-
-    def get_clients(self: BridgeConfig) -> Tuple[JsonRpcClient, JsonRpcClient]:
-        """
-        Get the clients for the chains associated with the bridge.
-
-        Returns:
-            The clients for the chains associated with the bridge.
-        """
-        return (JsonRpcClient(self.chains[0]), JsonRpcClient(self.chains[1]))
-
-    def get_bridge(self: BridgeConfig) -> XChainBridge:
-        """
-        Get the XChainBridge object associated with the bridge.
-
-        Returns:
-            The XChainBridge object.
-        """
-        locking_chain_issue = _to_issued_currency(self.xchain_currencies[0])
-        issuing_chain_issue = _to_issued_currency(self.xchain_currencies[1])
-        return XChainBridge(
-            locking_chain_door=self.door_accounts[0],
-            locking_chain_issue=locking_chain_issue,
-            issuing_chain_door=self.door_accounts[1],
-            issuing_chain_issue=issuing_chain_issue,
-        )
-
-    def to_xrpl(self: BridgeConfig) -> Dict[str, Any]:
-        """
-        Get the XRPL-formatted dictionary for the XChainBridge object.
-
-        Returns:
-            The XRPL-formatted dictionary for the XChainBridge object.
-        """
-        locking_chain_issue = _to_issued_currency(self.xchain_currencies[0])
-        issuing_chain_issue = _to_issued_currency(self.xchain_currencies[1])
-        return {
-            "LockingChainDoor": self.door_accounts[0],
-            "LockingChainIssue": locking_chain_issue,
-            "IssuingChainDoor": self.door_accounts[1],
-            "IssuingChainIssue": issuing_chain_issue,
-        }
-
-
-S = TypeVar("S", bound="ServerData")
-
-
-def _get_running_processes(servers: List[S]) -> List[S]:
+def _get_running_processes(servers: List[ServerData]) -> List[ServerData]:
     return_list = []
     for server in servers:
         http_url = f"http://{server['http_ip']}:{server['http_port']}"
