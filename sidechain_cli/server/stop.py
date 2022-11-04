@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import os
-import signal
 import subprocess
 from typing import List, Optional, cast
 
@@ -55,29 +54,18 @@ def stop_server(
         click.echo(f"Shutting down: {server_names}")
 
     docker_servers = []
+    fout = open(os.devnull, "w")
     for server in servers:
         if server.is_docker():
             docker_servers.append(server.name)
         elif isinstance(server, ChainConfig):
-            # TODO: stop the rippled server with a CLI command
-            # to_run = [server.rippled, "--conf", server.config, "stop"]
-            # subprocess.call(to_run, stdout=fout, stderr=subprocess.STDOUT)
-            pid = server.pid
-            try:
-                os.kill(pid, signal.SIGINT)
-            except ProcessLookupError:
-                pass  # process already died somehow
+            to_run = [server.exe, "--conf", server.config, "stop"]
+            subprocess.call(to_run, stdout=fout, stderr=subprocess.STDOUT)
             if verbose:
                 click.echo(f"Stopped {server.name}")
         else:
-            # TODO: stop the witnessd server with a CLI command
-            # to_run = [server.witnessd, "--config", server.config, "stop"]
-            # subprocess.call(to_run, stdout=fout, stderr=subprocess.STDOUT)
-            pid = server.pid
-            try:
-                os.kill(pid, signal.SIGINT)
-            except ProcessLookupError:
-                pass  # process already died somehow
+            to_run = [server.exe, "--config", server.config, "stop"]
+            subprocess.call(to_run, stdout=fout, stderr=subprocess.STDOUT)
             if verbose:
                 click.echo(f"Stopped {server.name}")
 
