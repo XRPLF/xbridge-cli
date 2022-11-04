@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import signal
 import subprocess
 from typing import List, Optional, cast
 
@@ -11,6 +12,15 @@ import click
 from sidechain_cli.exceptions import SidechainCLIException
 from sidechain_cli.server.start import _DOCKER_COMPOSE
 from sidechain_cli.utils import ChainConfig, ServerConfig, get_config, remove_server
+
+
+def _pid_is_alive(pid: int) -> bool:
+    try:
+        os.kill(pid, 0)
+    except OSError:
+        return False
+    else:
+        return True
 
 
 @click.command(name="stop")
@@ -60,14 +70,13 @@ def stop_server(
             docker_servers.append(server.name)
         elif isinstance(server, ChainConfig):
             to_run = [server.exe, "--conf", server.config, "stop"]
-            subprocess.call(to_run, stdout=fout, stderr=subprocess.STDOUT)
-            if verbose:
-                click.echo(f"Stopped {server.name}")
         else:
             to_run = [server.exe, "--config", server.config, "stop"]
-            subprocess.call(to_run, stdout=fout, stderr=subprocess.STDOUT)
-            if verbose:
-                click.echo(f"Stopped {server.name}")
+        subprocess.call(to_run, stdout=fout, stderr=subprocess.STDOUT)
+        if _pid_is_alive(server.pid):
+            os.kill(server.pid, signal.SIGINT)
+        if verbose:
+            click.echo(f"Stopped {server.name}")
 
     if len(docker_servers) > 0:
         to_run = [*_DOCKER_COMPOSE, "stop", *docker_servers]
