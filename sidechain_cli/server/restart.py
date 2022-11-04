@@ -8,7 +8,8 @@ from typing import List, Optional, cast
 import click
 
 from sidechain_cli.exceptions import SidechainCLIException
-from sidechain_cli.server.start import _DOCKER_COMPOSE, start_server, stop_server
+from sidechain_cli.server.start import _DOCKER_COMPOSE, start_server
+from sidechain_cli.server.stop import stop_server
 from sidechain_cli.utils import ServerConfig, get_config
 
 
