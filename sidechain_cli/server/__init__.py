@@ -6,12 +6,8 @@ from sidechain_cli.server.config import create_server_configs
 from sidechain_cli.server.list import list_servers
 from sidechain_cli.server.print import print_server_output
 from sidechain_cli.server.request import get_server_status, request_server
-from sidechain_cli.server.start import (
-    restart_server,
-    start_all_servers,
-    start_server,
-    stop_server,
-)
+from sidechain_cli.server.restart import restart_server
+from sidechain_cli.server.start import start_all_servers, start_server, stop_server
 
 
 @click.group()
