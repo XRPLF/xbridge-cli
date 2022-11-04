@@ -109,6 +109,15 @@ def _sign_attestation(
     ),
 )
 @click.option(
+    "--disable-master/--no-disable-master",
+    "disable_master",
+    default=True,
+    help=(
+        "Whether to disable the master key as a part of setting up the bridge. A "
+        "production bridge should always do this."
+    ),
+)
+@click.option(
     "-v",
     "--verbose",
     help="Whether or not to print more verbose information. Also supports `-vv`.",
@@ -122,6 +131,7 @@ def setup_bridge(
     signature_reward: str,
     funding_seed: Optional[str] = None,
     close_ledgers: bool = True,
+    disable_master: bool = True,
     verbose: int = 0,
 ) -> None:
     """
@@ -139,6 +149,8 @@ def setup_bridge(
         close_ledgers: Whether to close ledgers manually (via `ledger_accept`) or wait
             for ledgers to close automatically. A standalone node requires ledgers to
             be closed; an external network does not support ledger closing.
+        disable_master: Whether to disable the master key as a part of setting up the
+            bridge. A production bridge should always do this.
         verbose: Whether or not to print more verbose information. Add more v's for
             more verbosity.
 
@@ -252,15 +264,18 @@ def setup_bridge(
         signer_quorum=max(1, len(signer_entries) - 1),
         signer_entries=signer_entries,
     )
+    txs_to_submit1 = [create_tx1, signer_tx1]
 
     # disable the master key
-    disable_master_tx1 = AccountSet(
-        account=locking_door, set_flag=AccountSetFlag.ASF_DISABLE_MASTER
-    )
+    if disable_master:
+        disable_master_tx1 = AccountSet(
+            account=locking_door, set_flag=AccountSetFlag.ASF_DISABLE_MASTER
+        )
+        txs_to_submit1.append(disable_master_tx1)
 
     # submit transactions
     submit_tx(
-        [create_tx1, signer_tx1, disable_master_tx1],
+        txs_to_submit1,
         locking_client,
         locking_door_seed,
         verbose,
@@ -373,15 +388,18 @@ def setup_bridge(
         signer_quorum=max(1, len(signer_entries) - 1),
         signer_entries=signer_entries,
     )
+    txs_to_submit2: List[Transaction] = [signer_tx2]
 
     # disable the master key
-    disable_master_tx2 = AccountSet(
-        account=issuing_door, set_flag=AccountSetFlag.ASF_DISABLE_MASTER
-    )
+    if disable_master:
+        disable_master_tx2 = AccountSet(
+            account=issuing_door, set_flag=AccountSetFlag.ASF_DISABLE_MASTER
+        )
+        txs_to_submit2.append(disable_master_tx2)
 
     # submit transactions
     submit_tx(
-        [signer_tx2, disable_master_tx2],
+        txs_to_submit2,
         issuing_client,
         issuing_door_seed,
         verbose,
