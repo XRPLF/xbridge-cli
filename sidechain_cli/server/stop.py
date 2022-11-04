@@ -68,15 +68,19 @@ def stop_server(
     for server in servers:
         if server.is_docker():
             docker_servers.append(server.name)
-        elif isinstance(server, ChainConfig):
-            to_run = [server.exe, "--conf", server.config, "stop"]
         else:
-            to_run = [server.exe, "--config", server.config, "stop"]
-        subprocess.call(to_run, stdout=fout, stderr=subprocess.STDOUT)
-        if _pid_is_alive(server.pid):
-            os.kill(server.pid, signal.SIGINT)
-        if verbose:
-            click.echo(f"Stopped {server.name}")
+            if isinstance(server, ChainConfig):
+                to_run = [server.exe, "--conf", server.config, "stop"]
+            else:
+                to_run = [server.exe, "--config", server.config, "stop"]
+
+            subprocess.call(to_run, stdout=fout, stderr=subprocess.STDOUT)
+            if _pid_is_alive(server.pid):
+                if verbose:
+                    click.echo(f"Needed to kill {server.name}")
+                os.kill(server.pid, signal.SIGINT)
+            if verbose:
+                click.echo(f"Stopped {server.name}")
 
     if len(docker_servers) > 0:
         to_run = [*_DOCKER_COMPOSE, "stop", *docker_servers]
