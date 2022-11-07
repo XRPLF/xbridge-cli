@@ -4,10 +4,9 @@ from __future__ import annotations
 
 import json
 import os
-import signal
 import subprocess
 import time
-from typing import List, Optional, Tuple, cast
+from typing import List, Tuple
 
 import click
 import httpx
@@ -15,17 +14,13 @@ import httpx
 import docker
 from sidechain_cli.exceptions import SidechainCLIException
 from sidechain_cli.utils import (
-    ChainConfig,
     ChainData,
     RippledConfig,
-    ServerConfig,
     WitnessData,
     add_chain,
     add_witness,
     check_server_exists,
-    get_config,
     get_config_folder,
-    remove_server,
 )
 
 _DOCKER_COMPOSE_FILE = os.path.abspath(
@@ -388,141 +383,3 @@ def start_all_servers(
                     config=config,
                     verbose=verbose,
                 )
-
-
-@click.command(name="stop")
-@click.option("--name", help="The name of the server to stop.")
-@click.option(
-    "--all", "stop_all", is_flag=True, help="Whether to stop all of the servers."
-)
-@click.option(
-    "-v",
-    "--verbose",
-    is_flag=True,
-    help="Whether or not to print more verbose information.",
-)
-def stop_server(
-    name: Optional[str] = None, stop_all: bool = False, verbose: bool = False
-) -> None:
-    """
-    Stop a rippled node(s).
-    \f
-
-    Args:
-        name: The name of the server to stop.
-        stop_all: Whether to stop all of the servers.
-        verbose: Whether or not to print more verbose information.
-
-    Raises:
-        SidechainCLIException: If neither a name or `--all` is specified.
-    """  # noqa: D301
-    if name is None and stop_all is False:
-        raise SidechainCLIException("Must specify a name or `--all`.")
-    config = get_config()
-    if stop_all:
-        servers = cast(List[ServerConfig], config.witnesses) + cast(
-            List[ServerConfig], config.chains
-        )
-    else:
-        assert name is not None
-        servers = [config.get_server(name)]
-    if verbose:
-        server_names = ", ".join([server.name for server in servers])
-        click.echo(f"Shutting down: {server_names}")
-
-    docker_servers = []
-    for server in servers:
-        if server.is_docker():
-            docker_servers.append(server.name)
-        elif isinstance(server, ChainConfig):
-            # TODO: stop the rippled server with a CLI command
-            # to_run = [server.rippled, "--conf", server.config, "stop"]
-            # subprocess.call(to_run, stdout=fout, stderr=subprocess.STDOUT)
-            pid = server.pid
-            try:
-                os.kill(pid, signal.SIGINT)
-            except ProcessLookupError:
-                pass  # process already died somehow
-            if verbose:
-                click.echo(f"Stopped {server.name}")
-        else:
-            # TODO: stop the witnessd server with a CLI command
-            # to_run = [server.witnessd, "--config", server.config, "stop"]
-            # subprocess.call(to_run, stdout=fout, stderr=subprocess.STDOUT)
-            pid = server.pid
-            try:
-                os.kill(pid, signal.SIGINT)
-            except ProcessLookupError:
-                pass  # process already died somehow
-            if verbose:
-                click.echo(f"Stopped {server.name}")
-
-    if len(docker_servers) > 0:
-        to_run = [*_DOCKER_COMPOSE, "stop", *docker_servers]
-        subprocess.run(to_run, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        if verbose:
-            docker_names = ", ".join([name for name in docker_servers])
-            click.echo(f"Stopped {docker_names}")
-
-    remove_server(name, stop_all)
-
-
-@click.command(name="restart")
-@click.option("--name", help="The name of the server to restart.")
-@click.option(
-    "--all", "restart_all", is_flag=True, help="Whether to stop all of the servers."
-)
-@click.option(
-    "-v",
-    "--verbose",
-    is_flag=True,
-    help="Whether or not to print more verbose information.",
-)
-@click.pass_context
-def restart_server(
-    ctx: click.Context,
-    name: Optional[str] = None,
-    restart_all: bool = False,
-    verbose: bool = False,
-) -> None:
-    """
-    Restart a rippled or witness node(s).
-    \f
-
-    Args:
-        ctx: The click context.
-        name: The name of the server to restart.
-        restart_all: Whether to restart all of the servers.
-        verbose: Whether or not to print more verbose information.
-
-    Raises:
-        SidechainCLIException: If neither a name or `--all` is specified.
-    """  # noqa: D301
-    if name is None and restart_all is False:
-        raise SidechainCLIException("Must specify a name or `--all`.")
-
-    config = get_config()
-    if restart_all:
-        servers = cast(List[ServerConfig], config.chains) + cast(
-            List[ServerConfig], config.witnesses
-        )
-    else:
-        assert name is not None
-        servers = [config.get_server(name)]
-
-    ctx.invoke(stop_server, name=name, stop_all=restart_all, verbose=verbose)
-    for server in servers:
-        if server.is_docker():
-            subprocess.run(
-                [*_DOCKER_COMPOSE, "start", server.name],
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-            )
-        else:
-            ctx.invoke(
-                start_server,
-                name=server.name,
-                exe=server.exe,
-                config=server.config,
-                verbose=verbose,
-            )
