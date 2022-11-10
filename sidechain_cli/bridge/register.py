@@ -1,5 +1,6 @@
 """Register an existing bridge with the CLI."""
 
+import json
 from pprint import pformat
 from typing import Any, Dict, List, Optional, Tuple, cast
 
@@ -44,6 +45,13 @@ def _signers_equal(signers1: Dict[str, Any], signers2: Dict[str, Any]) -> bool:
         del signers["SignerListID"]
 
     return signers1 == signers2
+
+
+def _get_bootstrap_chain_and_door(chain_json: Dict[str, Any]) -> Tuple[str, str]:
+    endpoint = chain_json["Endpoint"]
+    chain = f"http://{endpoint['IP']}:{endpoint['JsonRPCPort']}"
+    door = chain_json["DoorAccount"]["Address"]
+    return chain, door
 
 
 @click.command(name="register")
@@ -111,18 +119,27 @@ def register_bridge(
         raise SidechainCLIException(f"Bridge named {name} already exists.")
 
     if bootstrap is not None:
+        with open(bootstrap) as f:
+            bootstrap_json = json.load(f)
+
+        locking_chain, locking_door = _get_bootstrap_chain_and_door(
+            bootstrap_json["LockingChain"]
+        )
+        issuing_chain, issuing_door = _get_bootstrap_chain_and_door(
+            bootstrap_json["IssuingChain"]
+        )
+
         if chains is not None:
-            # TODO: validate that the information is the same
-            pass
+            print(locking_chain, issuing_chain, chains)
+            if locking_chain != chains[0] or issuing_chain != chains[1]:
+                raise SidechainCLIException("Chains must match info in bootstrap file.")
         else:
-            # TODO: get the chains from the bootstrap
-            chains = ("", "")
+            chains = (locking_chain, issuing_chain)
         if doors is not None:
-            # TODO: validate that the information is the same
-            pass
+            if locking_door != doors[0] or issuing_door != doors[1]:
+                raise SidechainCLIException("Doors must match info in bootstrap file.")
         else:
-            # TODO: get the doors from the bootstrap
-            doors = ("", "")
+            doors = (locking_door, issuing_door)
     else:
         if chains is None:
             raise SidechainCLIException("Must have `chains` if no `bootstrap`.")
