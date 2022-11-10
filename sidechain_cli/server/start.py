@@ -36,7 +36,7 @@ _DOCKER_COMPOSE_FILE = os.path.abspath(
 
 _DOCKER_COMPOSE = ["docker", "compose", "-f", _DOCKER_COMPOSE_FILE]
 
-_START_UP_TIME = 5  # seconds
+_START_UP_TIME = 10  # seconds
 _WAIT_INCREMENT = 0.5  # seconds
 
 
