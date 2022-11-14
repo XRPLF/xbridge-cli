@@ -14,6 +14,7 @@ class TestRegister:
     def test_register(self):
         runner = CliRunner()
         bridge_config = get_config().get_bridge("test_bridge")
+        bridge_name = "test_bridge2"
 
         # set up bridge
         register_result = runner.invoke(
@@ -22,7 +23,7 @@ class TestRegister:
                 "bridge",
                 "register",
                 "--name",
-                "test_bridge2",
+                bridge_name,
                 "--chains",
                 "http://localhost:5005",
                 "http://localhost:5006",
@@ -67,7 +68,7 @@ class TestRegister:
                 "create-account",
                 "--from_locking",
                 "--bridge",
-                "test_bridge2",
+                bridge_name,
                 "--from",
                 send_wallet.seed,
                 "--to",
@@ -93,6 +94,7 @@ class TestRegister:
         runner = CliRunner()
         bridge_config = get_config().get_bridge("test_bridge")
         config_dir = os.path.abspath(os.getenv("XCHAIN_CONFIG_DIR"))
+        bridge_name = "test_bridge3"
 
         # set up bridge
         register_result = runner.invoke(
@@ -101,7 +103,7 @@ class TestRegister:
                 "bridge",
                 "register",
                 "--name",
-                "test_bridge3",
+                bridge_name,
                 "--bootstrap",
                 os.path.join(config_dir, "bridge_bootstrap.json"),
             ],
@@ -142,7 +144,7 @@ class TestRegister:
                 "create-account",
                 "--from_locking",
                 "--bridge",
-                "test_bridge3",
+                bridge_name,
                 "--from",
                 send_wallet.seed,
                 "--to",
