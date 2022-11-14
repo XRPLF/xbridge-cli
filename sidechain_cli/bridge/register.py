@@ -43,7 +43,7 @@ def _signers_equal(signers1: Dict[str, Any], signers2: Dict[str, Any]) -> bool:
         del signers["PreviousTxnLgrSeq"]
         del signers["index"]
         del signers["SignerListID"]
-
+        del signers["Flags"]
     return signers1 == signers2
 
 
@@ -119,6 +119,10 @@ def register_bridge(
         raise SidechainCLIException(f"Bridge named {name} already exists.")
 
     if bootstrap is not None:
+        if chains is not None:
+            raise SidechainCLIException("Cannot have both `chains` and `bootstrap`.")
+        if doors is not None:
+            raise SidechainCLIException("Cannot have both `doors` and `bootstrap`.")
         with open(bootstrap) as f:
             bootstrap_json = json.load(f)
 
@@ -128,18 +132,8 @@ def register_bridge(
         issuing_chain, issuing_door = _get_bootstrap_chain_and_door(
             bootstrap_json["IssuingChain"]
         )
-
-        if chains is not None:
-            print(locking_chain, issuing_chain, chains)
-            if locking_chain != chains[0] or issuing_chain != chains[1]:
-                raise SidechainCLIException("Chains must match info in bootstrap file.")
-        else:
-            chains = (locking_chain, issuing_chain)
-        if doors is not None:
-            if locking_door != doors[0] or issuing_door != doors[1]:
-                raise SidechainCLIException("Doors must match info in bootstrap file.")
-        else:
-            doors = (locking_door, issuing_door)
+        chains = (locking_chain, issuing_chain)
+        doors = (locking_door, issuing_door)
     else:
         if chains is None:
             raise SidechainCLIException("Must have `chains` if no `bootstrap`.")
@@ -151,7 +145,11 @@ def register_bridge(
 
     signer_list1 = _get_signers(locking_client, doors[0])
     signer_list2 = _get_signers(issuing_client, doors[1])
-    assert _signers_equal(signer_list1, signer_list2)
+    if not _signers_equal(signer_list1, signer_list2):
+        raise SidechainCLIException(
+            "The bridge was set up incorrectly. The Signer Lists are different on "
+            "both chains."
+        )
 
     num_signers = len(signer_list1)
 
