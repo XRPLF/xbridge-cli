@@ -142,7 +142,7 @@ class TestRegister:
                 "create-account",
                 "--from_locking",
                 "--bridge",
-                "test_bridge2",
+                "test_bridge3",
                 "--from",
                 send_wallet.seed,
                 "--to",
