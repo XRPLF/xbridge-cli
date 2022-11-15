@@ -7,16 +7,20 @@ import shutil
 from pathlib import Path
 from pprint import pformat
 from sys import platform
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Tuple, Union
 
 import click
 from jinja2 import Environment, FileSystemLoader
 from xrpl import CryptoAlgorithm
+from xrpl.models import IssuedCurrency
 from xrpl.wallet import Wallet
+from sidechain_cli.utils import CurrencyDict
 
 from sidechain_cli.server.config.ports import Ports
 
-JINJA_ENV = Environment(
+_GENESIS_SEED = "snoPBrXtMeMyMHUVTgbuqAfg1SUTb"
+
+_JINJA_ENV = Environment(
     loader=FileSystemLoader(
         searchpath=os.path.join(*os.path.split(__file__)[:-1], "templates")
     ),
@@ -25,11 +29,23 @@ JINJA_ENV = Environment(
 )
 
 
+def _get_currency(currency_str: str) -> CurrencyDict:
+    if currency_str == "XRP":
+        return {"currency": "XRP"}
+
+    assert currency_str.count(".") == 1
+    currency_split = currency_str.split(".")
+    return {
+        "currency": currency_split[0],
+        "issuer": currency_split[1]
+    }
+
+
 # render a Jinja template and dump it into a file
 def _generate_template(
     template_name: str, template_data: Dict[str, Any], filename: str
 ) -> None:
-    template = JINJA_ENV.get_template(template_name)
+    template = _JINJA_ENV.get_template(template_name)
 
     with open(filename, "w+") as f:
         f.write(template.render(template_data))
@@ -144,9 +160,25 @@ def _generate_rippled_configs(config_dir: str, docker: bool = False) -> Tuple[in
     help="The door account on the source chain.",
 )
 @click.option(
+    "--src_currency",
+    default="XRP",
+    help=(
+        "The currency on the source chain. Defaults to XRP. An issued currency is of "
+        "the form `{{currency}}.{{issue}}`"
+    ),
+)
+@click.option(
     "--dst_door",
     default="rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh",
     help="The door account on the destination chain. Defaults to the genesis account.",
+)
+@click.option(
+    "--dst_currency",
+    default="XRP",
+    help=(
+        "The currency on the destination chain. Defaults to XRP. An issued currency "
+        "is of the form `{{currency}}.{{issue}}`"
+    ),
 )
 @click.option(
     "--locking_reward_seed",
@@ -197,7 +229,10 @@ def generate_witness_config(
     src_door: str,
     signing_seed: str,
     is_docker: bool = True,
+    src_currency: str = "XRP",
     dst_door: str = "rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh",
+    dst_currency: str = "XRP",
+    docker: bool = True,
     verbose: bool = False,
 ) -> None:
     """
@@ -229,6 +264,14 @@ def generate_witness_config(
         sub_dir = os.path.join(abs_config_dir, name)
         cfg_dir = sub_dir
 
+    assert (src_currency == "XRP" and dst_currency == "XRP") or (
+        src_currency != "XRP" and dst_currency != "XRP"
+    )
+    src_issue = _get_currency(src_currency)
+    dst_issue = _get_currency(dst_currency)
+    if isinstance(dst_issue, dict):
+        assert dst_issue["issuer"] == dst_door
+
     for path in ["", "/db"]:
         dirpath = Path(cfg_dir + path)
         if dirpath.exists():
@@ -251,9 +294,9 @@ def generate_witness_config(
         "issuing_reward_seed": issuing_reward_seed,
         "issuing_reward_account": issuing_reward_account,
         "src_door": src_door,
-        "src_issue": '{"currency": "XRP"}',
+        "src_issue": src_issue,
         "dst_door": dst_door,
-        "dst_issue": '{"currency": "XRP"}',
+        "dst_issue": dst_issue,
         "is_linux": platform == "linux" or platform == "linux2",
         "is_docker": is_docker,
         "log_file": log_file,
@@ -373,7 +416,15 @@ def generate_bootstrap(
     "--num_witnesses",
     default=5,
     type=int,
-    help="The number of witness configs to generate.",
+    help="The number of witness configs to generate. Defaults to 5.",
+)
+@click.option(
+    "--currency",
+    default="XRP",
+    help=(
+        "The currency transferred across the bridge. Defaults to XRP. An issued "
+        "currency is of the form `{{currency}}.{{issue}}`."
+    ),
 )
 @click.option(
     "--docker",
@@ -392,6 +443,7 @@ def generate_all_configs(
     ctx: click.Context,
     config_dir: str,
     num_witnesses: int = 5,
+    currency: str = "XRP",
     is_docker: bool = False,
     verbose: bool = False,
 ) -> None:
@@ -410,6 +462,18 @@ def generate_all_configs(
 
     mc_port, sc_port = _generate_rippled_configs(abs_config_dir, is_docker)
     src_door = Wallet.create(CryptoAlgorithm.SECP256K1)
+
+    if currency != "XRP":
+        assert currency.count(".") == 1
+        currency_code, issuer = currency.split(".")
+        src_currency = currency
+        dst_door = Wallet.create()
+        dst_currency = f"{currency_code}.{dst_door.classic_address}"
+    else:
+        src_currency = "XRP"
+        dst_currency = "XRP"
+        dst_door = Wallet(_GENESIS_SEED, 0)
+
     reward_accounts = []
     signing_accounts = []
     for i in range(num_witnesses):
@@ -430,6 +494,9 @@ def generate_all_configs(
             witness_port=6010 + i,
             signing_seed=signing_wallet.seed,
             src_door=src_door.classic_address,
+            src_currency=src_currency,
+            dst_door=dst_door.classic_address,
+            dst_currency=dst_currency,
             locking_reward_seed=witness_reward_wallet.seed,
             locking_reward_account=witness_reward_wallet.classic_address,
             issuing_reward_seed=witness_reward_wallet.seed,
