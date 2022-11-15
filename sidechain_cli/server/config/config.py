@@ -7,7 +7,7 @@ import shutil
 from pathlib import Path
 from pprint import pformat
 from sys import platform
-from typing import Any, Dict, List, Tuple, Union
+from typing import Any, Dict, List, Literal, Tuple, Union
 
 import click
 from jinja2 import Environment, FileSystemLoader
@@ -27,7 +27,6 @@ _JINJA_ENV = Environment(
     trim_blocks=True,
     lstrip_blocks=True,
 )
-
 
 def _get_currency(currency_str: str) -> CurrencyDict:
     if currency_str == "XRP":
@@ -294,9 +293,9 @@ def generate_witness_config(
         "issuing_reward_seed": issuing_reward_seed,
         "issuing_reward_account": issuing_reward_account,
         "src_door": src_door,
-        "src_issue": src_issue,
+        "src_issue": repr(src_issue).replace("'", '"'),
         "dst_door": dst_door,
-        "dst_issue": dst_issue,
+        "dst_issue": repr(dst_issue).replace("'", '"'),
         "is_linux": platform == "linux" or platform == "linux2",
         "is_docker": is_docker,
         "log_file": log_file,
@@ -326,10 +325,28 @@ def generate_witness_config(
     help="The seed of the locking chain door account.",
 )
 @click.option(
+    "--locking_currency",
+    "locking_currency",
+    default="XRP",
+    help=(
+        "The bridge's locking chain currency. Defaults to XRP. An issued currency is "
+        "of the form `{{currency}}.{{issue}}`."
+    ),
+)
+@click.option(
     "--sc_seed",
     "issuing_chain_seed",
     default="snoPBrXtMeMyMHUVTgbuqAfg1SUTb",
     help="The seed of the issuing chain door account. Defaults to the genesis account.",
+)
+@click.option(
+    "--issuing_currency",
+    "issuing_currency",
+    default="XRP",
+    help=(
+        "The bridge's issuing chain currency. Defaults to XRP. An issued currency is "
+        "of the form `{{currency}}.{{issue}}`."
+    ),
 )
 @click.option(
     "--reward_account",
@@ -356,7 +373,9 @@ def generate_witness_config(
 def generate_bootstrap(
     config_dir: str,
     locking_chain_seed: str,
+    locking_currency: str,
     issuing_chain_seed: str,
+    issuing_currency: str,
     reward_accounts: List[str],
     signing_accounts: List[str],
     verbose: bool = False,
@@ -377,18 +396,26 @@ def generate_bootstrap(
     locking_door = Wallet(locking_chain_seed, 0)
     issuing_door = Wallet(issuing_chain_seed, 0)
 
+    assert (locking_currency == "XRP" and issuing_currency == "XRP") or (
+        locking_currency != "XRP" and issuing_currency != "XRP"
+    )
+    locking_issue = _get_currency(locking_currency)
+    issuing_issue = _get_currency(issuing_currency)
+    if isinstance(issuing_issue, dict):
+        assert issuing_issue["issuer"] == issuing_door.classic_address
+
     template_data = {
         "is_linux": platform == "linux" or platform == "linux2",
         "locking_node_port": 5005,
         "locking_door_account": locking_door.classic_address,
         "locking_door_seed": locking_door.seed,
-        "locking_issue": '{"currency": "XRP"}',
+        "locking_issue": repr(locking_issue).replace("'", '"'),
         "locking_reward_accounts": reward_accounts,
         "locking_submit_accounts": reward_accounts,
         "issuing_node_port": 5006,
         "issuing_door_account": issuing_door.classic_address,
         "issuing_door_seed": issuing_door.seed,
-        "issuing_issue": '{"currency": "XRP"}',
+        "issuing_issue": repr(issuing_issue).replace("'", '"'),
         "issuing_reward_accounts": reward_accounts,
         "issuing_submit_accounts": reward_accounts,
         "signing_accounts": signing_accounts,
@@ -507,6 +534,9 @@ def generate_all_configs(
         generate_bootstrap,
         config_dir=abs_config_dir,
         locking_chain_seed=src_door.seed,
+        locking_currency=src_currency,
+        issuing_chain_seed=dst_door.seed,
+        issuing_currency=dst_currency,
         verbose=verbose,
         reward_accounts=reward_accounts,
         signing_accounts=signing_accounts,
