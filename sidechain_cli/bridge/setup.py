@@ -11,8 +11,11 @@ from xrpl.clients import JsonRpcClient
 from xrpl.core.binarycodec import encode
 from xrpl.core.keypairs import sign
 from xrpl.models import (
+    XRP,
     AccountSet,
     AccountSetFlag,
+    Currency,
+    IssuedCurrency,
     ServerState,
     SignerEntry,
     SignerListSet,
@@ -161,15 +164,24 @@ def setup_bridge(
     issuing_door = bootstrap_config["IssuingChain"]["DoorAccount"]["Address"]
     issuing_issue = bootstrap_config["IssuingChain"]["BridgeIssue"]
 
+    if locking_issue == "XRP":
+        locking_chain_issue: Currency = XRP()
+    else:
+        locking_chain_issue = IssuedCurrency.from_dict(locking_issue)
+    if issuing_issue == "XRP":
+        issuing_chain_issue: Currency = XRP()
+    else:
+        issuing_chain_issue = IssuedCurrency.from_dict(issuing_issue)
+
     bridge_obj = XChainBridge(
         locking_chain_door=locking_door,
-        locking_chain_issue=locking_issue,
+        locking_chain_issue=locking_chain_issue,
         issuing_chain_door=issuing_door,
-        issuing_chain_issue=issuing_issue,
+        issuing_chain_issue=issuing_chain_issue,
     )
 
     if funding_seed is None:
-        if bridge_obj.issuing_chain_issue == "XRP" and funding_seed is None:
+        if bridge_obj.issuing_chain_issue == XRP() and funding_seed is None:
             if close_ledgers:
                 funding_seed = "snoPBrXtMeMyMHUVTgbuqAfg1SUTb"
             else:
@@ -206,7 +218,7 @@ def setup_bridge(
         raise SidechainCLIException(
             f"Issuing chain door {issuing_door} does not exist on the locking chain."
         )
-    if bridge_obj.issuing_chain_issue != "XRP":
+    if bridge_obj.issuing_chain_issue != XRP():
         # if a bridge is an XRP bridge, then the accounts need to be created via the
         # bridge (the bridge that doesn't exist yet)
         # so we only check if accounts already exist on the issuing chain for IOU
@@ -279,7 +291,7 @@ def setup_bridge(
     )
     submit_tx(create_tx2, issuing_client, issuing_door_seed, verbose, close_ledgers)
 
-    if bridge_obj.issuing_chain_issue == "XRP":
+    if bridge_obj.issuing_chain_issue == XRP():
         # we need to create the witness reward + submission accounts via the bridge
 
         # set up a signer list with the issuing seed as the only account

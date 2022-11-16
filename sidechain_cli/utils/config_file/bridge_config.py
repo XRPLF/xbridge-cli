@@ -6,17 +6,17 @@ from dataclasses import dataclass
 from typing import Any, Dict, Literal, Tuple, Union, cast
 
 from xrpl.clients import JsonRpcClient
-from xrpl.models import IssuedCurrency, XChainBridge
+from xrpl.models import XRP, Currency, IssuedCurrency, XChainBridge
 
 from sidechain_cli.utils.config_file.config_item import ConfigItem
-from sidechain_cli.utils.types import Currency
+from sidechain_cli.utils.types import Currency as CurrencyDict
 
 
 def _to_issued_currency(
-    xchain_currency: Union[Literal["XRP"], Currency]
-) -> Union[Literal["XRP"], IssuedCurrency]:
+    xchain_currency: Union[Literal["XRP"], CurrencyDict]
+) -> Currency:
     return (
-        cast(Literal["XRP"], "XRP")
+        XRP()
         if xchain_currency == "XRP"
         else IssuedCurrency.from_dict(cast(Dict[str, Any], xchain_currency))
     )
@@ -30,7 +30,7 @@ class BridgeConfig(ConfigItem):
     chains: Tuple[str, str]
     num_witnesses: int
     door_accounts: Tuple[str, str]
-    xchain_currencies: Tuple[Currency, Currency]
+    xchain_currencies: Tuple[CurrencyDict, CurrencyDict]
     signature_reward: str
     create_account_amounts: Tuple[str, str]
 

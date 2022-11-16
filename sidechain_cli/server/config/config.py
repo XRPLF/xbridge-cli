@@ -251,9 +251,9 @@ def generate_witness_config(
         "issuing_reward_seed": issuing_reward_seed,
         "issuing_reward_account": issuing_reward_account,
         "src_door": src_door,
-        "src_issue": "XRP",
+        "src_issue": '{"currency": "XRP"}',
         "dst_door": dst_door,
-        "dst_issue": "XRP",
+        "dst_issue": '{"currency": "XRP"}',
         "is_linux": platform == "linux" or platform == "linux2",
         "is_docker": docker,
     }
