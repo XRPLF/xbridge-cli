@@ -25,13 +25,7 @@ from sidechain_cli.utils.config_utils import (
 from sidechain_cli.utils.misc import is_external_chain
 from sidechain_cli.utils.rippled_config import RippledConfig
 from sidechain_cli.utils.transaction import submit_tx
-from sidechain_cli.utils.types import (
-    BridgeData,
-    ChainData,
-    Currency,
-    IssuedCurrencyDict,
-    WitnessData,
-)
+from sidechain_cli.utils.types import BridgeData, ChainData, CurrencyDict, WitnessData
 
 __all__ = [
     "wait_for_attestations",
@@ -51,8 +45,7 @@ __all__ = [
     "submit_tx",
     "BridgeData",
     "ChainData",
-    "Currency",
-    "IssuedCurrencyDict",
+    "CurrencyDict",
     "WitnessData",
     "RippledConfig",
     "BridgeConfig",

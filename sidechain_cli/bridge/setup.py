@@ -164,11 +164,11 @@ def setup_bridge(
     issuing_door = bootstrap_config["IssuingChain"]["DoorAccount"]["Address"]
     issuing_issue = bootstrap_config["IssuingChain"]["BridgeIssue"]
 
-    if locking_issue == "XRP":
+    if locking_issue == {"currency": "XRP"}:
         locking_chain_issue: Currency = XRP()
     else:
         locking_chain_issue = IssuedCurrency.from_dict(locking_issue)
-    if issuing_issue == "XRP":
+    if issuing_issue == {"currency": "XRP"}:
         issuing_chain_issue: Currency = XRP()
     else:
         issuing_chain_issue = IssuedCurrency.from_dict(issuing_issue)
