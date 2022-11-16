@@ -158,7 +158,7 @@ def start_server(
     elif is_rippled:
         to_run = [exe, "--conf", config, "-a"]
     else:
-        to_run = [exe, "--config", config, "--verbose"]
+        to_run = [exe, "--conf", config, "--verbose"]
 
     process, output_file = _run_process(to_run, name)
 
