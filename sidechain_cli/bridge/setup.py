@@ -20,6 +20,7 @@ from xrpl.models import (
     SignerEntry,
     SignerListSet,
     Transaction,
+    TrustSet,
     XChainAccountCreateCommit,
     XChainAddAttestation,
     XChainBridge,
@@ -249,30 +250,45 @@ def setup_bridge(
 
     ###################################################################################
     # set up locking chain
+    transactions: List[Transaction] = []
+
+    # create the trustline (if IOU)
+    if bridge_obj.locking_chain_issue != "XRP":
+        assert isinstance(bridge_obj.locking_chain_issue, IssuedCurrency)
+        transactions.append(
+            TrustSet(
+                account=locking_door,
+                limit_amount=bridge_obj.locking_chain_issue.to_amount("1000000000"),
+            )
+        )
 
     # create the bridge
-    create_tx1 = XChainCreateBridge(
-        account=locking_door,
-        xchain_bridge=bridge_obj,
-        signature_reward=signature_reward,
-        min_account_create_amount=str(min_create2),
+    transactions.append(
+        XChainCreateBridge(
+            account=locking_door,
+            xchain_bridge=bridge_obj,
+            signature_reward=signature_reward,
+            min_account_create_amount=str(min_create2),
+        )
     )
 
     # set up multisign on the door account
-    signer_tx1 = SignerListSet(
-        account=locking_door,
-        signer_quorum=max(1, len(signer_entries) - 1),
-        signer_entries=signer_entries,
+    transactions.append(
+        SignerListSet(
+            account=locking_door,
+            signer_quorum=max(1, len(signer_entries) - 1),
+            signer_entries=signer_entries,
+        )
     )
 
     # disable the master key
-    disable_master_tx1 = AccountSet(
-        account=locking_door, set_flag=AccountSetFlag.ASF_DISABLE_MASTER
+    transactions.append(
+        AccountSet(account=locking_door, set_flag=AccountSetFlag.ASF_DISABLE_MASTER)
     )
 
     # submit transactions
     submit_tx(
-        [create_tx1, signer_tx1, disable_master_tx1],
+        transactions,
         locking_client,
         locking_door_seed,
         verbose,

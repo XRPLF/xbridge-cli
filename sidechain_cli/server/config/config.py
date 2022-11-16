@@ -7,12 +7,11 @@ import shutil
 from pathlib import Path
 from pprint import pformat
 from sys import platform
-from typing import Any, Dict, List, Literal, Tuple, Union
+from typing import Any, Dict, List, Tuple
 
 import click
 from jinja2 import Environment, FileSystemLoader
 from xrpl import CryptoAlgorithm
-from xrpl.models import IssuedCurrency
 from xrpl.wallet import Wallet
 from sidechain_cli.utils import CurrencyDict
 
