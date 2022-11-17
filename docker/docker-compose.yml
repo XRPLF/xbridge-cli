@@ -3,7 +3,7 @@ services:
 
   locking_chain:
     container_name: locking_chain
-    image: legleux/rippled-xbridge
+    image: legleux/rippled-xbridge-test
     command: "--conf /etc/opt/ripple/rippled.cfg -a"
     volumes:
       - ${XCHAIN_CONFIG_DIR}/locking_chain:/etc/opt/ripple/
@@ -18,7 +18,7 @@ services:
 
   issuing_chain:
     container_name: issuing_chain
-    image: legleux/rippled-xbridge
+    image: legleux/rippled-xbridge-test
     command: "--conf /etc/opt/ripple/rippled.cfg -a"
     volumes:
       - ${XCHAIN_CONFIG_DIR}/issuing_chain:/etc/opt/ripple/
@@ -33,7 +33,7 @@ services:
 
   witness0:
     container_name: witness0
-    image: legleux/xbridge_witnessd
+    image: legleux/xbridge_witnessd-test
     command: "/opt/witness/witness.json"
     volumes:
       - ${XCHAIN_CONFIG_DIR}/witness0:/opt/witness/
@@ -45,7 +45,7 @@ services:
 
   witness1:
     container_name: witness1
-    image: legleux/xbridge_witnessd
+    image: legleux/xbridge_witnessd-test
     command: "/opt/witness/witness.json"
     volumes:
       - ${XCHAIN_CONFIG_DIR}/witness1:/opt/witness/
@@ -57,7 +57,7 @@ services:
 
   witness2:
     container_name: witness2
-    image: legleux/xbridge_witnessd
+    image: legleux/xbridge_witnessd-test
     command: "/opt/witness/witness.json"
     volumes:
       - ${XCHAIN_CONFIG_DIR}/witness2:/opt/witness/
@@ -69,7 +69,7 @@ services:
 
   witness3:
     container_name: witness3
-    image: legleux/xbridge_witnessd
+    image: legleux/xbridge_witnessd-test
     command: "/opt/witness/witness.json"
     volumes:
       - ${XCHAIN_CONFIG_DIR}/witness3:/opt/witness/
@@ -81,7 +81,7 @@ services:
 
   witness4:
     container_name: witness4
-    image: legleux/xbridge_witnessd
+    image: legleux/xbridge_witnessd-test
     command: "/opt/witness/witness.json"
     volumes:
       - ${XCHAIN_CONFIG_DIR}/witness4:/opt/witness/
