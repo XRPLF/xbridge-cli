@@ -86,6 +86,7 @@ def wait_for_attestations(
         for tx in new_txs:
             if tx["TransactionType"] == "XChainAddAttestation":
                 batch = tx["XChainAttestationBatch"]
+                print(batch)
                 if batch["XChainBridge"] != bridge_config.to_xrpl():
                     # make sure attestation is for this bridge
                     continue
