@@ -122,9 +122,7 @@ def create_bridge():
     assert result.exit_code == 0
 
     # start rippled servers
-    start_result = cli_runner.invoke(
-        main, ["server", "start-all", "--rippled-only", "--verbose"]
-    )
+    start_result = cli_runner.invoke(main, ["server", "start-all", "--verbose"])
     assert start_result.exit_code == 0, start_result.output
 
     # fund locking door
@@ -157,12 +155,6 @@ def create_bridge():
     )
     assert build_result.exit_code == 0, build_result.output
 
-    # start witness servers
-    start_result = cli_runner.invoke(
-        main, ["server", "start-all", "--witness-only", "--verbose"]
-    )
-    assert start_result.exit_code == 0, start_result.output
-
     yield
 
     # stop servers
@@ -186,9 +178,7 @@ def bridge_build_setup():
     assert result.exit_code == 0
 
     # start rippled servers
-    start_result = cli_runner.invoke(
-        main, ["server", "start-all", "--rippled-only", "--verbose"]
-    )
+    start_result = cli_runner.invoke(main, ["server", "start-all", "--verbose"])
     assert start_result.exit_code == 0, start_result.output
 
     # fund locking door
