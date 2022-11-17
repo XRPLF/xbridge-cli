@@ -88,6 +88,7 @@ def wait_for_attestations(
                 batch = tx["XChainAttestationBatch"]
                 print(batch)
                 if batch["XChainBridge"] != bridge_config.to_xrpl():
+                    print("bad bridge")
                     # make sure attestation is for this bridge
                     continue
                 attestations = batch[batch_name]
@@ -95,15 +96,20 @@ def wait_for_attestations(
                     element = attestation[f"{batch_name}Element"]
                     # check that the attestation actually matches this transfer
                     if element["Account"] != from_wallet.classic_address:
+                        print("bad account")
                         continue
                     if element["Amount"] != amount:
+                        print("bad amount")
                         continue
                     if element["Destination"] != to_account:
+                        print("bad destination")
                         continue
                     if is_transfer:
                         if element["XChainClaimID"] != xchain_claim_id:
+                            print("bad claim id")
                             continue
                     if element["PublicKey"] in attestations_seen:
+                        print("bad pubkey")
                         # already seen this attestation, skip
                         continue
                     attestations_seen.add(element["PublicKey"])
