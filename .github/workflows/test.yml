@@ -52,8 +52,8 @@ jobs:
 
       - name: Pull images from docker
         run: |
-          docker pull legleux/rippled-xbridge
-          docker pull legleux/xbridge_witnessd
+          docker pull legleux/rippled-xbridge-test
+          docker pull legleux/xbridge_witnessd-test
 
       - name: Run tests
         id: runTests
