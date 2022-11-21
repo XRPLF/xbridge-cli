@@ -36,7 +36,7 @@ _DOCKER_COMPOSE_FILE = os.path.abspath(
 
 _DOCKER_COMPOSE = ["docker", "compose", "-f", _DOCKER_COMPOSE_FILE]
 
-_START_UP_TIME = 15  # seconds
+_START_UP_TIME = 10  # seconds
 _WAIT_INCREMENT = 0.5  # seconds
 
 
@@ -57,6 +57,7 @@ def _wait_for_process(
             if is_docker:
                 docker_client = docker.from_env()
                 container = docker_client.containers.get(name)
+                print(container.status)
                 assert container.status == "running"
             return
         except (
@@ -66,7 +67,8 @@ def _wait_for_process(
             httpx.WriteError,
             docker.errors.NotFound,
             AssertionError,
-        ):
+        ) as e:
+            print("error", e)
             time.sleep(_WAIT_INCREMENT)
             time_waited += _WAIT_INCREMENT
     with open(output_file) as f:
