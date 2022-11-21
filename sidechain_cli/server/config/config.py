@@ -258,7 +258,6 @@ def generate_witness_config(
         "is_docker": docker,
     }
 
-    print(template_data)
     # add the witness.json file
     _generate_template(
         "witness.jinja",
