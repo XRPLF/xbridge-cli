@@ -120,9 +120,11 @@ def create_bridge():
     # create config files
     params = ["server", "create-config", "all"]
     if _is_docker():
+        print("DOCKERRRRRRRRRRRRRRRRRRRRRRRRRRRRR")
         params.append("--docker")
     result = cli_runner.invoke(main, params)
     assert result.exit_code == 0
+    print(result.output)
 
     # start rippled servers
     start_result = cli_runner.invoke(main, ["server", "start-all", "--verbose"])
