@@ -84,6 +84,7 @@ jobs:
           docker exec witness0 ss -tuna
           docker exec witness0 curl -d '{"method":"server_info"}' http://127.0.0.3:6010
           docker exec witness0 ip addr
+          docker exec witness0 cat /opt/witness/witness.json
           docker exec witness0 cat /var/log/witness.log
           echo "witness0"
           docker logs witness0
