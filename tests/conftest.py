@@ -3,6 +3,7 @@ import os
 import tempfile
 import unittest
 import unittest.mock
+from contextlib import contextmanager
 from typing import Any, Dict, List, Optional
 
 import pytest
@@ -74,15 +75,15 @@ def pytest_unconfigure(config):
     mocked_vars = []
 
 
-@pytest.fixture(scope="class")
-def runner():
-    # reset CLI config file
+def _reset_cli_config() -> None:
     config_file = os.path.join(get_config_folder(), "config.json")
     os.remove(config_file)
     with open(config_file, "w") as f:
-        data = {"chains": [], "witnesses": [], "bridges": []}
+        data: Dict[str, List[Any]] = {"chains": [], "witnesses": [], "bridges": []}
         json.dump(data, f, indent=4)
 
+
+def _create_config_files() -> None:
     cli_runner = CliRunner()
 
     # create config files
@@ -91,126 +92,77 @@ def runner():
         params.append("--docker")
     result = cli_runner.invoke(main, params)
     assert result.exit_code == 0
+
+
+def _fund_locking_accounts(cli_runner: CliRunner) -> None:
+    raw_xchain_config_dir = os.getenv("XCHAIN_CONFIG_DIR")
+    if raw_xchain_config_dir is None:
+        raise Exception("Error: $XCHAIN_CONFIG_DIR is not defined.")
+    xchain_config_dir = os.path.abspath(raw_xchain_config_dir)
+    with open(os.path.join(xchain_config_dir, "bridge_bootstrap.json")) as f:
+        bootstrap = json.load(f)
+
+    locking_door = bootstrap["LockingChain"]["DoorAccount"]["Address"]
+
+    # fund needed accounts on the locking chain
+    accounts_locking_fund = set(
+        [locking_door]
+        + bootstrap["LockingChain"]["WitnessRewardAccounts"]
+        + bootstrap["LockingChain"]["WitnessSubmitAccounts"]
+    )
+    fund_result = cli_runner.invoke(
+        main, ["fund", "locking_chain", *accounts_locking_fund]
+    )
+    assert fund_result.exit_code == 0, fund_result.output
+
+
+@contextmanager
+def _base_fixture():
+    _reset_cli_config()
+    _create_config_files()
+
+    cli_runner = CliRunner()
 
     # start servers
     start_result = cli_runner.invoke(main, ["server", "start-all", "--verbose"])
     assert start_result.exit_code == 0, start_result.output
 
-    yield cli_runner
+    try:
+        yield cli_runner
+    finally:
+        # stop servers
+        stop_result = cli_runner.invoke(main, ["server", "stop", "--all"])
+        assert stop_result.exit_code == 0, stop_result.output
 
-    # stop servers
-    stop_result = cli_runner.invoke(main, ["server", "stop", "--all"])
-    assert stop_result.exit_code == 0, stop_result.output
+
+@pytest.fixture(scope="class")
+def runner():
+    with _base_fixture() as cli_runner:
+        yield cli_runner
 
 
 @pytest.fixture(scope="class")
 def create_bridge():
-    # reset CLI config file
-    config_file = os.path.join(get_config_folder(), "config.json")
-    os.remove(config_file)
-    with open(config_file, "w") as f:
-        data = {"chains": [], "witnesses": [], "bridges": []}
-        json.dump(data, f, indent=4)
+    with _base_fixture() as cli_runner:
+        _fund_locking_accounts(cli_runner)
 
-    cli_runner = CliRunner()
+        # build bridge
+        build_result = cli_runner.invoke(
+            main,
+            [
+                "bridge",
+                "build",
+                "--name=test_bridge",
+                "--verbose",
+            ],
+        )
+        assert build_result.exit_code == 0, build_result.output
 
-    # create config files
-    params = ["server", "create-config", "all"]
-    if _is_docker():
-        params.append("--docker")
-    result = cli_runner.invoke(main, params)
-    assert result.exit_code == 0
-
-    # start rippled servers
-    start_result = cli_runner.invoke(
-        main, ["server", "start-all", "--rippled-only", "--verbose"]
-    )
-    assert start_result.exit_code == 0, start_result.output
-
-    # fund locking door
-    config_dir = os.path.abspath(os.getenv("XCHAIN_CONFIG_DIR"))
-    with open(os.path.join(config_dir, "bridge_bootstrap.json")) as f:
-        bootstrap = json.load(f)
-
-    locking_door = bootstrap["LockingChain"]["DoorAccount"]["Address"]
-
-    # fund needed accounts on the locking chain
-    accounts_locking_fund = set(
-        [locking_door]
-        + bootstrap["LockingChain"]["WitnessRewardAccounts"]
-        + bootstrap["LockingChain"]["WitnessSubmitAccounts"]
-    )
-    fund_result = cli_runner.invoke(
-        main, ["fund", "locking_chain", *accounts_locking_fund]
-    )
-    assert fund_result.exit_code == 0, fund_result.output
-
-    # build bridge
-    build_result = cli_runner.invoke(
-        main,
-        [
-            "bridge",
-            "build",
-            "--name=test_bridge",
-            "--verbose",
-        ],
-    )
-    assert build_result.exit_code == 0, build_result.output
-
-    # start witness servers
-    start_result = cli_runner.invoke(
-        main, ["server", "start-all", "--witness-only", "--verbose"]
-    )
-    assert start_result.exit_code == 0, start_result.output
-
-    yield
-
-    # stop servers
-    stop_result = cli_runner.invoke(main, ["server", "stop", "--all"])
-    assert stop_result.exit_code == 0, stop_result.output
+        yield
 
 
 @pytest.fixture(scope="function")
 def bridge_build_setup():
-    # reset CLI config file
-    config_file = os.path.join(get_config_folder(), "config.json")
-    os.remove(config_file)
-    with open(config_file, "w") as f:
-        data = {"chains": [], "witnesses": [], "bridges": []}
-        json.dump(data, f, indent=4)
-
-    cli_runner = CliRunner()
-
-    # create config files
-    result = cli_runner.invoke(main, ["server", "create-config", "all"])
-    assert result.exit_code == 0
-
-    # start rippled servers
-    start_result = cli_runner.invoke(
-        main, ["server", "start-all", "--rippled-only", "--verbose"]
-    )
-    assert start_result.exit_code == 0, start_result.output
-
-    # fund locking door
-    config_dir = os.path.abspath(os.getenv("XCHAIN_CONFIG_DIR"))
-    with open(os.path.join(config_dir, "bridge_bootstrap.json")) as f:
-        bootstrap = json.load(f)
-
-    locking_door = bootstrap["LockingChain"]["DoorAccount"]["Address"]
-
-    # fund needed accounts on the locking chain
-    accounts_locking_fund = set(
-        [locking_door]
-        + bootstrap["LockingChain"]["WitnessRewardAccounts"]
-        + bootstrap["LockingChain"]["WitnessSubmitAccounts"]
-    )
-    fund_result = cli_runner.invoke(
-        main, ["fund", "locking_chain", *accounts_locking_fund]
-    )
-    assert fund_result.exit_code == 0, fund_result.output
-
-    yield
-
-    # stop servers
-    stop_result = cli_runner.invoke(main, ["server", "stop", "--all"])
-    assert stop_result.exit_code == 0, stop_result.output
+    with _base_fixture() as cli_runner:
+        _fund_locking_accounts(cli_runner)
+        yield
