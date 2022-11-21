@@ -79,7 +79,7 @@ jobs:
       - name: Debug Test Failure (Witness Outputs)
         if: always() && steps.runTests.outcome == 'failure'
         run: |
-          docker exec -it witness0 cat /var/log/witness.log
+          docker exec witness0 cat /var/log/witness.log
           echo "witness0"
           docker logs witness0
           echo "witness1"
