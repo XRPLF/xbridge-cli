@@ -3,6 +3,7 @@ import os
 import tempfile
 import unittest
 import unittest.mock
+from contextlib import contextmanager
 from typing import Any, Dict, List, Optional
 
 import pytest
@@ -115,8 +116,8 @@ def _fund_locking_accounts(cli_runner: CliRunner) -> None:
     assert fund_result.exit_code == 0, fund_result.output
 
 
-@pytest.fixture(scope="class")
-def runner():
+@contextmanager
+def _base_fixture():
     _reset_cli_config()
     _create_config_files()
 
@@ -126,60 +127,42 @@ def runner():
     start_result = cli_runner.invoke(main, ["server", "start-all", "--verbose"])
     assert start_result.exit_code == 0, start_result.output
 
-    yield cli_runner
+    try:
+        yield cli_runner
+    finally:
+        # stop servers
+        stop_result = cli_runner.invoke(main, ["server", "stop", "--all"])
+        assert stop_result.exit_code == 0, stop_result.output
 
-    # stop servers
-    stop_result = cli_runner.invoke(main, ["server", "stop", "--all"])
-    assert stop_result.exit_code == 0, stop_result.output
+
+@pytest.fixture(scope="class")
+def runner():
+    with _base_fixture() as cli_runner:
+        yield cli_runner
 
 
 @pytest.fixture(scope="class")
 def create_bridge():
-    _reset_cli_config()
-    _create_config_files()
+    with _base_fixture() as cli_runner:
+        _fund_locking_accounts(cli_runner)
 
-    cli_runner = CliRunner()
+        # build bridge
+        build_result = cli_runner.invoke(
+            main,
+            [
+                "bridge",
+                "build",
+                "--name=test_bridge",
+                "--verbose",
+            ],
+        )
+        assert build_result.exit_code == 0, build_result.output
 
-    # start rippled servers
-    start_result = cli_runner.invoke(main, ["server", "start-all", "--verbose"])
-    assert start_result.exit_code == 0, start_result.output
-
-    _fund_locking_accounts(cli_runner)
-
-    # build bridge
-    build_result = cli_runner.invoke(
-        main,
-        [
-            "bridge",
-            "build",
-            "--name=test_bridge",
-            "--verbose",
-        ],
-    )
-    assert build_result.exit_code == 0, build_result.output
-
-    yield
-
-    # stop servers
-    stop_result = cli_runner.invoke(main, ["server", "stop", "--all"])
-    assert stop_result.exit_code == 0, stop_result.output
+        yield
 
 
 @pytest.fixture(scope="function")
 def bridge_build_setup():
-    _reset_cli_config()
-    _create_config_files()
-
-    cli_runner = CliRunner()
-
-    # start rippled servers
-    start_result = cli_runner.invoke(main, ["server", "start-all", "--verbose"])
-    assert start_result.exit_code == 0, start_result.output
-
-    _fund_locking_accounts(cli_runner)
-
-    yield
-
-    # stop servers
-    stop_result = cli_runner.invoke(main, ["server", "stop", "--all"])
-    assert stop_result.exit_code == 0, stop_result.output
+    with _base_fixture() as cli_runner:
+        _fund_locking_accounts(cli_runner)
+        yield
