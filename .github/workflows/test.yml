@@ -81,7 +81,7 @@ jobs:
         run: |
           docker exec witness0 apt-get update
           docker exec witness0 apt-get install iproute2 -y
-          docker exec witness0 ss-tuna
+          docker exec witness0 ss -tuna
           docker exec witness0 cat /var/log/witness.log
           echo "witness0"
           docker logs witness0
