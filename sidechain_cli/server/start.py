@@ -49,6 +49,7 @@ def _wait_for_process(
     is_docker: bool = False,
 ) -> None:
     http_url = f"http://{http_ip}:{http_port}"
+    print(http_url)
     time_waited = 0.0
     while time_waited < _START_UP_TIME:
         try:

@@ -79,6 +79,8 @@ jobs:
       - name: Debug Test Failure (Witness Outputs)
         if: always() && steps.runTests.outcome == 'failure'
         run: |
+          docker exec witness0 apt-get update && apt-get install curl
+          docker exec witness0 curl -d '{"method":"server_info"}' http://127.0.0.1:5007
           docker exec witness0 cat /var/log/witness.log
           echo "witness0"
           docker logs witness0
