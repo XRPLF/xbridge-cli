@@ -80,8 +80,8 @@ jobs:
         if: always() && steps.runTests.outcome == 'failure'
         run: |
           docker exec witness0 apt-get update
-          docker exec witness0 apt-get install curl -y
-          docker exec witness0 curl -d '{"method":"server_info"}' http://192.168.176.4:6010
+          docker exec witness0 apt-get install ss -y
+          docker exec witness0 ss-tuna
           docker exec witness0 cat /var/log/witness.log
           echo "witness0"
           docker logs witness0
