@@ -83,6 +83,7 @@ jobs:
           docker exec witness0 apt-get install curl iproute2 -y
           docker exec witness0 ss -tuna
           docker exec witness0 curl -d '{"method":"server_info"}' http://127.0.0.3:6010
+          docker exec witness0 curl -d '{"method":"server_info"}' http://0.0.0.0:6010
           docker exec witness0 cat /var/log/witness.log
           echo "witness0"
           docker logs witness0
