@@ -18,6 +18,7 @@ mocked_vars: List[Any] = []
 
 def _is_docker():
     """Whether tests are running on docker."""
+    print(os.environ)
     return (
         os.getenv("RIPPLED_EXE") == "docker" and os.getenv("WITNESSD_EXE") == "docker"
     )
@@ -88,9 +89,11 @@ def runner():
     # create config files
     params = ["server", "create-config", "all"]
     if _is_docker():
+        print("DOCKERRRRRRRRRRRRRRRRRRRRRRRRRRRRR")
         params.append("--docker")
     result = cli_runner.invoke(main, params)
     assert result.exit_code == 0
+    print(result.output)
 
     # start servers
     start_result = cli_runner.invoke(main, ["server", "start-all", "--verbose"])
