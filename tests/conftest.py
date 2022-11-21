@@ -75,15 +75,15 @@ def pytest_unconfigure(config):
     mocked_vars = []
 
 
-@pytest.fixture(scope="class")
-def runner():
-    # reset CLI config file
+def _reset_cli_config():
     config_file = os.path.join(get_config_folder(), "config.json")
     os.remove(config_file)
     with open(config_file, "w") as f:
         data = {"chains": [], "witnesses": [], "bridges": []}
         json.dump(data, f, indent=4)
 
+
+def _create_config_files():
     cli_runner = CliRunner()
 
     # create config files
@@ -94,6 +94,14 @@ def runner():
     result = cli_runner.invoke(main, params)
     assert result.exit_code == 0
     print(result.output)
+
+
+@pytest.fixture(scope="class")
+def runner():
+    _reset_cli_config()
+    _create_config_files()
+
+    cli_runner = CliRunner()
 
     # start servers
     start_result = cli_runner.invoke(main, ["server", "start-all", "--verbose"])
@@ -108,23 +116,10 @@ def runner():
 
 @pytest.fixture(scope="class")
 def create_bridge():
-    # reset CLI config file
-    config_file = os.path.join(get_config_folder(), "config.json")
-    os.remove(config_file)
-    with open(config_file, "w") as f:
-        data = {"chains": [], "witnesses": [], "bridges": []}
-        json.dump(data, f, indent=4)
+    _reset_cli_config()
+    _create_config_files()
 
     cli_runner = CliRunner()
-
-    # create config files
-    params = ["server", "create-config", "all"]
-    if _is_docker():
-        print("DOCKERRRRRRRRRRRRRRRRRRRRRRRRRRRRR")
-        params.append("--docker")
-    result = cli_runner.invoke(main, params)
-    assert result.exit_code == 0
-    print(result.output)
 
     # start rippled servers
     start_result = cli_runner.invoke(main, ["server", "start-all", "--verbose"])
@@ -169,18 +164,10 @@ def create_bridge():
 
 @pytest.fixture(scope="function")
 def bridge_build_setup():
-    # reset CLI config file
-    config_file = os.path.join(get_config_folder(), "config.json")
-    os.remove(config_file)
-    with open(config_file, "w") as f:
-        data = {"chains": [], "witnesses": [], "bridges": []}
-        json.dump(data, f, indent=4)
+    _reset_cli_config()
+    _create_config_files()
 
     cli_runner = CliRunner()
-
-    # create config files
-    result = cli_runner.invoke(main, ["server", "create-config", "all"])
-    assert result.exit_code == 0
 
     # start rippled servers
     start_result = cli_runner.invoke(main, ["server", "start-all", "--verbose"])
