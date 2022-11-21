@@ -79,22 +79,16 @@ jobs:
       - name: Debug Test Failure (Witness Outputs)
         if: always() && steps.runTests.outcome == 'failure'
         run: |
-          docker exec witness0 apt-get update
-          docker exec witness0 apt-get install curl iproute2 -y
-          docker exec witness0 ss -tuna
-          docker exec witness0 curl -d '{"method":"server_info"}' http://127.0.0.3:6010
-          docker exec witness0 ip addr
           docker exec witness0 cat /opt/witness/witness.json
-          docker exec witness0 cat /var/log/witness.log
           echo "witness0"
-          docker logs witness0
+          docker exec witness0 cat /var/log/witness.log
           echo "witness1"
-          docker logs witness1
+          docker exec witness1 cat /var/log/witness.log
           echo "witness2"
-          docker logs witness2
+          docker exec witness2 cat /var/log/witness.log
           echo "witness3"
-          docker logs witness3
+          docker exec witness3 cat /var/log/witness.log
           echo "witness4"
-          docker logs witness4
+          docker exec witness4 cat /var/log/witness.log
         env:
           XCHAIN_CONFIG_DIR: /home/runner/work/sidechain-config
