@@ -113,6 +113,7 @@ def _generate_rippled_configs(config_dir: str, docker: bool = False) -> Tuple[in
 )
 @click.option(
     "--docker",
+    "is_docker",
     is_flag=True,
     help="Whether the config files are for a docker setup.",
 )
@@ -198,7 +199,7 @@ def generate_witness_config(
     issuing_reward_account: str,
     src_door: str,
     signing_seed: str,
-    docker: bool = True,
+    is_docker: bool = True,
     dst_door: str = "rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh",
     verbose: bool = False,
 ) -> None:
@@ -219,16 +220,16 @@ def generate_witness_config(
         locking_reward_account: The reward account for the witness on the locking chain.
         locking_reward_seed: The seed for the locking chain reward account.
         issuing_reward_account: The reward account for the witness on the issuing chain.
-        docker: Whether the config files are for a docker setup.
+        is_docker: Whether the config files are for a docker setup.
         issuing_reward_seed: The seed for the issuing chain reward account.
         verbose: Whether or not to print more verbose information.
     """  # noqa: D301
     abs_config_dir = os.path.abspath(config_dir)
-    if docker:
+    if is_docker:
         sub_dir = "/opt/witness"
-        cfg_dir = f"{abs_config_dir}/{name}"
+        cfg_dir = os.path.join(abs_config_dir, name)
     else:
-        sub_dir = f"{abs_config_dir}/{name}"
+        sub_dir = os.path.join(abs_config_dir, name)
         cfg_dir = sub_dir
 
     for path in ["", "/db"]:
@@ -240,11 +241,16 @@ def generate_witness_config(
                 os.remove(dirpath)
         dirpath.mkdir(parents=True)
 
+    if is_docker:
+        log_file = "/var/log/witness.log"
+    else:
+        log_file = os.path.join(cfg_dir, "witness.log")
+
     template_data = {
         "locking_chain_port": locking_chain_port,
         "issuing_chain_port": issuing_chain_port,
         "witness_port": witness_port,
-        "db_dir": f"{sub_dir}/db",
+        "db_dir": os.path.join(sub_dir, "db"),
         "seed": signing_seed,
         "locking_reward_seed": locking_reward_seed,
         "locking_reward_account": locking_reward_account,
@@ -255,7 +261,8 @@ def generate_witness_config(
         "dst_door": dst_door,
         "dst_issue": '{"currency": "XRP"}',
         "is_linux": platform == "linux" or platform == "linux2",
-        "is_docker": docker,
+        "is_docker": is_docker,
+        "log_file": log_file,
     }
 
     # add the witness.json file

@@ -45,7 +45,7 @@
     {% endif %}
     "Port": {{ witness_port }}
   },
-  "LogFile": "/var/log/witness.log",
+  "LogFile": "{{ log_file }}",
   "DBDir": "{{ db_dir }}",
   "SigningKeySeed": "{{ seed }}",
   "SigningKeyType": "ed25519",
