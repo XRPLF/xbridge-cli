@@ -12,7 +12,7 @@ from xrpl.wallet import Wallet
 from sidechain_cli.exceptions import AttestationTimeoutException, SidechainCLIException
 from sidechain_cli.utils.config_file import BridgeConfig
 
-_ATTESTATION_TIME_LIMIT = 15  # in seconds
+_ATTESTATION_TIME_LIMIT = 10  # in seconds
 _WAIT_STEP_LENGTH = 1
 
 _EXTERNAL_ATTESTATION_TIME_LIMIT = 20
