@@ -1,6 +1,6 @@
 rm ~/.config/sidechain-cli/config.json  # TODO: remove once cleanup is better
 sidechain-cli server create-config all --docker
-sidechain-cli server start-all--docker
+sidechain-cli server start-all --docker
 sidechain-cli server list
 sidechain-cli explorer
 jq .LockingChain.DoorAccount.Address $XCHAIN_CONFIG_DIR/bridge_bootstrap.json | tr -d '"' | xargs sidechain-cli fund locking_chain
