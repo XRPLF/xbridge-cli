@@ -124,11 +124,6 @@ def _base_fixture():
     cli_runner = CliRunner()
 
     # start servers
-    import docker
-
-    docker_client = docker.from_env()
-
-    print(docker_client.containers.list())
     start_result = cli_runner.invoke(main, ["server", "start-all", "--verbose"])
     assert start_result.exit_code == 0, start_result.output
 
@@ -138,7 +133,6 @@ def _base_fixture():
         # stop servers
         stop_result = cli_runner.invoke(main, ["server", "stop", "--all"])
         assert stop_result.exit_code == 0, stop_result.output
-        print(docker_client.containers.list())
 
 
 @pytest.fixture(scope="class")

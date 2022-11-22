@@ -49,7 +49,6 @@ def _wait_for_process(
     is_docker: bool = False,
 ) -> None:
     http_url = f"http://{http_ip}:{http_port}"
-    print(http_url)
     time_waited = 0.0
     while time_waited < _START_UP_TIME:
         try:
@@ -58,7 +57,6 @@ def _wait_for_process(
             if is_docker:
                 docker_client = docker.from_env()
                 container = docker_client.containers.get(name)
-                print(container.status)
                 assert container.status == "running"
             return
         except (
@@ -68,8 +66,7 @@ def _wait_for_process(
             httpx.WriteError,
             docker.errors.NotFound,
             AssertionError,
-        ) as e:
-            print("error", e)
+        ):
             time.sleep(_WAIT_INCREMENT)
             time_waited += _WAIT_INCREMENT
     with open(output_file) as f:

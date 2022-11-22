@@ -72,7 +72,6 @@ def wait_for_attestations(
     time_count = 0.0
     attestations_seen: Set[str] = set()
     while True:
-        print("new loop")
         time.sleep(wait_time)
         if close_ledgers:
             ledger = to_client.request(
@@ -87,9 +86,7 @@ def wait_for_attestations(
         for tx in new_txs:
             if tx["TransactionType"] == "XChainAddAttestation":
                 batch = tx["XChainAttestationBatch"]
-                print(batch)
                 if batch["XChainBridge"] != bridge_config.to_xrpl():
-                    print("bad bridge")
                     # make sure attestation is for this bridge
                     continue
                 attestations = batch[batch_name]
@@ -97,20 +94,15 @@ def wait_for_attestations(
                     element = attestation[f"{batch_name}Element"]
                     # check that the attestation actually matches this transfer
                     if element["Account"] != from_wallet.classic_address:
-                        print("bad account")
                         continue
                     if element["Amount"] != amount:
-                        print("bad amount")
                         continue
                     if element["Destination"] != to_account:
-                        print("bad destination")
                         continue
                     if is_transfer:
                         if element["XChainClaimID"] != xchain_claim_id:
-                            print("bad claim id")
                             continue
                     if element["PublicKey"] in attestations_seen:
-                        print("bad pubkey")
                         # already seen this attestation, skip
                         continue
                     attestations_seen.add(element["PublicKey"])
@@ -134,9 +126,4 @@ def wait_for_attestations(
             break
 
         if time_count > attestation_time_limit:
-            from xrpl.account import does_account_exist
-            from xrpl.models import LedgerData
-
-            print(does_account_exist(to_account, to_client))
-            print(pformat(to_client.request(LedgerData()).result))
             raise AttestationTimeoutException()
