@@ -124,7 +124,9 @@ def _base_fixture():
     cli_runner = CliRunner()
 
     # start servers
-    start_result = cli_runner.invoke(main, ["server", "start-all", "--verbose"])
+    start_result = cli_runner.invoke(
+        main, ["server", "start-all", "--rippled-only", "--verbose"]
+    )
     assert start_result.exit_code == 0, start_result.output
 
     try:
@@ -159,6 +161,12 @@ def create_bridge():
             ],
         )
         assert build_result.exit_code == 0, build_result.output
+
+        # start witness servers
+        start_result = cli_runner.invoke(
+            main, ["server", "start-all", "--witness-only", "--verbose"]
+        )
+        assert start_result.exit_code == 0, start_result.output
 
         yield
 
