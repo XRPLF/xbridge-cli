@@ -134,4 +134,7 @@ def wait_for_attestations(
             break
 
         if time_count > attestation_time_limit:
+            from xrpl.account import does_account_exist
+
+            print(does_account_exist(to_account, to_client))
             raise AttestationTimeoutException()
