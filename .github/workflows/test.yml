@@ -79,6 +79,7 @@ jobs:
       - name: Debug Test Failure (Witness Outputs)
         if: always() && steps.runTests.outcome == 'failure'
         run: |
+          docker compose -f docker/docker-compose.yml up
           docker exec witness0 cat /opt/witness/witness.json
           echo "witness0"
           docker exec witness0 cat /var/log/witness.log
