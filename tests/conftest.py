@@ -129,10 +129,12 @@ def _base_fixture():
 
     try:
         yield cli_runner
-    finally:
-        # stop servers
-        stop_result = cli_runner.invoke(main, ["server", "stop", "--all"])
-        assert stop_result.exit_code == 0, stop_result.output
+    except Exception:
+        return
+
+    # stop servers
+    stop_result = cli_runner.invoke(main, ["server", "stop", "--all"])
+    assert stop_result.exit_code == 0, stop_result.output
 
 
 @pytest.fixture(scope="class")
