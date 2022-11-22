@@ -382,7 +382,10 @@ def generate_bootstrap(
     help="The number of witness configs to generate.",
 )
 @click.option(
-    "--docker", is_flag=True, help="Whether the config files are for a docker setup."
+    "--docker",
+    "is_docker",
+    is_flag=True,
+    help="Whether the config files are for a docker setup.",
 )
 @click.option(
     "-v",
@@ -395,7 +398,7 @@ def generate_all_configs(
     ctx: click.Context,
     config_dir: str,
     num_witnesses: int = 5,
-    docker: bool = False,
+    is_docker: bool = False,
     verbose: bool = False,
 ) -> None:
     """
@@ -405,13 +408,13 @@ def generate_all_configs(
         ctx: The click context.
         config_dir: The directory to use for the config files.
         num_witnesses: The number of witnesses configs to generate.
-        docker: Whether the config files are for a docker setup.
+        is_docker: Whether the config files are for a docker setup.
         verbose: Whether or not to print more verbose information.
     """
     # TODO: add support for external networks
     abs_config_dir = os.path.abspath(config_dir)
 
-    mc_port, sc_port = _generate_rippled_configs(abs_config_dir, docker)
+    mc_port, sc_port = _generate_rippled_configs(abs_config_dir, is_docker)
     src_door = Wallet.create(CryptoAlgorithm.SECP256K1)
     reward_accounts = []
     signing_accounts = []
@@ -437,7 +440,7 @@ def generate_all_configs(
             locking_reward_account=witness_reward_wallet.classic_address,
             issuing_reward_seed=witness_reward_wallet.seed,
             issuing_reward_account=witness_reward_wallet.classic_address,
-            docker=docker,
+            is_docker=is_docker,
         )
     ctx.invoke(
         generate_bootstrap,
