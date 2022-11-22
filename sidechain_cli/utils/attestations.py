@@ -135,6 +135,8 @@ def wait_for_attestations(
 
         if time_count > attestation_time_limit:
             from xrpl.account import does_account_exist
+            from xrpl.models import LedgerData
 
             print(does_account_exist(to_account, to_client))
+            print(pformat(to_client.request(LedgerData()).result))
             raise AttestationTimeoutException()
