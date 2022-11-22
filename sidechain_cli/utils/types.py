@@ -2,6 +2,8 @@
 
 from typing import Literal, Tuple, TypedDict, Union
 
+from typing_extensions import NotRequired
+
 
 class ServerData(TypedDict):
     """Helper type for server data stored in the config file."""
@@ -28,14 +30,11 @@ class WitnessData(ServerData):
     pass
 
 
-class IssuedCurrencyDict(TypedDict):
-    """Helper type for an issued currency dictionary."""
+class CurrencyDict(TypedDict):
+    """Helper type for a currency dictionary."""
 
     currency: str
-    issuer: str
-
-
-Currency = Union[Literal["XRP"], IssuedCurrencyDict]
+    issuer: NotRequired[str]
 
 
 class BridgeData(TypedDict):
@@ -45,6 +44,6 @@ class BridgeData(TypedDict):
     chains: Tuple[str, str]
     num_witnesses: int
     door_accounts: Tuple[str, str]
-    xchain_currencies: Tuple[Currency, Currency]
+    xchain_currencies: Tuple[CurrencyDict, CurrencyDict]
     signature_reward: str
     create_account_amounts: Tuple[str, str]

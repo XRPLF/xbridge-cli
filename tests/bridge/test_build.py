@@ -50,7 +50,7 @@ class TestBridgeBuild:
                 bootstrap["LockingChain"]["DoorAccount"]["Address"],
                 bootstrap["IssuingChain"]["DoorAccount"]["Address"],
             ],
-            "xchain_currencies": ["XRP", "XRP"],
+            "xchain_currencies": [{"currency": "XRP"}, {"currency": "XRP"}],
             "signature_reward": "100",
             "create_account_amounts": ["5000000", "5000000"],
         }
@@ -143,7 +143,7 @@ class TestBridgeBuild:
                 bootstrap["LockingChain"]["DoorAccount"]["Address"],
                 bootstrap["IssuingChain"]["DoorAccount"]["Address"],
             ],
-            "xchain_currencies": ["XRP", "XRP"],
+            "xchain_currencies": [{"currency": "XRP"}, {"currency": "XRP"}],
             "signature_reward": "100",
             "create_account_amounts": ["5000000", "5000000"],
         }
@@ -155,9 +155,9 @@ class TestBridgeBuild:
 
         bridge_obj = {
             "LockingChainDoor": locking_door,
-            "LockingChainIssue": "XRP",
+            "LockingChainIssue": {"currency": "XRP"},
             "IssuingChainDoor": issuing_door,
-            "IssuingChainIssue": "XRP",
+            "IssuingChainIssue": {"currency": "XRP"},
         }
 
         locking_objects_result = locking_client.request(

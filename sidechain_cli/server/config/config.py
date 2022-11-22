@@ -113,6 +113,7 @@ def _generate_rippled_configs(config_dir: str, docker: bool = False) -> Tuple[in
 )
 @click.option(
     "--docker",
+    "is_docker",
     is_flag=True,
     help="Whether the config files are for a docker setup.",
 )
@@ -198,7 +199,7 @@ def generate_witness_config(
     issuing_reward_account: str,
     src_door: str,
     signing_seed: str,
-    docker: bool = True,
+    is_docker: bool = True,
     dst_door: str = "rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh",
     verbose: bool = False,
 ) -> None:
@@ -219,16 +220,16 @@ def generate_witness_config(
         locking_reward_account: The reward account for the witness on the locking chain.
         locking_reward_seed: The seed for the locking chain reward account.
         issuing_reward_account: The reward account for the witness on the issuing chain.
-        docker: Whether the config files are for a docker setup.
+        is_docker: Whether the config files are for a docker setup.
         issuing_reward_seed: The seed for the issuing chain reward account.
         verbose: Whether or not to print more verbose information.
     """  # noqa: D301
     abs_config_dir = os.path.abspath(config_dir)
-    if docker:
+    if is_docker:
         sub_dir = "/opt/witness"
-        cfg_dir = f"{abs_config_dir}/{name}"
+        cfg_dir = os.path.join(abs_config_dir, name)
     else:
-        sub_dir = f"{abs_config_dir}/{name}"
+        sub_dir = os.path.join(abs_config_dir, name)
         cfg_dir = sub_dir
 
     for path in ["", "/db"]:
@@ -240,23 +241,30 @@ def generate_witness_config(
                 os.remove(dirpath)
         dirpath.mkdir(parents=True)
 
+    if is_docker:
+        log_file = "/var/log/witness.log"
+    else:
+        log_file = os.path.join(cfg_dir, "witness.log")
+
     template_data = {
         "locking_chain_port": locking_chain_port,
         "issuing_chain_port": issuing_chain_port,
         "witness_port": witness_port,
-        "db_dir": f"{sub_dir}/db",
+        "db_dir": os.path.join(sub_dir, "db"),
         "seed": signing_seed,
         "locking_reward_seed": locking_reward_seed,
         "locking_reward_account": locking_reward_account,
         "issuing_reward_seed": issuing_reward_seed,
         "issuing_reward_account": issuing_reward_account,
         "src_door": src_door,
-        "src_issue": "XRP",
+        "src_issue": '{"currency": "XRP"}',
         "dst_door": dst_door,
-        "dst_issue": "XRP",
+        "dst_issue": '{"currency": "XRP"}',
         "is_linux": platform == "linux" or platform == "linux2",
-        "is_docker": docker,
+        "is_docker": is_docker,
+        "log_file": log_file,
     }
+
     # add the witness.json file
     _generate_template(
         "witness.jinja",
@@ -337,13 +345,13 @@ def generate_bootstrap(
         "locking_node_port": 5005,
         "locking_door_account": locking_door.classic_address,
         "locking_door_seed": locking_door.seed,
-        "locking_issue": "XRP",
+        "locking_issue": '{"currency": "XRP"}',
         "locking_reward_accounts": reward_accounts,
         "locking_submit_accounts": reward_accounts,
         "issuing_node_port": 5006,
         "issuing_door_account": issuing_door.classic_address,
         "issuing_door_seed": issuing_door.seed,
-        "issuing_issue": "XRP",
+        "issuing_issue": '{"currency": "XRP"}',
         "issuing_reward_accounts": reward_accounts,
         "issuing_submit_accounts": reward_accounts,
         "signing_accounts": signing_accounts,
@@ -374,7 +382,10 @@ def generate_bootstrap(
     help="The number of witness configs to generate.",
 )
 @click.option(
-    "--docker", is_flag=True, help="Whether the config files are for a docker setup."
+    "--docker",
+    "is_docker",
+    is_flag=True,
+    help="Whether the config files are for a docker setup.",
 )
 @click.option(
     "-v",
@@ -387,7 +398,7 @@ def generate_all_configs(
     ctx: click.Context,
     config_dir: str,
     num_witnesses: int = 5,
-    docker: bool = False,
+    is_docker: bool = False,
     verbose: bool = False,
 ) -> None:
     """
@@ -397,13 +408,13 @@ def generate_all_configs(
         ctx: The click context.
         config_dir: The directory to use for the config files.
         num_witnesses: The number of witnesses configs to generate.
-        docker: Whether the config files are for a docker setup.
+        is_docker: Whether the config files are for a docker setup.
         verbose: Whether or not to print more verbose information.
     """
     # TODO: add support for external networks
     abs_config_dir = os.path.abspath(config_dir)
 
-    mc_port, sc_port = _generate_rippled_configs(abs_config_dir, docker)
+    mc_port, sc_port = _generate_rippled_configs(abs_config_dir, is_docker)
     src_door = Wallet.create(CryptoAlgorithm.SECP256K1)
     reward_accounts = []
     signing_accounts = []
@@ -429,7 +440,7 @@ def generate_all_configs(
             locking_reward_account=witness_reward_wallet.classic_address,
             issuing_reward_seed=witness_reward_wallet.seed,
             issuing_reward_account=witness_reward_wallet.classic_address,
-            docker=docker,
+            is_docker=is_docker,
         )
     ctx.invoke(
         generate_bootstrap,

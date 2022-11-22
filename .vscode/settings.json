@@ -16,12 +16,16 @@
         "Tgbuq",
         "binarycodec",
         "bwdty",
+        "darglint",
         "envvar",
         "fout",
         "getenv",
         "httpx",
+        "isort",
+        "isort's",
         "keypress",
         "legleux",
+        "mypy",
         "noqa",
         "pformat",
         "psutil",
@@ -32,4 +36,12 @@
         "xbridge",
         "xchain"
     ],
+    "cSpell.ignorePaths": [
+        "**/package-lock.json",
+        "**/node_modules/**",
+        "**/vscode-extension/**",
+        "**/.git/objects/**",
+        ".vscode",
+        ".vscode-insiders"
+    ]
 }

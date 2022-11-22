@@ -52,8 +52,8 @@ jobs:
 
       - name: Pull images from docker
         run: |
-          docker pull legleux/rippled-xbridge
-          docker pull legleux/xbridge_witnessd
+          docker pull legleux/rippled-xbridge-test
+          docker pull legleux/xbridge_witnessd-test
 
       - name: Run tests
         id: runTests
@@ -79,15 +79,18 @@ jobs:
       - name: Debug Test Failure (Witness Outputs)
         if: always() && steps.runTests.outcome == 'failure'
         run: |
+          docker compose -f docker/docker-compose.yml up -d
+          docker exec witness0 cat /opt/witness/witness.json
           echo "witness0"
-          docker logs witness0
+          docker exec witness0 cat /var/log/witness.log
           echo "witness1"
-          docker logs witness1
+          docker exec witness1 cat /var/log/witness.log
           echo "witness2"
-          docker logs witness2
+          docker exec witness2 cat /var/log/witness.log
           echo "witness3"
-          docker logs witness3
+          docker exec witness3 cat /var/log/witness.log
           echo "witness4"
-          docker logs witness4
+          docker exec witness4 cat /var/log/witness.log
+          docker compose -f docker/docker-compose.yml down
         env:
           XCHAIN_CONFIG_DIR: /home/runner/work/sidechain-config

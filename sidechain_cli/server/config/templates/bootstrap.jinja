@@ -9,7 +9,7 @@
       "Seed": "{{ locking_door_seed }}",
       "KeyType": "ed25519"
     },
-    "BridgeIssue": "{{ locking_issue }}",
+    "BridgeIssue": {{ locking_issue }},
     "WitnessRewardAccounts": [
       "{{ locking_reward_accounts | join("\",\n      \"") }}"
     ],
@@ -31,7 +31,7 @@
       "Seed": "{{ issuing_door_seed }}",
       "KeyType": "ed25519"
     },
-    "BridgeIssue": "{{ issuing_issue }}",
+    "BridgeIssue": {{ issuing_issue }},
     "WitnessRewardAccounts": [
       "{{ issuing_reward_accounts | join("\",\n      \"") }}"
     ],

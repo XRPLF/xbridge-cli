@@ -28,9 +28,6 @@ def _submit_tx(
         or result.result["meta"]["TransactionResult"]
     )
     if tx_result != "tesSUCCESS":
-        from pprint import pprint
-
-        pprint(result.result)
         raise SidechainCLIException(
             str(
                 result.result.get("error_message")

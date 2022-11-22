@@ -3,21 +3,19 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Dict, Literal, Tuple, Union, cast
+from typing import Any, Dict, Tuple, cast
 
 from xrpl.clients import JsonRpcClient
-from xrpl.models import IssuedCurrency, XChainBridge
+from xrpl.models import XRP, Currency, IssuedCurrency, XChainBridge
 
 from sidechain_cli.utils.config_file.config_item import ConfigItem
-from sidechain_cli.utils.types import Currency
+from sidechain_cli.utils.types import CurrencyDict
 
 
-def _to_issued_currency(
-    xchain_currency: Union[Literal["XRP"], Currency]
-) -> Union[Literal["XRP"], IssuedCurrency]:
+def _to_issued_currency(xchain_currency: CurrencyDict) -> Currency:
     return (
-        cast(Literal["XRP"], "XRP")
-        if xchain_currency == "XRP"
+        XRP()
+        if XRP.is_dict_of_model(xchain_currency)
         else IssuedCurrency.from_dict(cast(Dict[str, Any], xchain_currency))
     )
 
@@ -30,7 +28,7 @@ class BridgeConfig(ConfigItem):
     chains: Tuple[str, str]
     num_witnesses: int
     door_accounts: Tuple[str, str]
-    xchain_currencies: Tuple[Currency, Currency]
+    xchain_currencies: Tuple[CurrencyDict, CurrencyDict]
     signature_reward: str
     create_account_amounts: Tuple[str, str]
 
@@ -66,11 +64,9 @@ class BridgeConfig(ConfigItem):
         Returns:
             The XRPL-formatted dictionary for the XChainBridge object.
         """
-        locking_chain_issue = _to_issued_currency(self.xchain_currencies[0])
-        issuing_chain_issue = _to_issued_currency(self.xchain_currencies[1])
         return {
             "LockingChainDoor": self.door_accounts[0],
-            "LockingChainIssue": locking_chain_issue,
+            "LockingChainIssue": self.xchain_currencies[0],
             "IssuingChainDoor": self.door_accounts[1],
-            "IssuingChainIssue": issuing_chain_issue,
+            "IssuingChainIssue": self.xchain_currencies[1],
         }
