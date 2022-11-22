@@ -79,7 +79,7 @@ jobs:
       - name: Debug Test Failure (Witness Outputs)
         if: always() && steps.runTests.outcome == 'failure'
         run: |
-          docker compose -f docker/docker-compose.yml up
+          docker compose -f docker/docker-compose.yml up -d
           docker exec witness0 cat /opt/witness/witness.json
           echo "witness0"
           docker exec witness0 cat /var/log/witness.log
@@ -91,5 +91,6 @@ jobs:
           docker exec witness3 cat /var/log/witness.log
           echo "witness4"
           docker exec witness4 cat /var/log/witness.log
+          docker compose -f docker/docker-compose.yml down
         env:
           XCHAIN_CONFIG_DIR: /home/runner/work/sidechain-config
