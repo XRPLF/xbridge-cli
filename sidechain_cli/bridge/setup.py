@@ -294,24 +294,6 @@ def setup_bridge(
     if bridge_obj.issuing_chain_issue == XRP():
         # we need to create the witness reward + submission accounts via the bridge
 
-        # set up a signer list with the issuing seed as the only account
-        # TODO: remove when master keys and regular keys are supported
-        new_wallet = Wallet.create()
-        hacky_signer_tx = SignerListSet(
-            account=issuing_door,
-            signer_quorum=1,
-            signer_entries=[
-                SignerEntry(account=new_wallet.classic_address, signer_weight=1)
-            ],
-        )
-        submit_tx(
-            hacky_signer_tx,
-            issuing_client,
-            issuing_door_seed,
-            verbose,
-            close_ledgers,
-        )
-
         # helper function for submittion the attestations
         def _submit_attestations(
             attestations: List[XChainCreateAccountAttestationBatchElement],
@@ -332,8 +314,11 @@ def setup_bridge(
                 close_ledgers,
             )
 
+        issuing_wallet = Wallet(issuing_door_seed, 0)
+
         assert funding_seed is not None  # for typing purposes - checked earlier
         funding_wallet = Wallet(funding_seed, 0)
+
         amount = str(min_create2 * 2)  # submit accounts need spare funds
         attestations = []
         count = 1
@@ -360,14 +345,14 @@ def setup_bridge(
                 amount=amount,
                 attestation_reward_account=issuing_door,
                 destination=account,
-                public_key=new_wallet.public_key,
+                public_key=issuing_wallet.public_key,
                 signature="",
                 signature_reward=signature_reward,
                 was_locking_chain_send=1,
                 xchain_account_create_count=str(count),
             )
             signed_attestation = _sign_attestation(
-                init_attestation, bridge_obj, new_wallet.private_key
+                init_attestation, bridge_obj, issuing_wallet.private_key
             )
             attestations.append(signed_attestation)
             count += 1
