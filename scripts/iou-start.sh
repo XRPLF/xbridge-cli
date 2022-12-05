@@ -14,9 +14,9 @@ sidechain-cli bridge create-account --from_locking --bridge bridge --from snqs2z
 sidechain-cli bridge transfer --bridge bridge --from_locking --amount 10000000 --from snqs2zzXuMA71w9isKHPTrvFn1HaJ --to snyEJjY2Xi5Dxdh81Jy9Mj3AiYRQM --verbose
 
 echo "set up IOU bridge"
-sidechain-cli fund locking_chain rNhm2aTLEnSdcWQ7d6PZ5F7TX5skM7wkAS
+sidechain-cli fund locking_chain raFcdz1g8LWJDJWJE2ZKLRGdmUmsTyxaym
 # TODO: set default rippling here
-sidechain-cli server create-config all --config_dir ../sidechain-config2 --currency USD.rNhm2aTLEnSdcWQ7d6PZ5F7TX5skM7wkAS
+sidechain-cli server create-config all --config_dir ../sidechain-config2 --currency USD.raFcdz1g8LWJDJWJE2ZKLRGdmUmsTyxaym
 jq .LockingChain.DoorAccount.Address ../sidechain-config2/bridge_bootstrap.json | tr -d '"' | xargs sidechain-cli fund locking_chain
 jq '.LockingChain.WitnessSubmitAccounts[]' ../sidechain-config2/bridge_bootstrap.json | tr -d '"' | xargs sidechain-cli fund locking_chain
 jq '.LockingChain.WitnessRewardAccounts[]' ../sidechain-config2/bridge_bootstrap.json | tr -d '"' | xargs sidechain-cli fund locking_chain
@@ -32,8 +32,6 @@ sidechain-cli server list
 sidechain-cli server start-all --witness-only --config_dir ../sidechain-config2
 sidechain-cli server list
 sidechain-cli bridge build --name iou_bridge --bootstrap ../sidechain-config2/bridge_bootstrap.json -v
-sidechain-cli trust locking_chain USD.rNhm2aTLEnSdcWQ7d6PZ5F7TX5skM7wkAS snqs2zzXuMA71w9isKHPTrvFn1HaJ
-sidechain-cli trust locking_chain USD.rNhm2aTLEnSdcWQ7d6PZ5F7TX5skM7wkAS snyEJjY2Xi5Dxdh81Jy9Mj3AiYRQM
-# TODO: fund the from account with USD funds
-# TODO: set trustline for to account
-# sidechain-cli bridge transfer --bridge iou_bridge --from_locking --amount 1000 --from snqs2zzXuMA71w9isKHPTrvFn1HaJ --to snyEJjY2Xi5Dxdh81Jy9Mj3AiYRQM --verbose
+jq .LockingChain.DoorAccount.Seed ../sidechain-config2/bridge_bootstrap.json | tr -d '"' | xargs sidechain-cli trust locking_chain USD.raFcdz1g8LWJDJWJE2ZKLRGdmUmsTyxaym
+jq .IssuingChain.DoorAccount.Address ../sidechain-config2/bridge_bootstrap.json | tr -d '"' | xargs -I{} sidechain-cli trust issuing_chain USD.{} snyEJjY2Xi5Dxdh81Jy9Mj3AiYRQM
+sidechain-cli bridge transfer --bridge iou_bridge --from_locking --amount 1000 --from snqs2zzXuMA71w9isKHPTrvFn1HaJ --to snyEJjY2Xi5Dxdh81Jy9Mj3AiYRQM --verbose
