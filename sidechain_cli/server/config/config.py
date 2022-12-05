@@ -13,9 +13,9 @@ import click
 from jinja2 import Environment, FileSystemLoader
 from xrpl import CryptoAlgorithm
 from xrpl.wallet import Wallet
-from sidechain_cli.utils import CurrencyDict
 
 from sidechain_cli.server.config.ports import Ports
+from sidechain_cli.utils import CurrencyDict
 
 _GENESIS_SEED = "snoPBrXtMeMyMHUVTgbuqAfg1SUTb"
 
@@ -27,16 +27,14 @@ _JINJA_ENV = Environment(
     lstrip_blocks=True,
 )
 
+
 def _get_currency(currency_str: str) -> CurrencyDict:
     if currency_str == "XRP":
         return {"currency": "XRP"}
 
     assert currency_str.count(".") == 1
     currency_split = currency_str.split(".")
-    return {
-        "currency": currency_split[0],
-        "issuer": currency_split[1]
-    }
+    return {"currency": currency_split[0], "issuer": currency_split[1]}
 
 
 # render a Jinja template and dump it into a file
@@ -226,11 +224,10 @@ def generate_witness_config(
     issuing_reward_account: str,
     src_door: str,
     signing_seed: str,
-    is_docker: bool = True,
     src_currency: str = "XRP",
     dst_door: str = "rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh",
     dst_currency: str = "XRP",
-    docker: bool = True,
+    is_docker: bool = True,
     verbose: bool = False,
 ) -> None:
     """
@@ -267,7 +264,7 @@ def generate_witness_config(
     )
     src_issue = _get_currency(src_currency)
     dst_issue = _get_currency(dst_currency)
-    if isinstance(dst_issue, dict):
+    if "issuer" in dst_issue:
         assert dst_issue["issuer"] == dst_door
 
     for path in ["", "/db"]:
@@ -400,7 +397,7 @@ def generate_bootstrap(
     )
     locking_issue = _get_currency(locking_currency)
     issuing_issue = _get_currency(issuing_currency)
-    if isinstance(issuing_issue, dict):
+    if "issuer" in issuing_issue:
         assert issuing_issue["issuer"] == issuing_door.classic_address
 
     template_data = {

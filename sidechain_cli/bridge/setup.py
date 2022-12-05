@@ -253,7 +253,7 @@ def setup_bridge(
     transactions: List[Transaction] = []
 
     # create the trustline (if IOU)
-    if bridge_obj.locking_chain_issue != "XRP":
+    if bridge_obj.locking_chain_issue != XRP():
         assert isinstance(bridge_obj.locking_chain_issue, IssuedCurrency)
         transactions.append(
             TrustSet(
