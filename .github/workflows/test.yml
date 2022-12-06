@@ -70,7 +70,7 @@ jobs:
         if: always() && steps.runTests.outcome == 'failure'
         run: |
           echo "start of locking_chain logs"
-          cat $XCHAIN_CONFIG_DIR/locking_chain/debug.log
+          cat $XCHAIN_CONFIG_DIR/locking_chain_logs/debug.log
           echo "start of issuing_chain logs"
           cat $XCHAIN_CONFIG_DIR/issuing_chain/debug.log
         env:
