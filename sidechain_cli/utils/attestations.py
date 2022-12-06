@@ -126,5 +126,5 @@ def wait_for_attestations(
             break
 
         if time_count > attestation_time_limit:
-            print(to_client.request(LedgerData()))
+            print(pformat(to_client.request(LedgerData()).result))
             raise AttestationTimeoutException()
