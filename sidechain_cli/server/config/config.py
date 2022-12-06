@@ -241,10 +241,7 @@ def generate_witness_config(
                 os.remove(dirpath)
         dirpath.mkdir(parents=True)
 
-    if is_docker:
-        log_file = "/var/log/witness.log"
-    else:
-        log_file = os.path.join(cfg_dir, "witness.log")
+    log_file = os.path.join(sub_dir, "witness.log")
 
     template_data = {
         "locking_chain_port": locking_chain_port,
