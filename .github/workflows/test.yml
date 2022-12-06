@@ -74,7 +74,7 @@ jobs:
           docker logs locking_chain
           echo "issuing_chain"
           docker logs issuing_chain
-          docker exec issuing_chain /opt/ripple/bin/rippled ledger_data
+          docker exec issuing_chain /usr/local/bin/rippled ledger_data
           docker compose -f docker/docker-compose.yml down
         env:
           XCHAIN_CONFIG_DIR: /home/runner/work/sidechain-config
