@@ -65,7 +65,7 @@ class TestCreateAccount:
         )
         assert (
             does_account_exist(wallet_to_create.classic_address, issuing_client) is True
-        )
+        ), runner_result.output
 
     def test_create_account_prod(self):
         runner = CliRunner()
