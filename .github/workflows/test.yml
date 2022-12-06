@@ -82,15 +82,15 @@ jobs:
           docker compose -f docker/docker-compose.yml up -d
           docker exec witness0 cat /opt/witness/witness.json
           echo "start of witness0 logs"
-          docker exec witness0 cat /var/log/witness.log
+          cat $XCHAIN_CONFIG_DIR/witness0/witness.log
           echo "start of witness1 logs"
-          docker exec witness1 cat /var/log/witness.log
+          docker exec witness1 cat /opt/witness/witness.log
           echo "start of witness2 logs"
-          docker exec witness2 cat /var/log/witness.log
+          docker exec witness2 cat /opt/witness/witness.log
           echo "start of witness3 logs"
-          docker exec witness3 cat /var/log/witness.log
+          docker exec witness3 cat /opt/witness/witness.log
           echo "start of witness4 logs"
-          docker exec witness4 cat /var/log/witness.log
+          docker exec witness4 cat /opt/witness/witness.log
           docker compose -f docker/docker-compose.yml down
         env:
           XCHAIN_CONFIG_DIR: /home/runner/work/sidechain-config
