@@ -72,7 +72,7 @@ jobs:
           echo "start of locking_chain logs"
           cat $XCHAIN_CONFIG_DIR/locking_chain_logs/debug.log
           echo "start of issuing_chain logs"
-          cat $XCHAIN_CONFIG_DIR/issuing_chain/debug.log
+          cat $XCHAIN_CONFIG_DIR/issuing_chain_logs/debug.log
         env:
           XCHAIN_CONFIG_DIR: /home/runner/work/sidechain-config
 
