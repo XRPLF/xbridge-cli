@@ -69,9 +69,9 @@ jobs:
       - name: Debug Test Failure (Chain Outputs)
         if: always() && steps.runTests.outcome == 'failure'
         run: |
-          echo "locking_chain"
+          echo "start of locking_chain logs"
           docker logs locking_chain
-          echo "issuing_chain"
+          echo "start of issuing_chain logs"
           docker logs issuing_chain
         env:
           XCHAIN_CONFIG_DIR: /home/runner/work/sidechain-config
@@ -81,15 +81,15 @@ jobs:
         run: |
           docker compose -f docker/docker-compose.yml up -d
           docker exec witness0 cat /opt/witness/witness.json
-          echo "witness0"
+          echo "start of witness0 logs"
           docker exec witness0 cat /var/log/witness.log
-          echo "witness1"
+          echo "start of witness1 logs"
           docker exec witness1 cat /var/log/witness.log
-          echo "witness2"
+          echo "start of witness2 logs"
           docker exec witness2 cat /var/log/witness.log
-          echo "witness3"
+          echo "start of witness3 logs"
           docker exec witness3 cat /var/log/witness.log
-          echo "witness4"
+          echo "start of witness4 logs"
           docker exec witness4 cat /var/log/witness.log
           docker compose -f docker/docker-compose.yml down
         env:
