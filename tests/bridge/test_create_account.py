@@ -50,7 +50,7 @@ class TestCreateAccount:
                 send_wallet.seed,
                 "--to",
                 wallet_to_create.classic_address,
-                "--verbose",
+                "-vv",
             ],
         )
         assert runner_result.exit_code == 0, runner_result.output

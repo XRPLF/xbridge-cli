@@ -6,7 +6,7 @@ from typing import Optional, Set
 
 import click
 from xrpl.clients import JsonRpcClient
-from xrpl.models import GenericRequest, Ledger
+from xrpl.models import GenericRequest, Ledger, LedgerData
 from xrpl.wallet import Wallet
 
 from sidechain_cli.exceptions import AttestationTimeoutException, SidechainCLIException
@@ -126,4 +126,5 @@ def wait_for_attestations(
             break
 
         if time_count > attestation_time_limit:
+            print(to_client.request(LedgerData()))
             raise AttestationTimeoutException()

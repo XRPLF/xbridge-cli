@@ -130,14 +130,6 @@ def _base_fixture():
     try:
         yield cli_runner
     finally:
-        # print out ledger_data in CI
-        if os.getenv("GITHUB_CI") == "True":
-            print(
-                cli_runner.invoke(
-                    main,
-                    ["server", "request", "--name", "issuing_chain", "ledger_data"],
-                )
-            )
         # stop servers
         stop_result = cli_runner.invoke(main, ["server", "stop", "--all"])
         assert stop_result.exit_code == 0, stop_result.output
