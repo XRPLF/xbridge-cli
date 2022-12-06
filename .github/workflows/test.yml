@@ -71,9 +71,10 @@ jobs:
         run: |
           docker compose -f docker/docker-compose.yml up -d
           echo "locking_chain"
-          docker logs locking_chain
+          docker exec locking_chain cat /etc/opt/ripple/debug.log
           echo "issuing_chain"
-          docker logs issuing_chain
+          docker exec issuing_chain cat /etc/opt/ripple/debug.log
+          echo "issuing_chain ledger_data"
           docker exec issuing_chain /usr/local/bin/rippled ledger_data
           docker compose -f docker/docker-compose.yml down
         env:
