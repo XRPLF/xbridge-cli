@@ -12,7 +12,6 @@ services:
       - 5005:5005
       - 6005:6005
       - 6006:6006
-      # - 51235:51235
     networks:
      bridge-net:
        ipv4_address: 192.168.176.2
@@ -28,7 +27,6 @@ services:
       - 5006:5006
       - 6007:6007
       - 6008:6008
-      # - 51236:51236
     networks:
       bridge-net:
         ipv4_address: 192.168.176.3
