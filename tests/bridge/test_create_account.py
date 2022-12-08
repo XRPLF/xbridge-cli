@@ -134,4 +134,8 @@ class TestCreateAccount:
         )
         assert (
             does_account_exist(wallet_to_create.classic_address, issuing_client) is True
+        ), (
+            runner_result.output
+            + "\n" * 3
+            + pformat(issuing_client.request(LedgerData()).result)
         )
