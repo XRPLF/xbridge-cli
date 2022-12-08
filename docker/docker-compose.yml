@@ -8,11 +8,11 @@ services:
     volumes:
       - ${XCHAIN_CONFIG_DIR}/locking_chain:/etc/opt/ripple/
       - ${XCHAIN_CONFIG_DIR}/locking_chain_logs:/var/lib/rippled
-    # ports:
-    #   - 5005:5005
-    #   - 6005:6005
-    #   - 6006:6006
-    #   - 51235:51235
+    ports:
+      - 5005:5005
+      - 6005:6005
+      - 6006:6006
+      # - 51235:51235
     networks:
      bridge-net:
        ipv4_address: 192.168.176.2
@@ -24,11 +24,11 @@ services:
     volumes:
       - ${XCHAIN_CONFIG_DIR}/issuing_chain:/etc/opt/ripple/
       - ${XCHAIN_CONFIG_DIR}/issuing_chain_logs:/var/lib/rippled
-    # ports:
-    #   - 5006:5006
-    #   - 6007:6007
-    #   - 6008:6008
-    #   - 51236:51236
+    ports:
+      - 5006:5006
+      - 6007:6007
+      - 6008:6008
+      # - 51236:51236
     networks:
       bridge-net:
         ipv4_address: 192.168.176.3
