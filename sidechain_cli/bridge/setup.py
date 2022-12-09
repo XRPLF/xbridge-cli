@@ -389,7 +389,7 @@ def setup_bridge(
     bridge_data: BridgeData = {
         "name": name,
         "chains": (locking_url, issuing_url),
-        "num_witnesses": len(signer_entries),
+        "quorum": max(1, len(signer_entries) - 1),
         "door_accounts": (locking_door, issuing_door),
         "xchain_currencies": (locking_issue, issuing_issue),
         "signature_reward": signature_reward,

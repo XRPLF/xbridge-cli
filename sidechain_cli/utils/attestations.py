@@ -69,9 +69,8 @@ def wait_for_attestations(
         wait_time = _EXTERNAL_WAIT_STEP_LENGTH
         attestation_time_limit = _EXTERNAL_ATTESTATION_TIME_LIMIT
 
-    quorum = max(1, bridge_config.num_witnesses - 1)
     if verbose > 0:
-        click.echo(f"Attestation quorum is {quorum}")
+        click.echo(f"Attestation quorum is {bridge_config.quorum}")
 
     time_count = 0.0
     attestations_seen: Set[str] = set()
@@ -123,7 +122,7 @@ def wait_for_attestations(
             time_count = 0
         else:
             time_count += wait_time
-        if len(attestations_seen) >= quorum:
+        if len(attestations_seen) >= bridge_config.quorum:
             # received enough attestations for quorum
             break
 

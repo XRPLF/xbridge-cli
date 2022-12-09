@@ -151,7 +151,7 @@ def register_bridge(
             "both chains."
         )
 
-    num_signers = len(signer_list1)
+    quorum = signer_list1["SignerQuorum"]
 
     # TODO: determine whether the bridge was set up properly.
     bridge1 = _get_bridge(locking_client, doors[0])
@@ -172,7 +172,7 @@ def register_bridge(
     bridge_data: BridgeData = {
         "name": name,
         "chains": (chains[0], chains[1]),
-        "num_witnesses": num_signers,
+        "quorum": quorum,
         "door_accounts": (doors[0], doors[1]),
         "xchain_currencies": (
             bridge1["XChainBridge"]["LockingChainIssue"],
