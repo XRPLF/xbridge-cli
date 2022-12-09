@@ -51,7 +51,7 @@ def _generate_standalone_config(
         dirpath = Path(cfg_dir + path)
         if dirpath.exists():
             if dirpath.is_dir():
-                shutil.rmtree(dirpath)
+                shutil.rmtree(dirpath, ignore_errors=True)
             else:
                 os.remove(dirpath)
         dirpath.mkdir(parents=True)
