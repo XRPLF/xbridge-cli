@@ -55,10 +55,9 @@ def _generate_standalone_config(
                     files = list(Path(cfg_dir + path).glob("**/*"))
                     print(files)
                     for item in files:
-                        if "nudb.key" in item.name:
-                            owner = item.owner()
-                            group = item.group()
-                            print(f"{item.name} is owned by {owner}:{group}")
+                        owner = item.owner()
+                        group = item.group()
+                        print(f"{item.name} is owned by {owner}:{group}")
                 except Exception:
                     pass
                 shutil.rmtree(dirpath)
