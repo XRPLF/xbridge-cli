@@ -6,16 +6,16 @@ from typing import Optional, Set
 
 import click
 from xrpl.clients import JsonRpcClient
-from xrpl.models import GenericRequest, Ledger
+from xrpl.models import GenericRequest, Ledger, LedgerData
 from xrpl.wallet import Wallet
 
 from sidechain_cli.exceptions import AttestationTimeoutException, SidechainCLIException
 from sidechain_cli.utils.config_file import BridgeConfig
 
-_ATTESTATION_TIME_LIMIT = 10  # in seconds
+_ATTESTATION_TIME_LIMIT = 20  # in seconds
 _WAIT_STEP_LENGTH = 1
 
-_EXTERNAL_ATTESTATION_TIME_LIMIT = 20
+_EXTERNAL_ATTESTATION_TIME_LIMIT = 30
 _EXTERNAL_WAIT_STEP_LENGTH = 1
 
 
@@ -69,6 +69,9 @@ def wait_for_attestations(
         wait_time = _EXTERNAL_WAIT_STEP_LENGTH
         attestation_time_limit = _EXTERNAL_ATTESTATION_TIME_LIMIT
 
+    if verbose > 0:
+        click.echo(f"Attestation quorum is {bridge_config.quorum}")
+
     time_count = 0.0
     attestations_seen: Set[str] = set()
     while True:
@@ -114,16 +117,15 @@ def wait_for_attestations(
                             fg="bright_green",
                         )
         if len(new_txs) > 0:  # TODO: only count attestations
-            if close_ledgers:
-                to_client.request(GenericRequest(method="ledger_accept"))
             time_count = 0
         else:
             time_count += wait_time
-
-        quorum = max(1, bridge_config.num_witnesses - 1)
-        if len(attestations_seen) >= quorum:
+        if close_ledgers:
+            to_client.request(GenericRequest(method="ledger_accept"))
+        if len(attestations_seen) >= bridge_config.quorum:
             # received enough attestations for quorum
             break
 
         if time_count > attestation_time_limit:
+            print(pformat(to_client.request(LedgerData()).result))
             raise AttestationTimeoutException()

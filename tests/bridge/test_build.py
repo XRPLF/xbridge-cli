@@ -45,7 +45,7 @@ class TestBridgeBuild:
         expected_result = {
             "name": "test_bridge",
             "chains": ["http://0.0.0.0:5005", "http://0.0.0.0:5006"],
-            "num_witnesses": 5,
+            "quorum": 4,
             "door_accounts": [
                 bootstrap["LockingChain"]["DoorAccount"]["Address"],
                 bootstrap["IssuingChain"]["DoorAccount"]["Address"],
@@ -73,7 +73,7 @@ class TestBridgeBuild:
         signer_list = [
             obj for obj in locking_objects if obj["LedgerEntryType"] == "SignerList"
         ][0]
-        assert len(signer_list["SignerEntries"]) == bridge_config.num_witnesses
+        assert signer_list["SignerQuorum"] == bridge_config.quorum
 
         issuing_objects_result = issuing_client.request(
             AccountObjects(account=issuing_door)
@@ -86,7 +86,7 @@ class TestBridgeBuild:
         signer_list = [
             obj for obj in issuing_objects if obj["LedgerEntryType"] == "SignerList"
         ][0]
-        assert len(signer_list["SignerEntries"]) == bridge_config.num_witnesses
+        assert signer_list["SignerQuorum"] == bridge_config.quorum
 
     def test_bridge_prod_build_xrp(self):
         runner = CliRunner()
@@ -138,7 +138,7 @@ class TestBridgeBuild:
         expected_result = {
             "name": "test_bridge",
             "chains": ["http://0.0.0.0:5005", "http://0.0.0.0:5006"],
-            "num_witnesses": 5,
+            "quorum": 4,
             "door_accounts": [
                 bootstrap["LockingChain"]["DoorAccount"]["Address"],
                 bootstrap["IssuingChain"]["DoorAccount"]["Address"],

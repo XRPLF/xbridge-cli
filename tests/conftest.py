@@ -91,7 +91,7 @@ def _create_config_files() -> None:
     if _is_docker():
         params.append("--docker")
     result = cli_runner.invoke(main, params)
-    assert result.exit_code == 0
+    assert result.exit_code == 0, result.output
 
 
 def _fund_locking_accounts(cli_runner: CliRunner) -> None:

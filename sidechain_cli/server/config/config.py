@@ -41,7 +41,7 @@ def _generate_standalone_config(
 ) -> None:
     abs_config_dir = os.path.abspath(config_dir)
     if docker:
-        sub_dir = "/var/lib/rippled"
+        sub_dir = "/etc/opt/ripple"
         cfg_dir = f"{abs_config_dir}/{cfg_type}"
     else:
         sub_dir = f"{abs_config_dir}/{cfg_type}"
@@ -49,12 +49,9 @@ def _generate_standalone_config(
 
     for path in ["", "/db"]:
         dirpath = Path(cfg_dir + path)
-        if dirpath.exists():
-            if dirpath.is_dir():
-                shutil.rmtree(dirpath)
-            else:
-                os.remove(dirpath)
-        dirpath.mkdir(parents=True)
+        if not dirpath.exists():
+            dirpath = Path(cfg_dir + path)
+            dirpath.mkdir(parents=True)
 
     template_data = {
         "sub_dir": sub_dir,
@@ -241,10 +238,7 @@ def generate_witness_config(
                 os.remove(dirpath)
         dirpath.mkdir(parents=True)
 
-    if is_docker:
-        log_file = "/var/log/witness.log"
-    else:
-        log_file = os.path.join(cfg_dir, "witness.log")
+    log_file = os.path.join(sub_dir, "witness.log")
 
     template_data = {
         "locking_chain_port": locking_chain_port,

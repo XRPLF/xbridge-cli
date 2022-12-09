@@ -26,7 +26,7 @@ class BridgeConfig(ConfigItem):
 
     name: str
     chains: Tuple[str, str]
-    num_witnesses: int
+    quorum: int
     door_accounts: Tuple[str, str]
     xchain_currencies: Tuple[CurrencyDict, CurrencyDict]
     signature_reward: str

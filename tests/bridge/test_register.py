@@ -1,8 +1,10 @@
 import os
+from pprint import pformat
 
 import pytest
 from click.testing import CliRunner
 from xrpl.account import does_account_exist, get_balance
+from xrpl.models import LedgerData
 from xrpl.wallet import Wallet
 
 from sidechain_cli.main import main
@@ -88,6 +90,10 @@ class TestRegister:
         )
         assert (
             does_account_exist(wallet_to_create.classic_address, issuing_client) is True
+        ), (
+            runner_result.output
+            + "\n" * 3
+            + pformat(issuing_client.request(LedgerData()).result)
         )
 
     def test_register_bootstrap(self):
@@ -164,4 +170,8 @@ class TestRegister:
         )
         assert (
             does_account_exist(wallet_to_create.classic_address, issuing_client) is True
+        ), (
+            runner_result.output
+            + "\n" * 3
+            + pformat(issuing_client.request(LedgerData()).result)
         )

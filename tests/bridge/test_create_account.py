@@ -1,6 +1,9 @@
+from pprint import pformat
+
 import pytest
 from click.testing import CliRunner
 from xrpl.account import does_account_exist, get_balance
+from xrpl.models import LedgerData
 from xrpl.wallet import Wallet
 
 from sidechain_cli.main import main
@@ -50,7 +53,7 @@ class TestCreateAccount:
                 send_wallet.seed,
                 "--to",
                 wallet_to_create.classic_address,
-                "--verbose",
+                "-vv",
             ],
         )
         assert runner_result.exit_code == 0, runner_result.output
@@ -65,6 +68,10 @@ class TestCreateAccount:
         )
         assert (
             does_account_exist(wallet_to_create.classic_address, issuing_client) is True
+        ), (
+            runner_result.output
+            + "\n" * 3
+            + pformat(issuing_client.request(LedgerData()).result)
         )
 
     def test_create_account_prod(self):
@@ -127,4 +134,8 @@ class TestCreateAccount:
         )
         assert (
             does_account_exist(wallet_to_create.classic_address, issuing_client) is True
+        ), (
+            runner_result.output
+            + "\n" * 3
+            + pformat(issuing_client.request(LedgerData()).result)
         )
