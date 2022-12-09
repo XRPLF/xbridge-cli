@@ -51,7 +51,10 @@ def _generate_standalone_config(
         dirpath = Path(cfg_dir + path)
         if dirpath.exists():
             if dirpath.is_dir():
-                print(list(dirpath.iterdir()))
+                try:
+                    print(list(Path(cfg_dir + path + "/nudb").iterdir()))
+                except Exception:
+                    pass
                 shutil.rmtree(dirpath)
             else:
                 os.remove(dirpath)
