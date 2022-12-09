@@ -94,7 +94,7 @@ services:
 networks:
   bridge-net:
     name: bridge-net
-    driver: host
+    driver: bridge
     ipam:
       config:
         - subnet: 192.168.176.0/20
