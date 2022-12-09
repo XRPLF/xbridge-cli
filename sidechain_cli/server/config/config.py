@@ -49,22 +49,7 @@ def _generate_standalone_config(
 
     for path in ["", "/db"]:
         dirpath = Path(cfg_dir + path)
-        if dirpath.exists():
-            pass
-            # if dirpath.is_dir():
-            #     try:
-            #         files = list(Path(cfg_dir + path).glob("**/*"))
-            #         print(files)
-            #         for item in files:
-            #             owner = item.owner()
-            #             group = item.group()
-            #             print(f"{item.name} is owned by {owner}:{group}")
-            #     except Exception:
-            #         pass
-            #     shutil.rmtree(dirpath)
-            # else:
-            #     os.remove(dirpath)
-        else:
+        if not dirpath.exists():
             dirpath = Path(cfg_dir + path)
             dirpath.mkdir(parents=True)
 

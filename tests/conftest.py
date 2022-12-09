@@ -91,9 +91,6 @@ def _create_config_files() -> None:
     if _is_docker():
         params.append("--docker")
     result = cli_runner.invoke(main, params)
-    import traceback
-
-    traceback.print_exception(*result.exc_info)  # mypy: ignore
     assert result.exit_code == 0, result.output
 
 
