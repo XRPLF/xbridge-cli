@@ -47,13 +47,16 @@ def _generate_standalone_config(
         sub_dir = f"{abs_config_dir}/{cfg_type}"
         cfg_dir = sub_dir
 
-    for path in ["", "/db"]:
+    for path in ["/db", ""]:
         dirpath = Path(cfg_dir + path)
         if dirpath.exists():
             if dirpath.is_dir():
-                shutil.rmtree(dirpath, ignore_errors=True)
+                shutil.rmtree(dirpath)
             else:
                 os.remove(dirpath)
+
+    for path in ["", "/db"]:
+        dirpath = Path(cfg_dir + path)
         dirpath.mkdir(parents=True)
 
     template_data = {
