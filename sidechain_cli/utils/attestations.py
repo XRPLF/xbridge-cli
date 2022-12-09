@@ -117,11 +117,11 @@ def wait_for_attestations(
                             fg="bright_green",
                         )
         if len(new_txs) > 0:  # TODO: only count attestations
-            if close_ledgers:
-                to_client.request(GenericRequest(method="ledger_accept"))
             time_count = 0
         else:
             time_count += wait_time
+        if close_ledgers:
+            to_client.request(GenericRequest(method="ledger_accept"))
         if len(attestations_seen) >= bridge_config.quorum:
             # received enough attestations for quorum
             break
