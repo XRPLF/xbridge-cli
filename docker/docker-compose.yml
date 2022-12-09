@@ -4,10 +4,9 @@ services:
   locking_chain:
     container_name: locking_chain
     image: legleux/rippled-xbridge-test
-    command: "--conf /etc/opt/ripple/rippled.cfg -a"
+    command: "--conf /opt/ripple/rippled.cfg -a"
     volumes:
-      - ${XCHAIN_CONFIG_DIR}/locking_chain:/etc/opt/ripple/
-      - ${XCHAIN_CONFIG_DIR}/locking_chain_logs:/var/lib/rippled
+      - ${XCHAIN_CONFIG_DIR}/locking_chain:/opt/ripple/
     ports:
       - 5005:5005
       - 6005:6005
@@ -19,10 +18,9 @@ services:
   issuing_chain:
     container_name: issuing_chain
     image: legleux/rippled-xbridge-test
-    command: "--conf /etc/opt/ripple/rippled.cfg -a"
+    command: "--conf /opt/ripple/rippled.cfg -a"
     volumes:
-      - ${XCHAIN_CONFIG_DIR}/issuing_chain:/etc/opt/ripple/
-      - ${XCHAIN_CONFIG_DIR}/issuing_chain_logs:/var/lib/rippled
+      - ${XCHAIN_CONFIG_DIR}/issuing_chain:/opt/ripple/
     ports:
       - 5006:5006
       - 6007:6007

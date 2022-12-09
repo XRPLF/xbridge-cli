@@ -41,7 +41,7 @@ def _generate_standalone_config(
 ) -> None:
     abs_config_dir = os.path.abspath(config_dir)
     if docker:
-        sub_dir = "/var/lib/rippled"
+        sub_dir = "/opt/ripple"
         cfg_dir = f"{abs_config_dir}/{cfg_type}"
     else:
         sub_dir = f"{abs_config_dir}/{cfg_type}"
