@@ -50,23 +50,23 @@ def _generate_standalone_config(
     for path in ["", "/db"]:
         dirpath = Path(cfg_dir + path)
         if dirpath.exists():
-            if dirpath.is_dir():
-                try:
-                    files = list(Path(cfg_dir + path).glob("**/*"))
-                    print(files)
-                    for item in files:
-                        owner = item.owner()
-                        group = item.group()
-                        print(f"{item.name} is owned by {owner}:{group}")
-                except Exception:
-                    pass
-                shutil.rmtree(dirpath)
-            else:
-                os.remove(dirpath)
-
-    for path in ["", "/db"]:
-        dirpath = Path(cfg_dir + path)
-        dirpath.mkdir(parents=True)
+            pass
+            # if dirpath.is_dir():
+            #     try:
+            #         files = list(Path(cfg_dir + path).glob("**/*"))
+            #         print(files)
+            #         for item in files:
+            #             owner = item.owner()
+            #             group = item.group()
+            #             print(f"{item.name} is owned by {owner}:{group}")
+            #     except Exception:
+            #         pass
+            #     shutil.rmtree(dirpath)
+            # else:
+            #     os.remove(dirpath)
+        else:
+            dirpath = Path(cfg_dir + path)
+            dirpath.mkdir(parents=True)
 
     template_data = {
         "sub_dir": sub_dir,
