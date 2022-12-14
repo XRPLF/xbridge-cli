@@ -1,6 +1,6 @@
 """Helper types."""
 
-from typing import Literal, Tuple, TypedDict, Union
+from typing import Literal, Optional, Tuple, TypedDict, Union
 
 from typing_extensions import NotRequired
 
@@ -46,4 +46,4 @@ class BridgeData(TypedDict):
     door_accounts: Tuple[str, str]
     xchain_currencies: Tuple[CurrencyDict, CurrencyDict]
     signature_reward: str
-    create_account_amounts: Tuple[str, str]
+    create_account_amounts: Tuple[Optional[str], Optional[str]]

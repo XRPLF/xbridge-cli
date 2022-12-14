@@ -173,6 +173,14 @@ def setup_bridge(
         issuing_chain_issue: Currency = XRP()
     else:
         issuing_chain_issue = IssuedCurrency.from_dict(issuing_issue)
+    if (
+        locking_chain_issue == XRP()
+        and issuing_chain_issue != XRP()
+        or locking_chain_issue != XRP()
+        and issuing_chain_issue == XRP()
+    ):
+        raise SidechainCLIException("Invalid bridge. Must be XRP-XRP or IOU-IOU.")
+    is_xrp_bridge = locking_chain_issue == XRP()
 
     bridge_obj = XChainBridge(
         locking_chain_door=locking_door,
@@ -231,10 +239,14 @@ def setup_bridge(
                 )
 
     # get min create account amount values
-    server_state1 = locking_client.request(ServerState())
-    min_create1 = server_state1.result["state"]["validated_ledger"]["reserve_base"]
-    server_state2 = issuing_client.request(ServerState())
-    min_create2 = server_state2.result["state"]["validated_ledger"]["reserve_base"]
+    if is_xrp_bridge:
+        server_state1 = locking_client.request(ServerState())
+        min_create1 = server_state1.result["state"]["validated_ledger"]["reserve_base"]
+        server_state2 = issuing_client.request(ServerState())
+        min_create2 = server_state2.result["state"]["validated_ledger"]["reserve_base"]
+    else:
+        min_create1 = None
+        min_create2 = None
 
     # set up signer entries for multisign on the door accounts
     signer_entries = []
@@ -263,12 +275,13 @@ def setup_bridge(
         )
 
     # create the bridge
+    min_create2_rippled = str(min_create2) if min_create2 is not None else None
     transactions.append(
         XChainCreateBridge(
             account=locking_door,
             xchain_bridge=bridge_obj,
             signature_reward=signature_reward,
-            min_account_create_amount=str(min_create2),
+            min_account_create_amount=min_create2_rippled,
         )
     )
 
@@ -299,18 +312,19 @@ def setup_bridge(
     # set up issuing chain
 
     # create the bridge
+    min_create1_rippled = str(min_create1) if min_create2 is not None else None
     create_tx2 = XChainCreateBridge(
         account=issuing_door,
         xchain_bridge=bridge_obj,
         signature_reward=signature_reward,
-        min_account_create_amount=str(min_create1),
+        min_account_create_amount=min_create1_rippled,
     )
     submit_tx(create_tx2, issuing_client, issuing_door_seed, verbose, close_ledgers)
 
     if bridge_obj.issuing_chain_issue == XRP():
         # we need to create the witness reward + submission accounts via the bridge
 
-        # helper function for submittion the attestations
+        # helper function for submitting the attestations
         def _submit_attestations(
             attestations: List[XChainCreateAccountAttestationBatchElement],
         ) -> None:
