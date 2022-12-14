@@ -241,8 +241,10 @@ def generate_witness_config(
         issuing_chain_port: The port used by the issuing chain.
         witness_port: The port that will be used by the witness server.
         src_door: The door account on the source chain.
+        src_currency: The currency on the source chain.
         dst_door: The door account on the destination chain. Defaults to the genesis
             account.
+        dst_currency: The currency on the destination chain.
         signing_seed: The seed to use for signing attestations.
         locking_reward_account: The reward account for the witness on the locking chain.
         locking_reward_seed: The seed for the locking chain reward account.
@@ -383,8 +385,10 @@ def generate_bootstrap(
     Args:
         config_dir: The folder in which to store config files.
         locking_chain_seed: The seed of the locking_chain door account.
+        locking_currency: The currency on the locking chain.
         issuing_chain_seed: The seed of the issuing_chain door account. Defaults to the
             genesis account.
+        issuing_currency: The currency on the issuing chain.
         reward_accounts: The witness reward accounts (which need to be created).
         signing_accounts: The accounts the witness uses to sign attestations.
         verbose: Whether or not to print more verbose information.
@@ -477,6 +481,7 @@ def generate_all_configs(
         ctx: The click context.
         config_dir: The directory to use for the config files.
         num_witnesses: The number of witnesses configs to generate.
+        currency: The currency that is being transferred across the bridge.
         is_docker: Whether the config files are for a docker setup.
         verbose: Whether or not to print more verbose information.
     """

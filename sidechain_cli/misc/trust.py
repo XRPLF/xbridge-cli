@@ -38,13 +38,13 @@ def set_trustline(
     """
     Of the form `sidechain-cli trust CHAIN CURRENCY ACCOUNT1 [ACCOUNT2 ...].
 
-    Fund an account from the genesis account. Only works on a normal standalone rippled
-    node.
+    Set a trustline for a currency from an account or accounts.
     \f
 
     Args:
-        chain: The chain to fund an account on.
-        accounts: The account(s) to fund.
+        chain: The chain to set the trustline on.
+        currency: The currency of the trustline.
+        accounts: The seeds of the account(s) setting the trustline.
         verbose: Whether or not to print more verbose information.
     """  # noqa: D301
     token, issuer = currency.split(".")
