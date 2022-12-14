@@ -5,8 +5,6 @@
     "python.linting.enabled": true,
     "esbonio.sphinx.confDir": "${workspaceFolder}/docs",
     "python.linting.mypyEnabled": true,
-    "python.venvPath": "${workspaceFolder}/.venv/",
-    "python.linting.mypyPath": "${workspaceFolder}/.venv/bin/mypy/",
     "mypy.runUsingActiveInterpreter": true,
     "python.linting.ignorePatterns": [
         ".venv/**/*.py"
@@ -26,6 +24,7 @@
         "keypress",
         "legleux",
         "MHUV",
+        "multisign",
         "mypy",
         "noqa",
         "pformat",

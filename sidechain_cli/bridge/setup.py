@@ -173,14 +173,6 @@ def setup_bridge(
         issuing_chain_issue: Currency = XRP()
     else:
         issuing_chain_issue = IssuedCurrency.from_dict(issuing_issue)
-    if (
-        locking_chain_issue == XRP()
-        and issuing_chain_issue != XRP()
-        or locking_chain_issue != XRP()
-        and issuing_chain_issue == XRP()
-    ):
-        raise SidechainCLIException("Invalid bridge. Must be XRP-XRP or IOU-IOU.")
-    is_xrp_bridge = locking_chain_issue == XRP()
 
     bridge_obj = XChainBridge(
         locking_chain_door=locking_door,
@@ -188,6 +180,8 @@ def setup_bridge(
         issuing_chain_door=issuing_door,
         issuing_chain_issue=issuing_chain_issue,
     )
+
+    is_xrp_bridge = locking_chain_issue == XRP()
 
     if funding_seed is None:
         if bridge_obj.issuing_chain_issue == XRP() and funding_seed is None:
