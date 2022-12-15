@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Dict, Tuple, cast
+from typing import Any, Dict, Optional, Tuple, cast
 
 from xrpl.clients import JsonRpcClient
 from xrpl.models import XRP, Currency, IssuedCurrency, XChainBridge
@@ -30,7 +30,7 @@ class BridgeConfig(ConfigItem):
     door_accounts: Tuple[str, str]
     xchain_currencies: Tuple[CurrencyDict, CurrencyDict]
     signature_reward: str
-    create_account_amounts: Tuple[str, str]
+    create_account_amounts: Tuple[Optional[str], Optional[str]]
 
     def get_clients(self: BridgeConfig) -> Tuple[JsonRpcClient, JsonRpcClient]:
         """

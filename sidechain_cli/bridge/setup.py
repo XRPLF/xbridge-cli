@@ -20,6 +20,7 @@ from xrpl.models import (
     SignerEntry,
     SignerListSet,
     Transaction,
+    TrustSet,
     XChainAccountCreateCommit,
     XChainAddAttestation,
     XChainBridge,
@@ -180,6 +181,8 @@ def setup_bridge(
         issuing_chain_issue=issuing_chain_issue,
     )
 
+    is_xrp_bridge = locking_chain_issue == XRP()
+
     if funding_seed is None:
         if bridge_obj.issuing_chain_issue == XRP() and funding_seed is None:
             if close_ledgers:
@@ -230,10 +233,14 @@ def setup_bridge(
                 )
 
     # get min create account amount values
-    server_state1 = locking_client.request(ServerState())
-    min_create1 = server_state1.result["state"]["validated_ledger"]["reserve_base"]
-    server_state2 = issuing_client.request(ServerState())
-    min_create2 = server_state2.result["state"]["validated_ledger"]["reserve_base"]
+    if is_xrp_bridge:
+        server_state1 = locking_client.request(ServerState())
+        min_create1 = server_state1.result["state"]["validated_ledger"]["reserve_base"]
+        server_state2 = issuing_client.request(ServerState())
+        min_create2 = server_state2.result["state"]["validated_ledger"]["reserve_base"]
+    else:
+        min_create1 = None
+        min_create2 = None
 
     # set up signer entries for multisign on the door accounts
     signer_entries = []
@@ -249,30 +256,46 @@ def setup_bridge(
 
     ###################################################################################
     # set up locking chain
+    transactions: List[Transaction] = []
+
+    # create the trustline (if IOU)
+    if bridge_obj.locking_chain_issue != XRP():
+        assert isinstance(bridge_obj.locking_chain_issue, IssuedCurrency)
+        transactions.append(
+            TrustSet(
+                account=locking_door,
+                limit_amount=bridge_obj.locking_chain_issue.to_amount("1000000000"),
+            )
+        )
 
     # create the bridge
-    create_tx1 = XChainCreateBridge(
-        account=locking_door,
-        xchain_bridge=bridge_obj,
-        signature_reward=signature_reward,
-        min_account_create_amount=str(min_create2),
+    min_create2_rippled = str(min_create2) if min_create2 is not None else None
+    transactions.append(
+        XChainCreateBridge(
+            account=locking_door,
+            xchain_bridge=bridge_obj,
+            signature_reward=signature_reward,
+            min_account_create_amount=min_create2_rippled,
+        )
     )
 
     # set up multisign on the door account
-    signer_tx1 = SignerListSet(
-        account=locking_door,
-        signer_quorum=max(1, len(signer_entries) - 1),
-        signer_entries=signer_entries,
+    transactions.append(
+        SignerListSet(
+            account=locking_door,
+            signer_quorum=max(1, len(signer_entries) - 1),
+            signer_entries=signer_entries,
+        )
     )
 
     # disable the master key
-    disable_master_tx1 = AccountSet(
-        account=locking_door, set_flag=AccountSetFlag.ASF_DISABLE_MASTER
+    transactions.append(
+        AccountSet(account=locking_door, set_flag=AccountSetFlag.ASF_DISABLE_MASTER)
     )
 
     # submit transactions
     submit_tx(
-        [create_tx1, signer_tx1, disable_master_tx1],
+        transactions,
         locking_client,
         locking_door_seed,
         verbose,
@@ -283,18 +306,19 @@ def setup_bridge(
     # set up issuing chain
 
     # create the bridge
+    min_create1_rippled = str(min_create1) if min_create2 is not None else None
     create_tx2 = XChainCreateBridge(
         account=issuing_door,
         xchain_bridge=bridge_obj,
         signature_reward=signature_reward,
-        min_account_create_amount=str(min_create1),
+        min_account_create_amount=min_create1_rippled,
     )
     submit_tx(create_tx2, issuing_client, issuing_door_seed, verbose, close_ledgers)
 
     if bridge_obj.issuing_chain_issue == XRP():
         # we need to create the witness reward + submission accounts via the bridge
 
-        # helper function for submittion the attestations
+        # helper function for submitting the attestations
         def _submit_attestations(
             attestations: List[XChainCreateAccountAttestationBatchElement],
         ) -> None:

@@ -2,11 +2,11 @@
 
 import time
 from pprint import pformat
-from typing import Optional, Set
+from typing import Dict, Optional, Set, Union
 
 import click
 from xrpl.clients import JsonRpcClient
-from xrpl.models import GenericRequest, Ledger, LedgerData
+from xrpl.models import Amount, GenericRequest, Ledger, LedgerData
 from xrpl.wallet import Wallet
 
 from sidechain_cli.exceptions import AttestationTimeoutException, SidechainCLIException
@@ -25,7 +25,7 @@ def wait_for_attestations(
     to_client: JsonRpcClient,
     from_wallet: Wallet,
     to_account: str,
-    amount: str,
+    amount: Amount,
     xchain_claim_id: Optional[int] = None,
     close_ledgers: bool = True,
     verbose: int = 0,
@@ -56,6 +56,11 @@ def wait_for_attestations(
     """
     if is_transfer and xchain_claim_id is None:
         raise SidechainCLIException("Must have XChain Claim ID if is transfer.")
+
+    if isinstance(amount, str):
+        transfer_amount: Union[str, Dict[str, str]] = amount
+    else:
+        transfer_amount = amount.to_dict()
 
     if is_transfer:
         batch_name = "XChainClaimAttestationBatch"
@@ -98,7 +103,7 @@ def wait_for_attestations(
                     # check that the attestation actually matches this transfer
                     if element["Account"] != from_wallet.classic_address:
                         continue
-                    if element["Amount"] != amount:
+                    if element["Amount"] != transfer_amount:
                         continue
                     if element["Destination"] != to_account:
                         continue

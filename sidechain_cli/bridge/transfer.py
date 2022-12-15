@@ -4,7 +4,16 @@ from typing import Any, Dict, cast
 
 import click
 from xrpl.clients import JsonRpcClient
-from xrpl.models import Response, Transaction, Tx, XChainCommit, XChainCreateClaimID
+from xrpl.models import (
+    XRP,
+    Currency,
+    IssuedCurrency,
+    Response,
+    Transaction,
+    Tx,
+    XChainCommit,
+    XChainCreateClaimID,
+)
 from xrpl.wallet import Wallet
 
 from sidechain_cli.exceptions import SidechainCLIException
@@ -133,13 +142,21 @@ def send_transfer(
     """  # noqa: D301
     print_level = max(verbose, 2 if tutorial else 0)
     bridge_config = get_config().get_bridge(bridge)
+    bridge_obj = bridge_config.get_bridge()
     locking_client, issuing_client = bridge_config.get_clients()
     if from_locking:
         src_client = locking_client
         dst_client = issuing_client
+        from_issue = bridge_obj.locking_chain_issue
     else:
         src_client = issuing_client
         dst_client = locking_client
+        from_issue = bridge_obj.issuing_chain_issue
+
+    if isinstance(from_issue, IssuedCurrency):
+        original_issue: Currency = from_issue
+    else:
+        original_issue = XRP()
 
     try:
         from_wallet = Wallet(from_account, 0)
@@ -150,7 +167,7 @@ def send_transfer(
     except ValueError:
         raise SidechainCLIException(f"Invalid `to` seed: {to_account}")
 
-    bridge_obj = bridge_config.get_bridge()
+    transfer_amount = original_issue.to_amount(amount)
 
     # XChainSeqNumCreate
     if tutorial:
@@ -190,7 +207,7 @@ def send_transfer(
 
     commit_tx = XChainCommit(
         account=from_wallet.classic_address,
-        amount=amount,
+        amount=transfer_amount,
         xchain_bridge=bridge_obj,
         xchain_claim_id=xchain_claim_id,
         other_chain_destination=to_wallet.classic_address,
@@ -218,7 +235,7 @@ def send_transfer(
         dst_client,
         from_wallet,
         to_wallet.classic_address,
-        amount,
+        transfer_amount,
         xchain_claim_id,
         close_ledgers,
         verbose,
