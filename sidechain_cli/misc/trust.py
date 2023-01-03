@@ -63,6 +63,6 @@ def set_trustline(
                 ),
             )
         )
-    submit_tx(trust_sets, client, wallet.seed)
+    submit_tx(trust_sets, client, wallet)
     if verbose:
         pass

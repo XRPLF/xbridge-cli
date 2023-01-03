@@ -6,6 +6,7 @@ from pprint import pformat
 from typing import Any, Dict, List, Optional, Tuple
 
 import click
+from xrpl import CryptoAlgorithm
 from xrpl.account import does_account_exist
 from xrpl.clients import JsonRpcClient
 from xrpl.core.binarycodec import encode
@@ -118,9 +119,7 @@ def _sign_attestation(
     help="Whether or not to print more verbose information. Also supports `-vv`.",
     count=True,
 )
-@click.pass_context
 def setup_bridge(
-    ctx: click.Context,
     name: str,
     bootstrap: str,
     signature_reward: str,
@@ -133,7 +132,6 @@ def setup_bridge(
     \f
 
     Args:
-        ctx: The click context.
         name: The name of the bridge (used for differentiation purposes).
         bootstrap: The filepath to the bootstrap config file.
         signature_reward: The reward for witnesses providing a signature.
@@ -160,10 +158,13 @@ def setup_bridge(
     with open(bootstrap) as f:
         bootstrap_config = json.load(f)
 
-    locking_door = bootstrap_config["LockingChain"]["DoorAccount"]["Address"]
-    locking_issue = bootstrap_config["LockingChain"]["BridgeIssue"]
-    issuing_door = bootstrap_config["IssuingChain"]["DoorAccount"]["Address"]
-    issuing_issue = bootstrap_config["IssuingChain"]["BridgeIssue"]
+    bootstrap_locking = bootstrap_config["LockingChain"]
+    bootstrap_issuing = bootstrap_config["IssuingChain"]
+
+    locking_door = bootstrap_locking["DoorAccount"]["Address"]
+    locking_issue = bootstrap_locking["BridgeIssue"]
+    issuing_door = bootstrap_issuing["DoorAccount"]["Address"]
+    issuing_issue = bootstrap_issuing["BridgeIssue"]
 
     if locking_issue == {"currency": "XRP"}:
         locking_chain_issue: Currency = XRP()
@@ -192,22 +193,22 @@ def setup_bridge(
                     "Must include `funding_seed` for external XRP-XRP bridge."
                 )
 
-    locking_endpoint = bootstrap_config["LockingChain"]["Endpoint"]
+    locking_endpoint = bootstrap_locking["Endpoint"]
     locking_url = f"http://{locking_endpoint['IP']}:{locking_endpoint['JsonRPCPort']}"
     locking_client = JsonRpcClient(locking_url)
 
-    issuing_endpoint = bootstrap_config["IssuingChain"]["Endpoint"]
+    issuing_endpoint = bootstrap_issuing["Endpoint"]
     issuing_url = f"http://{issuing_endpoint['IP']}:{issuing_endpoint['JsonRPCPort']}"
     issuing_client = JsonRpcClient(issuing_url)
 
     accounts_locking_check = set(
         [locking_door]
-        + bootstrap_config["LockingChain"]["WitnessRewardAccounts"]
-        + bootstrap_config["LockingChain"]["WitnessSubmitAccounts"]
+        + bootstrap_locking["WitnessRewardAccounts"]
+        + bootstrap_locking["WitnessSubmitAccounts"]
     )
     accounts_issuing_check = set(
-        bootstrap_config["IssuingChain"]["WitnessRewardAccounts"]
-        + bootstrap_config["IssuingChain"]["WitnessSubmitAccounts"]
+        bootstrap_issuing["WitnessRewardAccounts"]
+        + bootstrap_issuing["WitnessSubmitAccounts"]
     )
 
     # check locking chain for accounts that should already exist
@@ -251,8 +252,16 @@ def setup_bridge(
             )
         )
 
-    locking_door_seed = bootstrap_config["LockingChain"]["DoorAccount"]["Seed"]
-    issuing_door_seed = bootstrap_config["IssuingChain"]["DoorAccount"]["Seed"]
+    locking_door_seed = bootstrap_locking["DoorAccount"]["Seed"]
+    locking_door_seed_algo = bootstrap_locking["DoorAccount"]["KeyType"]
+    locking_door_wallet = Wallet(
+        locking_door_seed, 0, algorithm=CryptoAlgorithm(locking_door_seed_algo)
+    )
+    issuing_door_seed = bootstrap_issuing["DoorAccount"]["Seed"]
+    issuing_door_seed_algo = bootstrap_issuing["DoorAccount"]["KeyType"]
+    issuing_door_wallet = Wallet(
+        issuing_door_seed, 0, algorithm=CryptoAlgorithm(issuing_door_seed_algo)
+    )
 
     ###################################################################################
     # set up locking chain
@@ -297,7 +306,7 @@ def setup_bridge(
     submit_tx(
         transactions,
         locking_client,
-        locking_door_seed,
+        locking_door_wallet,
         verbose,
         close_ledgers,
     )
@@ -313,7 +322,7 @@ def setup_bridge(
         signature_reward=signature_reward,
         min_account_create_amount=min_create1_rippled,
     )
-    submit_tx(create_tx2, issuing_client, issuing_door_seed, verbose, close_ledgers)
+    submit_tx(create_tx2, issuing_client, issuing_door_wallet, verbose, close_ledgers)
 
     if bridge_obj.issuing_chain_issue == XRP():
         # we need to create the witness reward + submission accounts via the bridge
@@ -333,12 +342,10 @@ def setup_bridge(
             submit_tx(
                 attestation_tx,
                 issuing_client,
-                issuing_door_seed,
+                issuing_door_wallet,
                 verbose,
                 close_ledgers,
             )
-
-        issuing_wallet = Wallet(issuing_door_seed, 0)
 
         assert funding_seed is not None  # for typing purposes - checked earlier
         funding_wallet = Wallet(funding_seed, 0)
@@ -360,7 +367,7 @@ def setup_bridge(
                     amount=amount,
                 )
             )
-        submit_tx(acct_txs, locking_client, funding_seed, verbose, close_ledgers)
+        submit_tx(acct_txs, locking_client, funding_wallet, verbose, close_ledgers)
 
         # set up the attestations for the commit
         for account in accounts_issuing_check:
@@ -369,14 +376,14 @@ def setup_bridge(
                 amount=amount,
                 attestation_reward_account=issuing_door,
                 destination=account,
-                public_key=issuing_wallet.public_key,
+                public_key=issuing_door_wallet.public_key,
                 signature="",
                 signature_reward=signature_reward,
                 was_locking_chain_send=1,
                 xchain_account_create_count=str(count),
             )
             signed_attestation = _sign_attestation(
-                init_attestation, bridge_obj, issuing_wallet.private_key
+                init_attestation, bridge_obj, issuing_door_wallet.private_key
             )
             attestations.append(signed_attestation)
             count += 1
@@ -404,7 +411,7 @@ def setup_bridge(
     submit_tx(
         [signer_tx2, disable_master_tx2],
         issuing_client,
-        issuing_door_seed,
+        issuing_door_wallet,
         verbose,
         close_ledgers,
     )

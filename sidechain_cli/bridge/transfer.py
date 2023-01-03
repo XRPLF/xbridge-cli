@@ -26,11 +26,11 @@ _WAIT_STEP_LENGTH = 0.05
 def _submit_tx(
     tx: Transaction,
     client: JsonRpcClient,
-    secret: str,
+    wallet: Wallet,
     verbose: int,
     close_ledgers: bool,
 ) -> Response:
-    result = submit_tx(tx, client, secret, verbose, close_ledgers)[0]
+    result = submit_tx(tx, client, wallet, verbose, close_ledgers)[0]
     tx_result = (
         result.result.get("error")
         or result.result.get("engine_result")
@@ -185,7 +185,7 @@ def send_transfer(
         other_chain_source=from_wallet.classic_address,
     )
     seq_num_result = _submit_tx(
-        seq_num_tx, dst_client, to_wallet.seed, print_level, close_ledgers
+        seq_num_tx, dst_client, to_wallet, print_level, close_ledgers
     )
 
     # extract new sequence number from metadata
@@ -212,7 +212,7 @@ def send_transfer(
         xchain_claim_id=xchain_claim_id,
         other_chain_destination=to_wallet.classic_address,
     )
-    submit_tx(commit_tx, src_client, from_wallet.seed, print_level, close_ledgers)
+    submit_tx(commit_tx, src_client, from_wallet, print_level, close_ledgers)
 
     # wait for attestations
     if tutorial:

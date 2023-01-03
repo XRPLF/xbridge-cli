@@ -141,7 +141,8 @@ def create_xchain_account(
             )
         create_amount = xrp_to_drops(amount)
 
-    from_wallet = Wallet(from_seed, 0, algorithm=CryptoAlgorithm(algorithm))
+    wallet_algorithm = CryptoAlgorithm(algorithm) if algorithm else None
+    from_wallet = Wallet(from_seed, 0, algorithm=wallet_algorithm)
 
     # submit XChainAccountCreate tx
     fund_tx = XChainAccountCreateCommit(
@@ -151,7 +152,7 @@ def create_xchain_account(
         destination=to_account,
         amount=create_amount,
     )
-    submit_tx(fund_tx, from_client, from_wallet.seed, verbose, close_ledgers)
+    submit_tx(fund_tx, from_client, from_wallet, verbose, close_ledgers)
 
     # wait for attestations
     if verbose > 0:

@@ -64,7 +64,7 @@ def fund_account(chain: str, accounts: List[str], verbose: bool = False) -> None
                 amount=xrp_to_drops(1000),
             )
         )
-    submit_tx(payments, client, wallet.seed)
+    submit_tx(payments, client, wallet)
     if verbose:
         for account in accounts:
             click.echo(pformat(client.request(AccountInfo(account=account)).result))

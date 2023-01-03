@@ -17,7 +17,7 @@ from xrpl.wallet import Wallet
 def submit_tx(
     txs: Union[Transaction, List[Transaction]],
     client: SyncClient,
-    seed: str,
+    wallet: Wallet,
     verbose: int = 0,
     close_ledgers: bool = True,
 ) -> List[Response]:
@@ -27,7 +27,7 @@ def submit_tx(
     Args:
         txs: The transaction(s) to submit.
         client: The client to submit it with.
-        seed: The seed to sign the transaction with.
+        wallet: The wallet to sign the transaction with.
         verbose: Whether or not to print more verbose information.
         close_ledgers: Whether to close ledgers manually or wait for them to be closed
             automatically.
@@ -47,7 +47,7 @@ def submit_tx(
     if close_ledgers:
         results = []
         for tx in txs:
-            signed_tx = safe_sign_and_autofill_transaction(tx, Wallet(seed, 0), client)
+            signed_tx = safe_sign_and_autofill_transaction(tx, wallet, client)
             results.append(submit_transaction(signed_tx, client))
         client.request(GenericRequest(method="ledger_accept"))
         tx_results = [
@@ -59,7 +59,7 @@ def submit_tx(
         results = []
         tx_results = []
         for tx in txs:
-            signed_tx = safe_sign_and_autofill_transaction(tx, Wallet(seed, 0), client)
+            signed_tx = safe_sign_and_autofill_transaction(tx, wallet, client)
             result = send_reliable_submission(signed_tx, client)
             results.append(result)
             tx_results.append(result.result["meta"]["TransactionResult"])
