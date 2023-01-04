@@ -104,6 +104,11 @@ def _sign_attestation(
     ),
 )
 @click.option(
+    "--funding_algorithm",
+    type=click.Choice([e.value for e in CryptoAlgorithm]),
+    help="The algorithm used to generate the keypair from the funding seed.",
+)
+@click.option(
     "--close-ledgers/--no-close-ledgers",
     "close_ledgers",
     default=True,
@@ -124,6 +129,7 @@ def setup_bridge(
     bootstrap: str,
     signature_reward: str,
     funding_seed: Optional[str] = None,
+    funding_algorithm: Optional[str] = None,
     close_ledgers: bool = True,
     verbose: int = 0,
 ) -> None:
@@ -138,6 +144,8 @@ def setup_bridge(
         funding_seed: The master key of an account on the locking chain that can fund
             accounts on the issuing chain. This is only needed for an XRP-XRP bridge.
             If not provided, uses the genesis seed.
+        funding_algorithm: The algorithm used to generate the keypair from the funding
+            seed.
         close_ledgers: Whether to close ledgers manually (via `ledger_accept`) or wait
             for ledgers to close automatically. A standalone node requires ledgers to
             be closed; an external network does not support ledger closing.
@@ -348,7 +356,10 @@ def setup_bridge(
             )
 
         assert funding_seed is not None  # for typing purposes - checked earlier
-        funding_wallet = Wallet(funding_seed, 0)
+        funding_wallet_algo = (
+            CryptoAlgorithm(funding_algorithm) if funding_algorithm else None
+        )
+        funding_wallet = Wallet(funding_seed, 0, algorithm=funding_wallet_algo)
 
         amount = str(min_create2 * 2)  # submit accounts need spare funds
         attestations = []
