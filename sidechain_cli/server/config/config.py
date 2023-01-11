@@ -7,7 +7,7 @@ import shutil
 from pathlib import Path
 from pprint import pformat
 from sys import platform
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import click
 from jinja2 import Environment, FileSystemLoader
@@ -299,6 +299,9 @@ def generate_witness_config(
         "log_file": log_file,
     }
 
+    if verbose:
+        click.echo(template_data)
+
     # add the witness.json file
     _generate_template(
         "witness.jinja",
@@ -316,11 +319,16 @@ def generate_witness_config(
     help="The folder in which to store the bridge bootstrap file.",
 )
 @click.option(
-    "--mc_seed",
-    "locking_chain_seed",
+    "--locking_seed",
+    "locking_seed",
     required=True,
     prompt=True,
     help="The seed of the locking chain door account.",
+)
+@click.option(
+    "--locking_algorithm",
+    type=click.Choice([e.value for e in CryptoAlgorithm]),
+    help="The algorithm used to generate the keypair from the locking door's seed.",
 )
 @click.option(
     "--locking_currency",
@@ -332,10 +340,15 @@ def generate_witness_config(
     ),
 )
 @click.option(
-    "--sc_seed",
-    "issuing_chain_seed",
+    "--issuing_seed",
+    "issuing_seed",
     default="snoPBrXtMeMyMHUVTgbuqAfg1SUTb",
     help="The seed of the issuing chain door account. Defaults to the genesis account.",
+)
+@click.option(
+    "--issuing_algorithm",
+    type=click.Choice([e.value for e in CryptoAlgorithm]),
+    help="The algorithm used to generate the keypair from the issuing door's seed.",
 )
 @click.option(
     "--issuing_currency",
@@ -370,12 +383,14 @@ def generate_witness_config(
 )
 def generate_bootstrap(
     config_dir: str,
-    locking_chain_seed: str,
+    locking_seed: str,
     locking_currency: str,
-    issuing_chain_seed: str,
+    issuing_seed: str,
     issuing_currency: str,
     reward_accounts: List[str],
     signing_accounts: List[str],
+    locking_algorithm: Optional[str] = None,
+    issuing_algorithm: Optional[str] = None,
     verbose: bool = False,
 ) -> None:
     """
@@ -384,17 +399,27 @@ def generate_bootstrap(
 
     Args:
         config_dir: The folder in which to store config files.
-        locking_chain_seed: The seed of the locking_chain door account.
+        locking_seed: The seed of the locking_chain door account.
+        locking_algorithm: The algorithm used to generate the keypair from the locking
+            door seed.
         locking_currency: The currency on the locking chain.
-        issuing_chain_seed: The seed of the issuing_chain door account. Defaults to the
+        issuing_seed: The seed of the issuing_chain door account. Defaults to the
             genesis account.
+        issuing_algorithm: The algorithm used to generate the keypair from the issuing
+            door seed.
         issuing_currency: The currency on the issuing chain.
         reward_accounts: The witness reward accounts (which need to be created).
         signing_accounts: The accounts the witness uses to sign attestations.
         verbose: Whether or not to print more verbose information.
     """  # noqa: D301
-    locking_door = Wallet(locking_chain_seed, 0)
-    issuing_door = Wallet(issuing_chain_seed, 0)
+    locking_wallet_algo = (
+        CryptoAlgorithm(locking_algorithm) if locking_algorithm else None
+    )
+    issuing_wallet_algo = (
+        CryptoAlgorithm(issuing_algorithm) if issuing_algorithm else None
+    )
+    locking_door = Wallet(locking_seed, 0, algorithm=locking_wallet_algo)
+    issuing_door = Wallet(issuing_seed, 0, algorithm=issuing_wallet_algo)
 
     assert (locking_currency == "XRP" and issuing_currency == "XRP") or (
         locking_currency != "XRP" and issuing_currency != "XRP"
@@ -493,14 +518,14 @@ def generate_all_configs(
 
     if currency != "XRP":
         assert currency.count(".") == 1
-        currency_code, issuer = currency.split(".")
+        currency_code, _issuer = currency.split(".")
         src_currency = currency
         dst_door = Wallet.create()
         dst_currency = f"{currency_code}.{dst_door.classic_address}"
     else:
         src_currency = "XRP"
         dst_currency = "XRP"
-        dst_door = Wallet(_GENESIS_SEED, 0)
+        dst_door = Wallet(_GENESIS_SEED, 0, algorithm=CryptoAlgorithm.SECP256K1)
 
     reward_accounts = []
     signing_accounts = []
@@ -534,9 +559,9 @@ def generate_all_configs(
     ctx.invoke(
         generate_bootstrap,
         config_dir=abs_config_dir,
-        locking_chain_seed=src_door.seed,
+        locking_seed=src_door.seed,
         locking_currency=src_currency,
-        issuing_chain_seed=dst_door.seed,
+        issuing_seed=dst_door.seed,
         issuing_currency=dst_currency,
         verbose=verbose,
         reward_accounts=reward_accounts,
