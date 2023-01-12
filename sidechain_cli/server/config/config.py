@@ -127,7 +127,7 @@ def _generate_rippled_configs(config_dir: str, docker: bool = False) -> Tuple[in
     help="Whether the config files are for a docker setup.",
 )
 @click.option(
-    "--mc_port",
+    "--locking_port",
     "locking_chain_port",
     required=True,
     prompt=True,
@@ -135,7 +135,7 @@ def _generate_rippled_configs(config_dir: str, docker: bool = False) -> Tuple[in
     help="The port used by the locking chain.",
 )
 @click.option(
-    "--sc_port",
+    "--issuing_port",
     "issuing_chain_port",
     required=True,
     prompt=True,
