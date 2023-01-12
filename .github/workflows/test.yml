@@ -2,24 +2,24 @@ name: Test
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
     paths-ignore:
-      - 'docs/**'
-      - '**.md'
-      - '.vscode/**'
+      - "docs/**"
+      - "**.md"
+      - ".vscode/**"
   workflow_dispatch:
 
 jobs:
   test:
     name: Test
-    runs-on: ubuntu-20.04
+    runs-on: [self-hosted, heavy]
     timeout-minutes: 10
     strategy:
       matrix:
         # we have to use 3.7.1 to get around openssl issues
         # TODO: add 3.7 once xrpl-py has been updated
-        python-version: ['3.8', '3.9', '3.10', '3.11']
+        python-version: ["3.8", "3.9", "3.10", "3.11"]
       fail-fast: false
 
     steps:
@@ -41,7 +41,7 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: "${{ matrix.python-version }}"
-          cache: 'poetry'
+          cache: "poetry"
 
       - name: Display Python version
         run: |
