@@ -10,7 +10,12 @@ from xrpl.utils import drops_to_xrp, xrp_to_drops
 from xrpl.wallet import Wallet
 
 from sidechain_cli.exceptions import SidechainCLIException
-from sidechain_cli.utils import get_config, submit_tx, wait_for_attestations
+from sidechain_cli.utils import (
+    CryptoAlgorithmChoice,
+    get_config,
+    submit_tx,
+    wait_for_attestations,
+)
 
 
 @click.command(name="create-account")
@@ -41,7 +46,7 @@ from sidechain_cli.utils import get_config, submit_tx, wait_for_attestations
 )
 @click.option(
     "--algorithm",
-    type=click.Choice([e.value for e in CryptoAlgorithm]),
+    type=CryptoAlgorithmChoice,
     help="The algorithm used to generate the keypair from the seed.",
 )
 @click.option(

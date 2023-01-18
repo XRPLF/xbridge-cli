@@ -35,7 +35,13 @@ from xrpl.models.transactions.xchain_add_attestation import (
 from xrpl.wallet import Wallet
 
 from sidechain_cli.exceptions import SidechainCLIException
-from sidechain_cli.utils import BridgeData, add_bridge, check_bridge_exists, submit_tx
+from sidechain_cli.utils import (
+    BridgeData,
+    CryptoAlgorithmChoice,
+    add_bridge,
+    check_bridge_exists,
+    submit_tx,
+)
 
 _ATTESTATION_ENCODE_ORDER: List[Tuple[str, int]] = [
     ("account", 4),
@@ -105,7 +111,7 @@ def _sign_attestation(
 )
 @click.option(
     "--funding_algorithm",
-    type=click.Choice([e.value for e in CryptoAlgorithm]),
+    type=CryptoAlgorithmChoice,
     help="The algorithm used to generate the keypair from the funding seed.",
 )
 @click.option(

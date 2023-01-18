@@ -15,7 +15,7 @@ from xrpl import CryptoAlgorithm
 from xrpl.wallet import Wallet
 
 from sidechain_cli.server.config.ports import Ports
-from sidechain_cli.utils import CurrencyDict
+from sidechain_cli.utils import CryptoAlgorithmChoice, CurrencyDict
 
 _GENESIS_SEED = "snoPBrXtMeMyMHUVTgbuqAfg1SUTb"
 
@@ -327,7 +327,7 @@ def generate_witness_config(
 )
 @click.option(
     "--locking_algorithm",
-    type=click.Choice([e.value for e in CryptoAlgorithm]),
+    type=CryptoAlgorithmChoice,
     help="The algorithm used to generate the keypair from the locking door's seed.",
 )
 @click.option(
@@ -347,7 +347,7 @@ def generate_witness_config(
 )
 @click.option(
     "--issuing_algorithm",
-    type=click.Choice([e.value for e in CryptoAlgorithm]),
+    type=CryptoAlgorithmChoice,
     help="The algorithm used to generate the keypair from the issuing door's seed.",
 )
 @click.option(
