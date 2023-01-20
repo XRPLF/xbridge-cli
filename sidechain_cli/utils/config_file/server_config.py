@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Literal, Union
+from typing import Literal
 
 from sidechain_cli.utils.config_file.config_item import ConfigItem
 
@@ -13,7 +13,7 @@ class ServerConfig(ConfigItem):
     """Object representing the config for a server (chain/witness)."""
 
     name: str
-    type: Union[Literal["rippled"], Literal["witness"]]
+    type: Literal["rippled"] | Literal["witness"]
     pid: int
     exe: str
     config: str
