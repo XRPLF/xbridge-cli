@@ -1,6 +1,7 @@
 """Config-related rippled commands."""
 
 from dataclasses import asdict
+from typing import Any, Dict, cast
 
 import click
 from tabulate import tabulate
@@ -8,6 +9,10 @@ from tabulate import tabulate
 from sidechain_cli.utils import get_config
 
 # TODO: actually combine these tables
+
+
+def _sort(server: Dict[str, Any]) -> str:
+    return cast(str, server["name"])
 
 
 def _list_chains() -> None:
@@ -18,6 +23,7 @@ def _list_chains() -> None:
     chains = list(map(asdict, config.chains))
     for chain in chains:
         del chain["type"]
+    chains.sort(key=_sort)
     click.echo("Chains:")
     click.echo(
         tabulate(
@@ -38,6 +44,7 @@ def _list_witnesses() -> None:
     witnesses = list(map(asdict, config.witnesses))
     for witness in witnesses:
         del witness["type"]
+    witnesses.sort(key=_sort)
 
     click.echo("Witnesses:")
     click.echo(
