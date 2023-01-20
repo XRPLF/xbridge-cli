@@ -6,6 +6,7 @@ from pprint import pformat
 from typing import Any, Dict, List, Optional, Tuple
 
 import click
+from xrpl import CryptoAlgorithm
 from xrpl.account import does_account_exist
 from xrpl.clients import JsonRpcClient
 from xrpl.core.binarycodec import encode
@@ -34,7 +35,13 @@ from xrpl.models.transactions.xchain_add_attestation import (
 from xrpl.wallet import Wallet
 
 from sidechain_cli.exceptions import SidechainCLIException
-from sidechain_cli.utils import BridgeData, add_bridge, check_bridge_exists, submit_tx
+from sidechain_cli.utils import (
+    BridgeData,
+    CryptoAlgorithmChoice,
+    add_bridge,
+    check_bridge_exists,
+    submit_tx,
+)
 
 _ATTESTATION_ENCODE_ORDER: List[Tuple[str, int]] = [
     ("account", 4),
@@ -103,6 +110,11 @@ def _sign_attestation(
     ),
 )
 @click.option(
+    "--funding_algorithm",
+    type=CryptoAlgorithmChoice,
+    help="The algorithm used to generate the keypair from the funding seed.",
+)
+@click.option(
     "--close-ledgers/--no-close-ledgers",
     "close_ledgers",
     default=True,
@@ -118,13 +130,12 @@ def _sign_attestation(
     help="Whether or not to print more verbose information. Also supports `-vv`.",
     count=True,
 )
-@click.pass_context
 def setup_bridge(
-    ctx: click.Context,
     name: str,
     bootstrap: str,
     signature_reward: str,
     funding_seed: Optional[str] = None,
+    funding_algorithm: Optional[str] = None,
     close_ledgers: bool = True,
     verbose: int = 0,
 ) -> None:
@@ -133,13 +144,14 @@ def setup_bridge(
     \f
 
     Args:
-        ctx: The click context.
         name: The name of the bridge (used for differentiation purposes).
         bootstrap: The filepath to the bootstrap config file.
         signature_reward: The reward for witnesses providing a signature.
         funding_seed: The master key of an account on the locking chain that can fund
             accounts on the issuing chain. This is only needed for an XRP-XRP bridge.
             If not provided, uses the genesis seed.
+        funding_algorithm: The algorithm used to generate the keypair from the funding
+            seed.
         close_ledgers: Whether to close ledgers manually (via `ledger_accept`) or wait
             for ledgers to close automatically. A standalone node requires ledgers to
             be closed; an external network does not support ledger closing.
@@ -160,10 +172,13 @@ def setup_bridge(
     with open(bootstrap) as f:
         bootstrap_config = json.load(f)
 
-    locking_door = bootstrap_config["LockingChain"]["DoorAccount"]["Address"]
-    locking_issue = bootstrap_config["LockingChain"]["BridgeIssue"]
-    issuing_door = bootstrap_config["IssuingChain"]["DoorAccount"]["Address"]
-    issuing_issue = bootstrap_config["IssuingChain"]["BridgeIssue"]
+    bootstrap_locking = bootstrap_config["LockingChain"]
+    bootstrap_issuing = bootstrap_config["IssuingChain"]
+
+    locking_door = bootstrap_locking["DoorAccount"]["Address"]
+    locking_issue = bootstrap_locking["BridgeIssue"]
+    issuing_door = bootstrap_issuing["DoorAccount"]["Address"]
+    issuing_issue = bootstrap_issuing["BridgeIssue"]
 
     if locking_issue == {"currency": "XRP"}:
         locking_chain_issue: Currency = XRP()
@@ -192,22 +207,22 @@ def setup_bridge(
                     "Must include `funding_seed` for external XRP-XRP bridge."
                 )
 
-    locking_endpoint = bootstrap_config["LockingChain"]["Endpoint"]
+    locking_endpoint = bootstrap_locking["Endpoint"]
     locking_url = f"http://{locking_endpoint['IP']}:{locking_endpoint['JsonRPCPort']}"
     locking_client = JsonRpcClient(locking_url)
 
-    issuing_endpoint = bootstrap_config["IssuingChain"]["Endpoint"]
+    issuing_endpoint = bootstrap_issuing["Endpoint"]
     issuing_url = f"http://{issuing_endpoint['IP']}:{issuing_endpoint['JsonRPCPort']}"
     issuing_client = JsonRpcClient(issuing_url)
 
     accounts_locking_check = set(
         [locking_door]
-        + bootstrap_config["LockingChain"]["WitnessRewardAccounts"]
-        + bootstrap_config["LockingChain"]["WitnessSubmitAccounts"]
+        + bootstrap_locking["WitnessRewardAccounts"]
+        + bootstrap_locking["WitnessSubmitAccounts"]
     )
     accounts_issuing_check = set(
-        bootstrap_config["IssuingChain"]["WitnessRewardAccounts"]
-        + bootstrap_config["IssuingChain"]["WitnessSubmitAccounts"]
+        bootstrap_issuing["WitnessRewardAccounts"]
+        + bootstrap_issuing["WitnessSubmitAccounts"]
     )
 
     # check locking chain for accounts that should already exist
@@ -251,8 +266,16 @@ def setup_bridge(
             )
         )
 
-    locking_door_seed = bootstrap_config["LockingChain"]["DoorAccount"]["Seed"]
-    issuing_door_seed = bootstrap_config["IssuingChain"]["DoorAccount"]["Seed"]
+    locking_door_seed = bootstrap_locking["DoorAccount"]["Seed"]
+    locking_door_seed_algo = bootstrap_locking["DoorAccount"]["KeyType"]
+    locking_door_wallet = Wallet(
+        locking_door_seed, 0, algorithm=CryptoAlgorithm(locking_door_seed_algo)
+    )
+    issuing_door_seed = bootstrap_issuing["DoorAccount"]["Seed"]
+    issuing_door_seed_algo = bootstrap_issuing["DoorAccount"]["KeyType"]
+    issuing_door_wallet = Wallet(
+        issuing_door_seed, 0, algorithm=CryptoAlgorithm(issuing_door_seed_algo)
+    )
 
     ###################################################################################
     # set up locking chain
@@ -297,7 +320,7 @@ def setup_bridge(
     submit_tx(
         transactions,
         locking_client,
-        locking_door_seed,
+        locking_door_wallet,
         verbose,
         close_ledgers,
     )
@@ -313,7 +336,7 @@ def setup_bridge(
         signature_reward=signature_reward,
         min_account_create_amount=min_create1_rippled,
     )
-    submit_tx(create_tx2, issuing_client, issuing_door_seed, verbose, close_ledgers)
+    submit_tx(create_tx2, issuing_client, issuing_door_wallet, verbose, close_ledgers)
 
     if bridge_obj.issuing_chain_issue == XRP():
         # we need to create the witness reward + submission accounts via the bridge
@@ -333,15 +356,16 @@ def setup_bridge(
             submit_tx(
                 attestation_tx,
                 issuing_client,
-                issuing_door_seed,
+                issuing_door_wallet,
                 verbose,
                 close_ledgers,
             )
 
-        issuing_wallet = Wallet(issuing_door_seed, 0)
-
         assert funding_seed is not None  # for typing purposes - checked earlier
-        funding_wallet = Wallet(funding_seed, 0)
+        funding_wallet_algo = (
+            CryptoAlgorithm(funding_algorithm) if funding_algorithm else None
+        )
+        funding_wallet = Wallet(funding_seed, 0, algorithm=funding_wallet_algo)
 
         amount = str(min_create2 * 2)  # submit accounts need spare funds
         attestations = []
@@ -360,7 +384,7 @@ def setup_bridge(
                     amount=amount,
                 )
             )
-        submit_tx(acct_txs, locking_client, funding_seed, verbose, close_ledgers)
+        submit_tx(acct_txs, locking_client, funding_wallet, verbose, close_ledgers)
 
         # set up the attestations for the commit
         for account in accounts_issuing_check:
@@ -369,14 +393,14 @@ def setup_bridge(
                 amount=amount,
                 attestation_reward_account=issuing_door,
                 destination=account,
-                public_key=issuing_wallet.public_key,
+                public_key=issuing_door_wallet.public_key,
                 signature="",
                 signature_reward=signature_reward,
                 was_locking_chain_send=1,
                 xchain_account_create_count=str(count),
             )
             signed_attestation = _sign_attestation(
-                init_attestation, bridge_obj, issuing_wallet.private_key
+                init_attestation, bridge_obj, issuing_door_wallet.private_key
             )
             attestations.append(signed_attestation)
             count += 1
@@ -404,7 +428,7 @@ def setup_bridge(
     submit_tx(
         [signer_tx2, disable_master_tx2],
         issuing_client,
-        issuing_door_seed,
+        issuing_door_wallet,
         verbose,
         close_ledgers,
     )

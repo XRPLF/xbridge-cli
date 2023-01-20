@@ -33,7 +33,7 @@ def pytest_configure(config):
     runner = CliRunner()
     runner.invoke(main, ["server", "stop", "--all"])
 
-    if os.getenv("GITHUB_CI") != "True":
+    if os.getenv("CI") != "True":
         config_dir = tempfile.TemporaryDirectory()
         env_vars = unittest.mock.patch.dict(
             os.environ,

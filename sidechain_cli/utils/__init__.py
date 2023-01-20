@@ -22,7 +22,7 @@ from sidechain_cli.utils.config_utils import (
     remove_server,
     remove_witness,
 )
-from sidechain_cli.utils.misc import is_external_chain
+from sidechain_cli.utils.misc import CryptoAlgorithmChoice
 from sidechain_cli.utils.rippled_config import RippledConfig
 from sidechain_cli.utils.transaction import submit_tx
 from sidechain_cli.utils.types import BridgeData, ChainData, CurrencyDict, WitnessData
@@ -41,7 +41,6 @@ __all__ = [
     "remove_chain",
     "remove_server",
     "remove_witness",
-    "is_external_chain",
     "submit_tx",
     "BridgeData",
     "ChainData",
@@ -53,4 +52,5 @@ __all__ = [
     "WitnessConfig",
     "ServerConfig",
     "get_config_folder",
+    "CryptoAlgorithmChoice",
 ]

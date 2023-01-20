@@ -4,12 +4,18 @@ from pprint import pformat
 from typing import Optional
 
 import click
+from xrpl import CryptoAlgorithm
 from xrpl.models import AccountInfo, XChainAccountCreateCommit
 from xrpl.utils import drops_to_xrp, xrp_to_drops
 from xrpl.wallet import Wallet
 
 from sidechain_cli.exceptions import SidechainCLIException
-from sidechain_cli.utils import get_config, submit_tx, wait_for_attestations
+from sidechain_cli.utils import (
+    CryptoAlgorithmChoice,
+    get_config,
+    submit_tx,
+    wait_for_attestations,
+)
 
 
 @click.command(name="create-account")
@@ -37,6 +43,11 @@ from sidechain_cli.utils import get_config, submit_tx, wait_for_attestations
     prompt=True,
     type=str,
     help="The seed of the account that the funds come from.",
+)
+@click.option(
+    "--algorithm",
+    type=CryptoAlgorithmChoice,
+    help="The algorithm used to generate the keypair from the seed.",
 )
 @click.option(
     "--to",
@@ -76,6 +87,7 @@ def create_xchain_account(
     bridge: str,
     from_seed: str,
     to_account: str,
+    algorithm: Optional[str] = None,
     amount: Optional[int] = None,
     close_ledgers: bool = True,
     verbose: int = 0,
@@ -89,6 +101,7 @@ def create_xchain_account(
             Defaults to the locking chain.
         bridge: The bridge across which to create the account.
         from_seed: The seed of the account that the funds come from.
+        algorithm: The algorithm used to generate the keypair from the seed.
         to_account: The chain to fund an account on.
         amount: The amount with which to fund the account. Must be greater than the
             account reserve. Defaults to the account reserve.
@@ -133,7 +146,8 @@ def create_xchain_account(
             )
         create_amount = xrp_to_drops(amount)
 
-    from_wallet = Wallet(from_seed, 0)
+    wallet_algorithm = CryptoAlgorithm(algorithm) if algorithm else None
+    from_wallet = Wallet(from_seed, 0, algorithm=wallet_algorithm)
 
     # submit XChainAccountCreate tx
     fund_tx = XChainAccountCreateCommit(
@@ -143,7 +157,7 @@ def create_xchain_account(
         destination=to_account,
         amount=create_amount,
     )
-    submit_tx(fund_tx, from_client, from_wallet.seed, verbose, close_ledgers)
+    submit_tx(fund_tx, from_client, from_wallet, verbose, close_ledgers)
 
     # wait for attestations
     if verbose > 0:
