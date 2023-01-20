@@ -58,6 +58,7 @@ jobs:
       - name: Run tests
         id: runTests
         run: |
+          sleep 1000000
           poetry run coverage run -m pytest -xsvv tests
           poetry run coverage report
         env:
