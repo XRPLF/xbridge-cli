@@ -39,7 +39,7 @@ jobs:
           
       - name: Install poetry
         run: |
-          sleep 100000
+          cp openssl/openssl.cnf /etc/ssl/openssl.cnf
           curl -sSL https://install.python-poetry.org/ | python -
           echo "$HOME/.local/bin" >> $GITHUB_PATH
 
