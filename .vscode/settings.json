@@ -33,6 +33,7 @@
         "Popen",
         "psutil",
         "pytest",
+        "searchpath",
         "secho",
         "tablefmt",
         "Tgbuq",

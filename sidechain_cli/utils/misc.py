@@ -9,6 +9,7 @@ def is_external_chain(chain: str) -> bool:
     Args:
         chain: The chain "name".
 
+
     Returns:
         True if the chain is an external chain's URL, False if it's the name of a local
         chain.
