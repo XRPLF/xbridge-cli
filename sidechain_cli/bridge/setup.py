@@ -23,12 +23,12 @@ from xrpl.models import (
     Transaction,
     TrustSet,
     XChainAccountCreateCommit,
-    XChainAddAttestation,
+    XChainAddAttestationBatch,
     XChainBridge,
     XChainCreateBridge,
 )
 from xrpl.models.transactions.transaction import transaction_json_to_binary_codec_form
-from xrpl.models.transactions.xchain_add_attestation import (
+from xrpl.models.transactions.xchain_add_attestation_batch import (
     XChainAttestationBatch,
     XChainCreateAccountAttestationBatchElement,
 )
@@ -345,7 +345,7 @@ def setup_bridge(
         def _submit_attestations(
             attestations: List[XChainCreateAccountAttestationBatchElement],
         ) -> None:
-            attestation_tx = XChainAddAttestation(
+            attestation_tx = XChainAddAttestationBatch(
                 account=issuing_door,
                 xchain_attestation_batch=XChainAttestationBatch(
                     xchain_bridge=bridge_obj,
@@ -405,7 +405,7 @@ def setup_bridge(
             attestations.append(signed_attestation)
             count += 1
 
-            # we can only have 8 attestations in an XChainAddAttestation tx
+            # we can only have 8 attestations in an XChainAddAttestationBatch tx
             if len(attestations) == 8:
                 _submit_attestations(attestations)
                 attestations = []

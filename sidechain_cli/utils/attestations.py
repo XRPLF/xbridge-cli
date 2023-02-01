@@ -92,7 +92,7 @@ def wait_for_attestations(
 
         new_txs = ledger.result["ledger"]["transactions"]
         for tx in new_txs:
-            if tx["TransactionType"] == "XChainAddAttestation":
+            if tx["TransactionType"] == "XChainAddAttestationBatch":
                 batch = tx["XChainAttestationBatch"]
                 if batch["XChainBridge"] != bridge_config.to_xrpl():
                     # make sure attestation is for this bridge
