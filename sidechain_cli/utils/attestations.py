@@ -64,8 +64,10 @@ def wait_for_attestations(
 
     if is_transfer:
         batch_name = "XChainClaimAttestationBatch"
+        single_tx_name = "XChainAddClaimAttestation"
     else:
         batch_name = "XChainCreateAccountAttestationBatch"
+        single_tx_name = "XChainAddAccountCreateAttestation"
 
     if close_ledgers:
         wait_time = _WAIT_STEP_LENGTH
@@ -92,6 +94,31 @@ def wait_for_attestations(
 
         new_txs = ledger.result["ledger"]["transactions"]
         for tx in new_txs:
+            if tx["TransactionType"] == single_tx_name:
+                if tx["XChainBridge"] != bridge_config.to_xrpl():
+                    # make sure attestation is for this bridge
+                    continue
+                # check that the attestation actually matches this transfer
+                if tx["OtherChainSource"] != from_wallet.classic_address:
+                    continue
+                if tx["Amount"] != transfer_amount:
+                    continue
+                if tx["Destination"] != to_account:
+                    continue
+                if is_transfer:
+                    if tx["XChainClaimID"] != xchain_claim_id:
+                        continue
+                if tx["PublicKey"] in attestations_seen:
+                    # already seen this attestation, skip
+                    continue
+                attestations_seen.add(tx["PublicKey"])
+                if verbose > 1:
+                    click.echo(pformat(tx))
+                if verbose > 0:
+                    click.secho(
+                        f"Received {len(attestations_seen)} attestations",
+                        fg="bright_green",
+                    )
             if tx["TransactionType"] == "XChainAddAttestationBatch":
                 batch = tx["XChainAttestationBatch"]
                 if batch["XChainBridge"] != bridge_config.to_xrpl():
@@ -101,26 +128,26 @@ def wait_for_attestations(
                 for attestation in attestations:
                     element = attestation[f"{batch_name}Element"]
                     # check that the attestation actually matches this transfer
-                    if element["Account"] != from_wallet.classic_address:
-                        continue
-                    if element["Amount"] != transfer_amount:
-                        continue
-                    if element["Destination"] != to_account:
-                        continue
-                    if is_transfer:
-                        if element["XChainClaimID"] != xchain_claim_id:
-                            continue
-                    if element["PublicKey"] in attestations_seen:
-                        # already seen this attestation, skip
-                        continue
-                    attestations_seen.add(element["PublicKey"])
-                    if verbose > 1:
-                        click.echo(pformat(element))
-                    if verbose > 0:
-                        click.secho(
-                            f"Received {len(attestations_seen)} attestations",
-                            fg="bright_green",
-                        )
+            if element["Account"] != from_wallet.classic_address:
+                continue
+            if element["Amount"] != transfer_amount:
+                continue
+            if element["Destination"] != to_account:
+                continue
+            if is_transfer:
+                if element["XChainClaimID"] != xchain_claim_id:
+                    continue
+            if element["PublicKey"] in attestations_seen:
+                # already seen this attestation, skip
+                continue
+            attestations_seen.add(element["PublicKey"])
+            if verbose > 1:
+                click.echo(pformat(element))
+            if verbose > 0:
+                click.secho(
+                    f"Received {len(attestations_seen)} attestations",
+                    fg="bright_green",
+                )
         if len(new_txs) > 0:  # TODO: only count attestations
             time_count = 0
         else:
