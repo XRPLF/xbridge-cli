@@ -63,10 +63,8 @@ def wait_for_attestations(
         transfer_amount = amount.to_dict()
 
     if is_transfer:
-        batch_name = "XChainClaimAttestationBatch"
         single_tx_name = "XChainAddClaimAttestation"
     else:
-        batch_name = "XChainCreateAccountAttestationBatch"
         single_tx_name = "XChainAddAccountCreateAttestation"
 
     if close_ledgers:
@@ -119,35 +117,6 @@ def wait_for_attestations(
                         f"Received {len(attestations_seen)} attestations",
                         fg="bright_green",
                     )
-            if tx["TransactionType"] == "XChainAddAttestationBatch":
-                batch = tx["XChainAttestationBatch"]
-                if batch["XChainBridge"] != bridge_config.to_xrpl():
-                    # make sure attestation is for this bridge
-                    continue
-                attestations = batch[batch_name]
-                for attestation in attestations:
-                    element = attestation[f"{batch_name}Element"]
-                    # check that the attestation actually matches this transfer
-            if element["Account"] != from_wallet.classic_address:
-                continue
-            if element["Amount"] != transfer_amount:
-                continue
-            if element["Destination"] != to_account:
-                continue
-            if is_transfer:
-                if element["XChainClaimID"] != xchain_claim_id:
-                    continue
-            if element["PublicKey"] in attestations_seen:
-                # already seen this attestation, skip
-                continue
-            attestations_seen.add(element["PublicKey"])
-            if verbose > 1:
-                click.echo(pformat(element))
-            if verbose > 0:
-                click.secho(
-                    f"Received {len(attestations_seen)} attestations",
-                    fg="bright_green",
-                )
         if len(new_txs) > 0:  # TODO: only count attestations
             time_count = 0
         else:
