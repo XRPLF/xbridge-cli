@@ -3,7 +3,7 @@
 import json
 import os
 from pprint import pformat
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Literal, Optional, TypedDict, Union, cast
 
 import click
 from xrpl import CryptoAlgorithm
@@ -15,6 +15,7 @@ from xrpl.models import (
     XRP,
     AccountSet,
     AccountSetFlag,
+    Amount,
     Currency,
     IssuedCurrency,
     ServerState,
@@ -23,15 +24,11 @@ from xrpl.models import (
     Transaction,
     TrustSet,
     XChainAccountCreateCommit,
-    XChainAddAttestationBatch,
+    XChainAddAccountCreateAttestation,
     XChainBridge,
     XChainCreateBridge,
 )
 from xrpl.models.transactions.transaction import transaction_json_to_binary_codec_form
-from xrpl.models.transactions.xchain_add_attestation_batch import (
-    XChainAttestationBatch,
-    XChainCreateAccountAttestationBatchElement,
-)
 from xrpl.wallet import Wallet
 
 from sidechain_cli.exceptions import SidechainCLIException
@@ -43,8 +40,25 @@ from sidechain_cli.utils import (
     submit_tx,
 )
 
-_ATTESTATION_ENCODE_ORDER: List[Tuple[str, int]] = [
-    ("account", 4),
+
+class _UnsignedAttestation(TypedDict):
+    xchain_bridge: XChainBridge
+    other_chain_source: str
+    amount: Amount
+    attestation_reward_account: str
+    was_locking_chain_send: Union[Literal[0], Literal[1]]
+    xchain_account_create_count: str
+    destination: str
+    signature_reward: Amount
+
+
+class _SignedAttestation(_UnsignedAttestation):
+    public_key: str
+    signature: str
+
+
+_ATTESTATION_ENCODE_ORDER = [
+    ("other_chain_source", 4),
     ("amount", 2),
     ("signature_reward", 4),
     ("attestation_reward_account", 6),
@@ -55,29 +69,30 @@ _ATTESTATION_ENCODE_ORDER: List[Tuple[str, int]] = [
 
 
 def _sign_attestation(
-    attestation: XChainCreateAccountAttestationBatchElement,
+    attestation: _UnsignedAttestation,
     bridge: XChainBridge,
-    private_key: str,
-) -> XChainCreateAccountAttestationBatchElement:
-    attestation_dict = attestation.to_dict()[
-        "xchain_create_account_attestation_batch_element"
-    ]
+    wallet: Wallet,
+) -> _SignedAttestation:
     # TODO: use this instead once it's been implemented
-    # attestation_xrpl = transaction_json_to_binary_codec_form(attestation_dict)
+    # attestation_xrpl = transaction_json_to_binary_codec_form(attestation)
     # encoded_obj = encode(attestation_xrpl)
     bridge_dict: Dict[str, Any] = {"xchain_bridge": bridge.to_dict()}
     encoded_obj = encode(transaction_json_to_binary_codec_form(bridge_dict))[4:]
     for key, prefix in _ATTESTATION_ENCODE_ORDER:
-        value = attestation_dict[key]
+        value = attestation[key]  # type: ignore  # Hard to type
         if key == "was_locking_chain_send":
             encoded_obj += "0" + str(value)
         else:
             xrpl_attestation = transaction_json_to_binary_codec_form({key: value})
             encoded_obj += encode(xrpl_attestation)[prefix:]
-    signature = sign(bytes.fromhex(encoded_obj), private_key)
-    attestation_dict["signature"] = signature
-    signed_attestation = XChainCreateAccountAttestationBatchElement.from_dict(
-        attestation_dict
+    signature = sign(bytes.fromhex(encoded_obj), wallet.private_key)
+    signed_attestation: _SignedAttestation = cast(
+        _SignedAttestation,
+        {
+            **attestation,
+            "signature": signature,
+            "public_key": wallet.public_key,
+        },
     )
     return signed_attestation
 
@@ -342,16 +357,14 @@ def setup_bridge(
         # we need to create the witness reward + submission accounts via the bridge
 
         # helper function for submitting the attestations
-        def _submit_attestations(
-            attestations: List[XChainCreateAccountAttestationBatchElement],
+        def _submit_attestation(
+            attestation: _SignedAttestation,
         ) -> None:
-            attestation_tx = XChainAddAttestationBatch(
-                account=issuing_door,
-                xchain_attestation_batch=XChainAttestationBatch(
-                    xchain_bridge=bridge_obj,
-                    xchain_claim_attestation_batch=[],
-                    xchain_create_account_attestation_batch=attestations,
-                ),
+            attestation_tx = XChainAddAccountCreateAttestation.from_dict(
+                {
+                    **attestation,
+                    "account": issuing_door,
+                }
             )
             submit_tx(
                 attestation_tx,
@@ -368,7 +381,6 @@ def setup_bridge(
         funding_wallet = Wallet(funding_seed, 0, algorithm=funding_wallet_algo)
 
         amount = str(min_create2 * 2)  # submit accounts need spare funds
-        attestations = []
         count = 1
 
         # create the accounts
@@ -388,29 +400,20 @@ def setup_bridge(
 
         # set up the attestations for the commit
         for account in accounts_issuing_check:
-            init_attestation = XChainCreateAccountAttestationBatchElement(
-                account=funding_wallet.classic_address,
+            init_attestation = _UnsignedAttestation(
+                xchain_bridge=bridge_obj,
+                other_chain_source=funding_wallet.classic_address,
                 amount=amount,
                 attestation_reward_account=issuing_door,
                 destination=account,
-                public_key=issuing_door_wallet.public_key,
-                signature="",
                 signature_reward=signature_reward,
                 was_locking_chain_send=1,
                 xchain_account_create_count=str(count),
             )
             signed_attestation = _sign_attestation(
-                init_attestation, bridge_obj, issuing_door_wallet.private_key
+                init_attestation, bridge_obj, issuing_door_wallet
             )
-            attestations.append(signed_attestation)
-            count += 1
-
-            # we can only have 8 attestations in an XChainAddAttestationBatch tx
-            if len(attestations) == 8:
-                _submit_attestations(attestations)
-                attestations = []
-
-        _submit_attestations(attestations)
+            _submit_attestation(signed_attestation)
 
     # set up multisign on the door account
     signer_tx2 = SignerListSet(
