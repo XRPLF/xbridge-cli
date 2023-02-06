@@ -414,6 +414,7 @@ def setup_bridge(
                 init_attestation, bridge_obj, issuing_door_wallet
             )
             _submit_attestation(signed_attestation)
+            count += 1
 
     # set up multisign on the door account
     signer_tx2 = SignerListSet(
