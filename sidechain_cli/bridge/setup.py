@@ -58,7 +58,7 @@ class _SignedAttestation(_UnsignedAttestation):
 
 
 _ATTESTATION_ENCODE_ORDER = [
-    ("other_chain_source", 4),
+    ("other_chain_source", 6),
     ("amount", 2),
     ("signature_reward", 4),
     ("attestation_reward_account", 6),
