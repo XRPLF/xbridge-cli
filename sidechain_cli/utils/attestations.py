@@ -128,5 +128,6 @@ def wait_for_attestations(
             break
 
         if time_count > attestation_time_limit:
-            print(pformat(to_client.request(LedgerData()).result))
+            if verbose >= 2:
+                click.echo(pformat(to_client.request(LedgerData()).result))
             raise AttestationTimeoutException()
