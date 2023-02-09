@@ -198,7 +198,7 @@ def send_transfer(
         for node in created_nodes
         if node["LedgerEntryType"] == "XChainOwnedClaimID"
     ]
-    assert len(claim_ids_ledger_entries) == 1
+    assert len(claim_ids_ledger_entries) == 1, len(claim_ids_ledger_entries)
     xchain_claim_id = claim_ids_ledger_entries[0]["NewFields"]["XChainClaimID"]
 
     # XChainTransfer
