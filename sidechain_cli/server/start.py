@@ -6,7 +6,7 @@ import json
 import os
 import subprocess
 import time
-from typing import List, Literal, Tuple
+from typing import List, Tuple
 
 import click
 import docker
@@ -103,7 +103,7 @@ def _run_process(
     "--exe",
     required=True,
     prompt=True,
-    type=(Literal["docker"], click.Path(exists=True)),
+    type=str,  # TODO: should be Union[Literal["docker"], click.Path(exists=True)]
     help="The filepath to the executable.",
 )
 @click.option(
@@ -227,7 +227,7 @@ def start_server(
     envvar="RIPPLED_EXE",
     required=True,
     prompt=True,
-    type=(Literal["docker"], click.Path(exists=True)),
+    type=str,  # TODO: should be Union[Literal["docker"], click.Path(exists=True)]
     help="The filepath to the rippled executable.",
 )
 @click.option(
@@ -235,7 +235,7 @@ def start_server(
     envvar="WITNESSD_EXE",
     required=True,
     prompt=True,
-    type=(Literal["docker"], click.Path(exists=True)),
+    type=str,  # TODO: should be Union[Literal["docker"], click.Path(exists=True)]
     help="The filepath to the witnessd executable.",
 )
 @click.option("--docker", is_flag=True, help="Use executables from Docker.")
