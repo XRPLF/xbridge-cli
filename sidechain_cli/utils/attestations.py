@@ -82,13 +82,10 @@ def wait_for_attestations(
     while True:
         time.sleep(wait_time)
         if close_ledgers:
-            ledger = to_client.request(
-                Ledger(ledger_index="current", transactions=True, expand=True)
-            )
-        else:
-            ledger = to_client.request(
-                Ledger(ledger_index="validated", transactions=True, expand=True)
-            )
+            to_client.request(GenericRequest(method="ledger_accept"))
+        ledger = to_client.request(
+            Ledger(ledger_index="validated", transactions=True, expand=True)
+        )
 
         new_txs = ledger.result["ledger"]["transactions"]
         for tx in new_txs:
@@ -121,8 +118,7 @@ def wait_for_attestations(
             time_count = 0
         else:
             time_count += wait_time
-        if close_ledgers:
-            to_client.request(GenericRequest(method="ledger_accept"))
+
         if len(attestations_seen) >= bridge_config.quorum:
             # received enough attestations for quorum
             break
