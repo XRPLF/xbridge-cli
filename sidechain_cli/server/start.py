@@ -9,9 +9,9 @@ import time
 from typing import List, Tuple
 
 import click
+import docker
 import httpx
 
-import docker
 from sidechain_cli.exceptions import SidechainCLIException
 from sidechain_cli.utils import (
     ChainData,
@@ -29,7 +29,7 @@ _DOCKER_COMPOSE_FILE = os.path.abspath(
         "..",
         "..",
         "..",
-        "docker",
+        "docker-setup",
         "docker-compose.yml",
     )
 )
