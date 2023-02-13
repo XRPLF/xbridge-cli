@@ -98,6 +98,7 @@ class TestServer:
         else:
             witness = get_config().get_witness(process_to_kill)
             os.kill(witness.pid, signal.SIGINT)
+            time.sleep(0.01)
 
             process = psutil.Process(pid=witness.pid)
             assert (
