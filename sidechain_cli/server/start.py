@@ -9,9 +9,9 @@ import time
 from typing import List, Tuple
 
 import click
+import docker
 import httpx
 
-import docker
 from sidechain_cli.exceptions import SidechainCLIException
 from sidechain_cli.utils import (
     ChainData,
@@ -29,7 +29,7 @@ _DOCKER_COMPOSE_FILE = os.path.abspath(
         "..",
         "..",
         "..",
-        "docker",
+        "docker-setup",
         "docker-compose.yml",
     )
 )
@@ -103,7 +103,7 @@ def _run_process(
     "--exe",
     required=True,
     prompt=True,
-    type=click.Path(exists=True),
+    type=str,  # TODO: should be Union[Literal["docker"], click.Path(exists=True)]
     help="The filepath to the executable.",
 )
 @click.option(
@@ -227,7 +227,7 @@ def start_server(
     envvar="RIPPLED_EXE",
     required=True,
     prompt=True,
-    type=click.Path(exists=True),
+    type=str,  # TODO: should be Union[Literal["docker"], click.Path(exists=True)]
     help="The filepath to the rippled executable.",
 )
 @click.option(
@@ -235,7 +235,7 @@ def start_server(
     envvar="WITNESSD_EXE",
     required=True,
     prompt=True,
-    type=click.Path(exists=True),
+    type=str,  # TODO: should be Union[Literal["docker"], click.Path(exists=True)]
     help="The filepath to the witnessd executable.",
 )
 @click.option("--docker", is_flag=True, help="Use executables from Docker.")

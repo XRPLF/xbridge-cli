@@ -32,6 +32,10 @@ def pytest_configure(config):
     global mocked_home_dir, config_dir, mocked_vars
     runner = CliRunner()
     runner.invoke(main, ["server", "stop", "--all"])
+    if os.getenv("RIPPLED_EXE") is None:
+        raise Exception("Environment variable `RIPPLED_EXE` is not defined.")
+    if os.getenv("WITNESSD_EXE") is None:
+        raise Exception("Environment variable `WITNESSD_EXE` is not defined.")
 
     if os.getenv("CI") != "True":
         config_dir = tempfile.TemporaryDirectory()

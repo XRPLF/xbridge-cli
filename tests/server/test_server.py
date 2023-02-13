@@ -5,10 +5,10 @@ import signal
 import subprocess
 import time
 
+import docker
 import psutil
 import pytest
 
-import docker
 from sidechain_cli.main import main
 from sidechain_cli.server.start import _DOCKER_COMPOSE
 from sidechain_cli.utils import get_config
@@ -98,6 +98,7 @@ class TestServer:
         else:
             witness = get_config().get_witness(process_to_kill)
             os.kill(witness.pid, signal.SIGINT)
+            time.sleep(0.01)
 
             process = psutil.Process(pid=witness.pid)
             assert (

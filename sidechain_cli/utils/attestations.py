@@ -63,9 +63,9 @@ def wait_for_attestations(
         transfer_amount = amount.to_dict()
 
     if is_transfer:
-        batch_name = "XChainClaimAttestationBatch"
+        tx_type = "XChainAddClaimAttestation"
     else:
-        batch_name = "XChainCreateAccountAttestationBatch"
+        tx_type = "XChainAddAccountCreateAttestation"
 
     if close_ledgers:
         wait_time = _WAIT_STEP_LENGTH
@@ -82,55 +82,48 @@ def wait_for_attestations(
     while True:
         time.sleep(wait_time)
         if close_ledgers:
-            ledger = to_client.request(
-                Ledger(ledger_index="current", transactions=True, expand=True)
-            )
-        else:
-            ledger = to_client.request(
-                Ledger(ledger_index="validated", transactions=True, expand=True)
-            )
+            to_client.request(GenericRequest(method="ledger_accept"))
+        ledger = to_client.request(
+            Ledger(ledger_index="validated", transactions=True, expand=True)
+        )
 
         new_txs = ledger.result["ledger"]["transactions"]
         for tx in new_txs:
-            if tx["TransactionType"] == "XChainAddAttestation":
-                batch = tx["XChainAttestationBatch"]
-                if batch["XChainBridge"] != bridge_config.to_xrpl():
+            if tx["TransactionType"] == tx_type:
+                if tx["XChainBridge"] != bridge_config.to_xrpl():
                     # make sure attestation is for this bridge
                     continue
-                attestations = batch[batch_name]
-                for attestation in attestations:
-                    element = attestation[f"{batch_name}Element"]
-                    # check that the attestation actually matches this transfer
-                    if element["Account"] != from_wallet.classic_address:
+                # check that the attestation actually matches this transfer
+                if tx["OtherChainSource"] != from_wallet.classic_address:
+                    continue
+                if tx["Amount"] != transfer_amount:
+                    continue
+                if tx["Destination"] != to_account:
+                    continue
+                if is_transfer:
+                    if tx["XChainClaimID"] != xchain_claim_id:
                         continue
-                    if element["Amount"] != transfer_amount:
-                        continue
-                    if element["Destination"] != to_account:
-                        continue
-                    if is_transfer:
-                        if element["XChainClaimID"] != xchain_claim_id:
-                            continue
-                    if element["PublicKey"] in attestations_seen:
-                        # already seen this attestation, skip
-                        continue
-                    attestations_seen.add(element["PublicKey"])
-                    if verbose > 1:
-                        click.echo(pformat(element))
-                    if verbose > 0:
-                        click.secho(
-                            f"Received {len(attestations_seen)} attestations",
-                            fg="bright_green",
-                        )
+                if tx["PublicKey"] in attestations_seen:
+                    # already seen this attestation, skip
+                    continue
+                attestations_seen.add(tx["PublicKey"])
+                if verbose > 1:
+                    click.echo(pformat(tx))
+                if verbose > 0:
+                    click.secho(
+                        f"Received {len(attestations_seen)} attestations",
+                        fg="bright_green",
+                    )
         if len(new_txs) > 0:  # TODO: only count attestations
             time_count = 0
         else:
             time_count += wait_time
-        if close_ledgers:
-            to_client.request(GenericRequest(method="ledger_accept"))
+
         if len(attestations_seen) >= bridge_config.quorum:
             # received enough attestations for quorum
             break
 
         if time_count > attestation_time_limit:
-            print(pformat(to_client.request(LedgerData()).result))
+            if verbose >= 2:
+                click.echo(pformat(to_client.request(LedgerData()).result))
             raise AttestationTimeoutException()
