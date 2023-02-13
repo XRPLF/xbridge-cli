@@ -63,9 +63,9 @@ def wait_for_attestations(
         transfer_amount = amount.to_dict()
 
     if is_transfer:
-        single_tx_name = "XChainAddClaimAttestation"
+        tx_type = "XChainAddClaimAttestation"
     else:
-        single_tx_name = "XChainAddAccountCreateAttestation"
+        tx_type = "XChainAddAccountCreateAttestation"
 
     if close_ledgers:
         wait_time = _WAIT_STEP_LENGTH
@@ -89,7 +89,7 @@ def wait_for_attestations(
 
         new_txs = ledger.result["ledger"]["transactions"]
         for tx in new_txs:
-            if tx["TransactionType"] == single_tx_name:
+            if tx["TransactionType"] == tx_type:
                 if tx["XChainBridge"] != bridge_config.to_xrpl():
                     # make sure attestation is for this bridge
                     continue
