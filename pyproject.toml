@@ -1,9 +1,9 @@
 [tool.poetry]
-name = "xrpl-sidechain-cli"
+name = "xbridge-cli"
 version = "1.0.0b4"
-description = "A CLI that helps you set up an XRPL sidechain."
+description = "A CLI that helps you set up an XRPL-XRPL bridge."
 readme = "README.md"
-repository = "https://github.com/xpring-eng/sidechain-cli"
+repository = "https://github.com/xpring-eng/xbridge-cli"
 authors = ["Mayukha Vadari <mvadari@ripple.com>"]
 keywords = [
   "xrp",
@@ -15,11 +15,11 @@ include = [
   "LICENSE",
 ]
 packages = [
-  { include = "sidechain_cli" },
+  { include = "xbridge_cli" },
 ]
 
 [tool.poetry.scripts]
-sidechain-cli = 'sidechain_cli.main:main'
+xbridge-cli = 'xbridge_cli.main:main'
 
 [tool.poetry.dependencies]
 python = "^3.7.1"
@@ -55,7 +55,7 @@ profile = "black"
 [tool.coverage.run]
 branch = true
 command_line = "-m pytest tests"
-source = ["sidechain_cli"]
+source = ["xbridge_cli"]
 
 [tool.coverage.report]
 show_missing = true
