@@ -1,4 +1,4 @@
-"""Util methods for the sidechain CLI."""
+"""Util methods for the xbridge CLI."""
 
 from xbridge_cli.utils.attestations import wait_for_attestations
 from xbridge_cli.utils.config_file import (

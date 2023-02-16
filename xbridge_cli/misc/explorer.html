@@ -1,6 +1,6 @@
 <html>
   <head>
-    <title>XRPL Sidechain CLI Explorer</title>
+    <title>XBridge CLI Explorer</title>
   </head>
   <body>
     <link rel="shortcut icon" href="https://livenet.xrpl.org/favicon.ico" type="image/x-icon" />
@@ -15,7 +15,7 @@
         <input type="url" value="localhost:6006" id="left_input">
         <button type="button" id="left_button">Submit</button>
       </div>
-      <iframe id="left_iframe" src="https://sidechain.xrpl.org/localhost:6006" frameborder="0"></iframe>
+      <iframe id="left_iframe" src="https://custom.xrpl.org/localhost:6006" frameborder="0"></iframe>
     </div>
     <div class="explorer">
       <div class="url-bar">
@@ -28,7 +28,7 @@
         <input type="url" value="localhost:6008" id="right_input">
         <button type="button" id="right_button">Submit</button>
       </div>
-      <iframe id="right_iframe" src="https://sidechain.xrpl.org/localhost:6008" frameborder="0"></iframe>
+      <iframe id="right_iframe" src="https://custom.xrpl.org/localhost:6008" frameborder="0"></iframe>
     </div>
 
 
@@ -122,7 +122,7 @@
         const iframe = document.getElementById(`${position}_iframe`);
         const input = document.getElementById(`${position}_input`);
         const newUrl = input.value;
-        iframe.src = `http://sidechain.xrpl.org/${newUrl}`;
+        iframe.src = `http://custom.xrpl.org/${newUrl}`;
       }
     </script>
   </body>

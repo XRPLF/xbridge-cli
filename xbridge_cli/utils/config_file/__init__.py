@@ -1,4 +1,4 @@
-"""Util methods for the sidechain CLI."""
+"""Util methods for the xbridge CLI."""
 
 from xbridge_cli.utils.config_file.bridge_config import BridgeConfig
 from xbridge_cli.utils.config_file.chain_config import ChainConfig
