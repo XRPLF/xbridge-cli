@@ -9,8 +9,8 @@ from typing import Any, Dict, List, Optional
 import pytest
 from click.testing import CliRunner
 
-from sidechain_cli.main import main
-from sidechain_cli.utils import get_config_folder
+from xbridge_cli.main import main
+from xbridge_cli.utils import get_config_folder
 
 config_dir: Optional[tempfile.TemporaryDirectory] = None
 mocked_home_dir: Optional[tempfile.TemporaryDirectory] = None

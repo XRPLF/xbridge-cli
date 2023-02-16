@@ -3,7 +3,7 @@ import unittest.mock
 
 from click.testing import CliRunner
 
-from sidechain_cli.main import main
+from xbridge_cli.main import main
 
 
 class TestExplorer:

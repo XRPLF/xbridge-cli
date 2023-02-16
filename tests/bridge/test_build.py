@@ -7,10 +7,10 @@ from xrpl.account import does_account_exist
 from xrpl.clients import JsonRpcClient
 from xrpl.models import AccountObjects
 
-from sidechain_cli.main import main
-from sidechain_cli.utils import get_config
-from sidechain_cli.utils.config_file import get_config_folder
 from tests.utils import SetInterval, close_ledgers
+from xbridge_cli.main import main
+from xbridge_cli.utils import get_config
+from xbridge_cli.utils.config_file import get_config_folder
 
 _CONFIG_FILE = os.path.join(get_config_folder(), "config.json")
 
