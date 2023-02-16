@@ -13,7 +13,7 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 
 @click.group(context_settings=CONTEXT_SETTINGS)
 def main() -> None:
-    """The Sidechain Command-Line Interface. Do everything with sidechains."""
+    """The Sidechain Command-Line Interface. Do everything with XRPL-XRPL bridges."""
     pass
 
 

@@ -9,7 +9,7 @@ from xrpl.clients import JsonRpcClient
 from xrpl.models import Amount, GenericRequest, Ledger, LedgerData
 from xrpl.wallet import Wallet
 
-from xbridge_cli.exceptions import AttestationTimeoutException, SidechainCLIException
+from xbridge_cli.exceptions import AttestationTimeoutException, XBridgeCLIException
 from xbridge_cli.utils.config_file import BridgeConfig
 
 _ATTESTATION_TIME_LIMIT = 20  # in seconds
@@ -51,11 +51,11 @@ def wait_for_attestations(
     Raises:
         AttestationTimeoutException: If the method times out while waiting for an
             attestation.
-        SidechainCLIException: If the method is waiting for a transfer and there is no
+        XBridgeCLIException: If the method is waiting for a transfer and there is no
             claim ID provided.
     """
     if is_transfer and xchain_claim_id is None:
-        raise SidechainCLIException("Must have XChain Claim ID if is transfer.")
+        raise XBridgeCLIException("Must have XChain Claim ID if is transfer.")
 
     if isinstance(amount, str):
         transfer_amount: Union[str, Dict[str, str]] = amount

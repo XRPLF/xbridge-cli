@@ -2,7 +2,7 @@
 
 from typing import Any, Dict, Optional, cast
 
-from xbridge_cli.exceptions import SidechainCLIException
+from xbridge_cli.exceptions import XBridgeCLIException
 from xbridge_cli.utils.config_file import (
     BridgeConfig,
     ChainConfig,
@@ -116,10 +116,10 @@ def remove_chain(name: Optional[str] = None, remove_all: bool = False) -> None:
         remove_all: Whether to remove all of the chains.
 
     Raises:
-        SidechainCLIException: If `name` is `None` and `remove_all` is `False`.
+        XBridgeCLIException: If `name` is `None` and `remove_all` is `False`.
     """
     if name is None and remove_all is False:
-        raise SidechainCLIException(
+        raise XBridgeCLIException(
             "Cannot remove chain if name is `None` and remove_all is `False`."
         )
     conf = get_config()
@@ -151,10 +151,10 @@ def remove_witness(name: Optional[str] = None, remove_all: bool = False) -> None
         remove_all: Whether to remove all of the witnesses.
 
     Raises:
-        SidechainCLIException: If `name` is `None` and `remove_all` is `False`.
+        XBridgeCLIException: If `name` is `None` and `remove_all` is `False`.
     """
     if name is None and remove_all is False:
-        raise SidechainCLIException(
+        raise XBridgeCLIException(
             "Cannot remove witness if name is `None` and remove_all is `False`."
         )
     conf = get_config()
@@ -174,10 +174,10 @@ def remove_server(name: Optional[str] = None, remove_all: bool = False) -> None:
         remove_all: Whether to remove all of the servers.
 
     Raises:
-        SidechainCLIException: If `name` is `None` and `remove_all` is `False`.
+        XBridgeCLIException: If `name` is `None` and `remove_all` is `False`.
     """
     if name is None and remove_all is False:
-        raise SidechainCLIException(
+        raise XBridgeCLIException(
             "Cannot remove server if name is `None` and remove_all is `False`."
         )
     conf = get_config()
@@ -217,10 +217,10 @@ def remove_bridge(name: Optional[str] = None, remove_all: bool = False) -> None:
         remove_all: Whether to remove all of the bridges.
 
     Raises:
-        SidechainCLIException: If `name` is `None` and `remove_all` is `False`.
+        XBridgeCLIException: If `name` is `None` and `remove_all` is `False`.
     """
     if name is None and remove_all is False:
-        raise SidechainCLIException(
+        raise XBridgeCLIException(
             "Cannot remove bridge if name is `None` and remove_all is `False`."
         )
     conf = get_config()

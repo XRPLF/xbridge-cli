@@ -12,7 +12,7 @@ import click
 import docker
 import httpx
 
-from xbridge_cli.exceptions import SidechainCLIException
+from xbridge_cli.exceptions import XBridgeCLIException
 from xbridge_cli.utils import (
     ChainData,
     RippledConfig,
@@ -71,7 +71,7 @@ def _wait_for_process(
             time_waited += _WAIT_INCREMENT
     with open(output_file) as f:
         click.echo(f.read())
-    raise SidechainCLIException("Process did not start up correctly.")
+    raise XBridgeCLIException("Process did not start up correctly.")
 
 
 def _run_process(
@@ -135,7 +135,7 @@ def start_server(
         verbose: Whether or not to print more verbose information.
 
     Raises:
-        SidechainCLIException: If server is already running with that name/config.
+        XBridgeCLIException: If server is already running with that name/config.
     """  # noqa: D301
     exe = os.path.abspath(exe)
     config = os.path.abspath(config)
@@ -147,7 +147,7 @@ def start_server(
             config_json = json.load(f)
         is_rippled = False
     if check_server_exists(name, config):
-        raise SidechainCLIException("Server already running with that name or config.")
+        raise XBridgeCLIException("Server already running with that name or config.")
 
     server_type = "rippled" if is_rippled else "witness"
     if verbose:
@@ -275,10 +275,10 @@ def start_all_servers(
         verbose: Whether or not to print more verbose information.
 
     Raises:
-        SidechainCLIException: If `config_dir` is not a directory.
+        XBridgeCLIException: If `config_dir` is not a directory.
     """  # noqa: D301
     if not os.path.isdir(config_dir):
-        raise SidechainCLIException(f"{config_dir} is not a directory.")
+        raise XBridgeCLIException(f"{config_dir} is not a directory.")
     if not rippled_only and not witness_only:
         all_chains = True
     else:

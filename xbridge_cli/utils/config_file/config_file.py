@@ -10,7 +10,7 @@ from typing import Any, Dict, List, Type
 
 import httpx
 
-from xbridge_cli.exceptions import SidechainCLIException
+from xbridge_cli.exceptions import XBridgeCLIException
 from xbridge_cli.utils.config_file.bridge_config import BridgeConfig
 from xbridge_cli.utils.config_file.chain_config import ChainConfig
 from xbridge_cli.utils.config_file.server_config import ServerConfig
@@ -19,9 +19,9 @@ from xbridge_cli.utils.types import ServerData
 
 _HOME = str(Path.home())
 
-CONFIG_FOLDER = os.path.join(_HOME, ".config", "sidechain-cli")
+CONFIG_FOLDER = os.path.join(_HOME, ".config", "xbridge-cli")
 
-# ~/.config/sidechain-cli/config.json
+# ~/.config/xbridge-cli/config.json
 _CONFIG_FILE = os.path.join(CONFIG_FOLDER, "config.json")
 
 # Initialize config file
@@ -108,12 +108,12 @@ class ConfigFile:
             The ChainConfig object corresponding to that chain.
 
         Raises:
-            SidechainCLIException: if there is no chain with that name.
+            XBridgeCLIException: if there is no chain with that name.
         """
         for chain in self.chains:
             if chain.name == name:
                 return chain
-        raise SidechainCLIException(f"No chain with name {name}.")
+        raise XBridgeCLIException(f"No chain with name {name}.")
 
     def get_witness(self: ConfigFile, name: str) -> WitnessConfig:
         """
@@ -126,12 +126,12 @@ class ConfigFile:
             The WitnessConfig object corresponding to that witness.
 
         Raises:
-            SidechainCLIException: if there is no witness with that name.
+            XBridgeCLIException: if there is no witness with that name.
         """
         for witness in self.witnesses:
             if witness.name == name:
                 return witness
-        raise SidechainCLIException(f"No witness with name {name}.")
+        raise XBridgeCLIException(f"No witness with name {name}.")
 
     def get_server(self: ConfigFile, name: str) -> ServerConfig:
         """
@@ -144,7 +144,7 @@ class ConfigFile:
             The ServerConfig object corresponding to that server.
 
         Raises:
-            SidechainCLIException: if there is no server with that name.
+            XBridgeCLIException: if there is no server with that name.
         """
         for chain in self.chains:
             if chain.name == name:
@@ -152,7 +152,7 @@ class ConfigFile:
         for witness in self.witnesses:
             if witness.name == name:
                 return witness
-        raise SidechainCLIException(f"No server with name {name}.")
+        raise XBridgeCLIException(f"No server with name {name}.")
 
     def get_bridge(self: ConfigFile, name: str) -> BridgeConfig:
         """
@@ -165,12 +165,12 @@ class ConfigFile:
             The BridgeConfig object corresponding to that bridge.
 
         Raises:
-            SidechainCLIException: if there is no bridge with that name.
+            XBridgeCLIException: if there is no bridge with that name.
         """
         for bridge in self.bridges:
             if bridge.name == name:
                 return bridge
-        raise SidechainCLIException(f"No bridge with name {name}.")
+        raise XBridgeCLIException(f"No bridge with name {name}.")
 
     def to_dict(self: ConfigFile) -> Dict[str, List[Dict[str, Any]]]:
         """

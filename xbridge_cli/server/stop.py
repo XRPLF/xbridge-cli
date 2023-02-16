@@ -9,7 +9,7 @@ from typing import List, Optional, cast
 
 import click
 
-from xbridge_cli.exceptions import SidechainCLIException
+from xbridge_cli.exceptions import XBridgeCLIException
 from xbridge_cli.server.start import _DOCKER_COMPOSE
 from xbridge_cli.utils import ChainConfig, ServerConfig, get_config, remove_server
 
@@ -47,10 +47,10 @@ def stop_server(
         verbose: Whether or not to print more verbose information.
 
     Raises:
-        SidechainCLIException: If neither a name or `--all` is specified.
+        XBridgeCLIException: If neither a name or `--all` is specified.
     """  # noqa: D301
     if name is None and stop_all is False:
-        raise SidechainCLIException("Must specify a name or `--all`.")
+        raise XBridgeCLIException("Must specify a name or `--all`.")
     config = get_config()
     if stop_all:
         servers = cast(List[ServerConfig], config.witnesses) + cast(

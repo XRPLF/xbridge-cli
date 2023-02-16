@@ -9,7 +9,7 @@ from xrpl.models import AccountInfo, XChainAccountCreateCommit
 from xrpl.utils import drops_to_xrp, xrp_to_drops
 from xrpl.wallet import Wallet
 
-from xbridge_cli.exceptions import SidechainCLIException
+from xbridge_cli.exceptions import XBridgeCLIException
 from xbridge_cli.utils import (
     CryptoAlgorithmChoice,
     get_config,
@@ -112,7 +112,7 @@ def create_xchain_account(
             more verbosity.
 
     Raises:
-        SidechainCLIException: Min create account isn't set or amount is less than the
+        XBridgeCLIException: Min create account isn't set or amount is less than the
             minimum account reserve, or timeout on attestations.
         AttestationTimeoutException: If there is a timeout when waiting for
             attestations.
@@ -130,7 +130,7 @@ def create_xchain_account(
         0 if from_locking else 1
     ]
     if min_create_account_amount is None:
-        raise SidechainCLIException(
+        raise XBridgeCLIException(
             "Cannot create a cross-chain account if the create account amount "
             "is not set."
         )
@@ -140,7 +140,7 @@ def create_xchain_account(
     else:
         create_amount_xrp = drops_to_xrp(min_create_account_amount)
         if amount < create_amount_xrp:
-            raise SidechainCLIException(
+            raise XBridgeCLIException(
                 f"Amount must be greater than account reserve of {create_amount_xrp} "
                 "XRP."
             )

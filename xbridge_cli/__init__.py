@@ -1,1 +1,1 @@
-"""CLI tool for working with sidechains."""
+"""CLI tool for working with XRPL-XRPL bridges."""

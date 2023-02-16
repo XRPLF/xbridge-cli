@@ -31,7 +31,7 @@ from xrpl.models import (
 from xrpl.models.transactions.transaction import transaction_json_to_binary_codec_form
 from xrpl.wallet import Wallet
 
-from xbridge_cli.exceptions import SidechainCLIException
+from xbridge_cli.exceptions import XBridgeCLIException
 from xbridge_cli.utils import (
     BridgeData,
     CryptoAlgorithmChoice,
@@ -174,12 +174,12 @@ def setup_bridge(
             more verbosity.
 
     Raises:
-        SidechainCLIException: If an account on the locking chain doesn't exist
+        XBridgeCLIException: If an account on the locking chain doesn't exist
             (namely, the witness reward or submit accounts or the door account).
     """  # noqa: D301
     # check name
     if check_bridge_exists(name):
-        raise SidechainCLIException(f"Bridge named {name} already exists.")
+        raise XBridgeCLIException(f"Bridge named {name} already exists.")
 
     if bootstrap == os.getenv("XCHAIN_CONFIG_DIR"):
         bootstrap = os.path.join(bootstrap, "bridge_bootstrap.json")
@@ -218,7 +218,7 @@ def setup_bridge(
             if close_ledgers:
                 funding_seed = "snoPBrXtMeMyMHUVTgbuqAfg1SUTb"
             else:
-                raise SidechainCLIException(
+                raise XBridgeCLIException(
                     "Must include `funding_seed` for external XRP-XRP bridge."
                 )
 
@@ -243,12 +243,12 @@ def setup_bridge(
     # check locking chain for accounts that should already exist
     for account in accounts_locking_check:
         if not does_account_exist(account, locking_client):
-            raise SidechainCLIException(
+            raise XBridgeCLIException(
                 f"Account {account} does not exist on the locking chain."
             )
     # make sure issuing door account exists
     if not does_account_exist(issuing_door, issuing_client):
-        raise SidechainCLIException(
+        raise XBridgeCLIException(
             f"Issuing chain door {issuing_door} does not exist on the locking chain."
         )
     if bridge_obj.issuing_chain_issue != XRP():
@@ -258,7 +258,7 @@ def setup_bridge(
         # bridges
         for account in accounts_issuing_check:
             if not does_account_exist(account, issuing_client):
-                raise SidechainCLIException(
+                raise XBridgeCLIException(
                     f"Account {account} does not exist on the issuing chain."
                 )
 

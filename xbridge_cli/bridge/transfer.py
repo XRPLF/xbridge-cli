@@ -16,7 +16,7 @@ from xrpl.models import (
 )
 from xrpl.wallet import Wallet
 
-from xbridge_cli.exceptions import SidechainCLIException
+from xbridge_cli.exceptions import XBridgeCLIException
 from xbridge_cli.utils import get_config, submit_tx, wait_for_attestations
 
 _ATTESTATION_TIME_LIMIT = 10  # in seconds
@@ -37,7 +37,7 @@ def _submit_tx(
         or result.result["meta"]["TransactionResult"]
     )
     if tx_result != "tesSUCCESS":
-        raise SidechainCLIException(
+        raise XBridgeCLIException(
             str(
                 result.result.get("error_message")
                 or result.result.get("engine_result_message")
@@ -135,7 +135,7 @@ def send_transfer(
         tutorial: Whether to slow down and explain each step.
 
     Raises:
-        SidechainCLIException: If there is an error with a transaction somewhere along
+        XBridgeCLIException: If there is an error with a transaction somewhere along
             the way.
         AttestationTimeoutException: If there is a timeout when waiting for
             attestations.
@@ -161,11 +161,11 @@ def send_transfer(
     try:
         from_wallet = Wallet(from_account, 0)
     except ValueError:
-        raise SidechainCLIException(f"Invalid `from` seed: {from_account}")
+        raise XBridgeCLIException(f"Invalid `from` seed: {from_account}")
     try:
         to_wallet = Wallet(to_account, 0)
     except ValueError:
-        raise SidechainCLIException(f"Invalid `to` seed: {to_account}")
+        raise XBridgeCLIException(f"Invalid `to` seed: {to_account}")
 
     transfer_amount = original_issue.to_amount(amount)
 

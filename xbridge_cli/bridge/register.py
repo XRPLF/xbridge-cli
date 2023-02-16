@@ -8,7 +8,7 @@ import click
 from xrpl.clients import JsonRpcClient
 from xrpl.models import AccountObjects, AccountObjectType, ServerState
 
-from xbridge_cli.exceptions import SidechainCLIException
+from xbridge_cli.exceptions import XBridgeCLIException
 from xbridge_cli.utils import BridgeData, add_bridge, check_bridge_exists
 
 
@@ -112,17 +112,17 @@ def register_bridge(
         verbose: Whether or not to print more verbose information.
 
     Raises:
-        SidechainCLIException: If there are issues with the information passed in.
+        XBridgeCLIException: If there are issues with the information passed in.
     """  # noqa: D301
     # check name
     if check_bridge_exists(name):
-        raise SidechainCLIException(f"Bridge named {name} already exists.")
+        raise XBridgeCLIException(f"Bridge named {name} already exists.")
 
     if bootstrap is not None:
         if chains is not None:
-            raise SidechainCLIException("Cannot have both `chains` and `bootstrap`.")
+            raise XBridgeCLIException("Cannot have both `chains` and `bootstrap`.")
         if doors is not None:
-            raise SidechainCLIException("Cannot have both `doors` and `bootstrap`.")
+            raise XBridgeCLIException("Cannot have both `doors` and `bootstrap`.")
         with open(bootstrap) as f:
             bootstrap_json = json.load(f)
 
@@ -136,9 +136,9 @@ def register_bridge(
         doors = (locking_door, issuing_door)
     else:
         if chains is None:
-            raise SidechainCLIException("Must have `chains` if no `bootstrap`.")
+            raise XBridgeCLIException("Must have `chains` if no `bootstrap`.")
         if doors is None:
-            raise SidechainCLIException("Must have `doors` if no `bootstrap`.")
+            raise XBridgeCLIException("Must have `doors` if no `bootstrap`.")
 
     locking_client = JsonRpcClient(chains[0])
     issuing_client = JsonRpcClient(chains[1])
@@ -146,7 +146,7 @@ def register_bridge(
     signer_list1 = _get_signers(locking_client, doors[0])
     signer_list2 = _get_signers(issuing_client, doors[1])
     if not _signers_equal(signer_list1, signer_list2):
-        raise SidechainCLIException(
+        raise XBridgeCLIException(
             "The bridge was set up incorrectly. The Signer Lists are different on "
             "both chains."
         )

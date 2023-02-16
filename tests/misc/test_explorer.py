@@ -18,7 +18,7 @@ class TestExplorer:
                     "..",
                     "..",
                     "..",
-                    "sidechain_cli",
+                    "xbridge_cli",
                     "misc",
                     "explorer.html",
                 )

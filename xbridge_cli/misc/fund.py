@@ -8,7 +8,7 @@ from xrpl.models import AccountInfo, Payment, Transaction
 from xrpl.utils import xrp_to_drops
 from xrpl.wallet import Wallet
 
-from xbridge_cli.exceptions import SidechainCLIException
+from xbridge_cli.exceptions import XBridgeCLIException
 from xbridge_cli.utils import get_config, submit_tx
 
 
@@ -32,7 +32,7 @@ from xbridge_cli.utils import get_config, submit_tx
 )
 def fund_account(chain: str, accounts: List[str], verbose: bool = False) -> None:
     """
-    Of the form `sidechain-cli fund CHAIN ACCOUNT1 [ACCOUNT2 ...].
+    Of the form `xbridge-cli fund CHAIN ACCOUNT1 [ACCOUNT2 ...].
 
     Fund an account from the genesis account. Only works on a normal standalone rippled
     node.
@@ -44,10 +44,10 @@ def fund_account(chain: str, accounts: List[str], verbose: bool = False) -> None
         verbose: Whether or not to print more verbose information.
 
     Raises:
-        SidechainCLIException: If the chain is the issuing chain.
+        XBridgeCLIException: If the chain is the issuing chain.
     """  # noqa: D301
     if chain == "issuing_chain":
-        raise SidechainCLIException(
+        raise XBridgeCLIException(
             "Cannot fund account on issuing chain. Must use `create-account`."
         )
 

@@ -36,7 +36,7 @@ def set_trustline(
     chain: str, currency: str, accounts: List[str], verbose: bool = False
 ) -> None:
     """
-    Of the form `sidechain-cli trust CHAIN CURRENCY ACCOUNT1 [ACCOUNT2 ...].
+    Of the form `xbridge-cli trust CHAIN CURRENCY ACCOUNT1 [ACCOUNT2 ...].
 
     Set a trustline for a currency from an account or accounts.
     \f
