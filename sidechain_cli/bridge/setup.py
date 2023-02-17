@@ -364,6 +364,7 @@ def setup_bridge(
                 {
                     **attestation,
                     "account": issuing_door,
+                    "attestation_signer_account": issuing_door,
                 }
             )
             submit_tx(
