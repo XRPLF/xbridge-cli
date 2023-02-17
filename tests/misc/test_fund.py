@@ -2,8 +2,8 @@ import pytest
 from xrpl.models import AccountInfo
 from xrpl.wallet import Wallet
 
-from sidechain_cli.main import main
-from sidechain_cli.utils import get_config
+from xbridge_cli.main import main
+from xbridge_cli.utils import get_config
 
 
 @pytest.mark.usefixtures("runner")

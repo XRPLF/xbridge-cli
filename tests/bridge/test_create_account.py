@@ -6,9 +6,9 @@ from xrpl.account import does_account_exist, get_balance
 from xrpl.models import LedgerData
 from xrpl.wallet import Wallet
 
-from sidechain_cli.main import main
-from sidechain_cli.utils import get_config
 from tests.utils import SetInterval, close_ledgers
+from xbridge_cli.main import main
+from xbridge_cli.utils import get_config
 
 
 @pytest.mark.usefixtures("create_bridge")
