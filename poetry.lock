@@ -1329,32 +1329,28 @@ files = [
 
 [[package]]
 name = "xrpl-py"
-version = "1.7.0"
+version = "1.8.0b1"
 description = "A complete Python library for interacting with the XRP ledger"
 category = "main"
 optional = false
-python-versions = "^3.7"
-files = []
-develop = false
-
-[package.dependencies]
-base58 = "^2.1.0"
-Deprecated = "^1.2.13"
-ECPy = "^1.2.5"
-httpx = ">=0.18.1,<0.24.0"
-pycryptodome = "^3.16.0"
-types-Deprecated = "^1.2.9"
-typing-extensions = "^4.2.0"
-websockets = [
-    {version = ">=9.0.1 <11.0", markers = "python_version >= \"3.7\" and python_version < \"3.10\""},
-    {version = "^10.0", markers = "python_version >= \"3.10\" and python_version < \"4.0\""},
+python-versions = ">=3.7,<4.0"
+files = [
+    {file = "xrpl_py-1.8.0b1-py3-none-any.whl", hash = "sha256:e6613fc7e163ecf8a1204e441ddcf088865c2f85b04ec8fb52cb7deb328d85f5"},
+    {file = "xrpl_py-1.8.0b1.tar.gz", hash = "sha256:bfa029cc2b5c756f3eafcd0035df2969cebef99e941f19a23b4aed52e4c07c14"},
 ]
 
-[package.source]
-type = "git"
-url = "https://github.com/XRPLF/xrpl-py.git"
-reference = "sidechain-2.5"
-resolved_reference = "06500b93e364237d72d4c1c418a840210b3a9936"
+[package.dependencies]
+base58 = ">=2.1.0,<3.0.0"
+Deprecated = ">=1.2.13,<2.0.0"
+ECPy = ">=1.2.5,<2.0.0"
+httpx = ">=0.18.1,<0.24.0"
+pycryptodome = ">=3.16.0,<4.0.0"
+types-Deprecated = ">=1.2.9,<2.0.0"
+typing-extensions = ">=4.2.0,<5.0.0"
+websockets = [
+    {version = ">=9.0.1,<11.0", markers = "python_version >= \"3.7\" and python_version < \"3.10\""},
+    {version = ">=10.0,<11.0", markers = "python_version >= \"3.10\" and python_version < \"4.0\""},
+]
 
 [[package]]
 name = "zipp"
@@ -1375,4 +1371,4 @@ testing = ["flake8 (<5)", "func-timeout", "jaraco.functools", "jaraco.itertools"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.7.1"
-content-hash = "989828cbfb4864ce30f5df9180a637914d918491e732a8a77d50e159ad608cf0"
+content-hash = "c7606558886c2a9c4424f0174455eff69587d0cd329565dd25a1921306aa9849"
