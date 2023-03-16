@@ -7,7 +7,7 @@
     "DoorAccount": {
       "Address": "{{ locking_door_account }}",
       "Seed": "{{ locking_door_seed }}",
-      "KeyType": "secp256k1"
+      "KeyType": "{{ locking_door_algo }}"
     },
     "BridgeIssue": {{ locking_issue }},
     "WitnessRewardAccounts": [
@@ -29,7 +29,7 @@
     "DoorAccount": {
       "Address": "{{ issuing_door_account }}",
       "Seed": "{{ issuing_door_seed }}",
-      "KeyType": "secp256k1"
+      "KeyType": "{{ issuing_door_algo }}"
     },
     "BridgeIssue": {{ issuing_issue }},
     "WitnessRewardAccounts": [
