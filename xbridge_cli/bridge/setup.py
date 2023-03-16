@@ -42,7 +42,7 @@ from xbridge_cli.utils import (
 
 
 class _UnsignedAttestation(TypedDict):
-    xchain_bridge: XChainBridge
+    xchain_bridge: Dict[str, Any]
     other_chain_source: str
     amount: Amount
     attestation_reward_account: str
@@ -57,34 +57,14 @@ class _SignedAttestation(_UnsignedAttestation):
     signature: str
 
 
-_ATTESTATION_ENCODE_ORDER = [
-    ("other_chain_source", 6),
-    ("amount", 2),
-    ("signature_reward", 4),
-    ("attestation_reward_account", 6),
-    ("was_locking_chain_send", 0),
-    ("xchain_account_create_count", 4),
-    ("destination", 4),
-]
-
-
 def _sign_attestation(
     attestation: _UnsignedAttestation,
-    bridge: XChainBridge,
     wallet: Wallet,
 ) -> _SignedAttestation:
-    # TODO: use this instead once it's been implemented
-    # attestation_xrpl = transaction_json_to_binary_codec_form(attestation)
-    # encoded_obj = encode(attestation_xrpl)
-    bridge_dict: Dict[str, Any] = {"xchain_bridge": bridge.to_dict()}
-    encoded_obj = encode(transaction_json_to_binary_codec_form(bridge_dict))[4:]
-    for key, prefix in _ATTESTATION_ENCODE_ORDER:
-        value = attestation[key]  # type: ignore  # Hard to type
-        if key == "was_locking_chain_send":
-            encoded_obj += "0" + str(value)
-        else:
-            xrpl_attestation = transaction_json_to_binary_codec_form({key: value})
-            encoded_obj += encode(xrpl_attestation)[prefix:]
+    attestation_xrpl = transaction_json_to_binary_codec_form(
+        cast(Dict[str, Any], attestation)
+    )
+    encoded_obj = encode(attestation_xrpl)
     signature = sign(bytes.fromhex(encoded_obj), wallet.private_key)
     signed_attestation: _SignedAttestation = cast(
         _SignedAttestation,
@@ -402,7 +382,7 @@ def setup_bridge(
         # set up the attestations for the commit
         for account in accounts_issuing_check:
             init_attestation = _UnsignedAttestation(
-                xchain_bridge=bridge_obj,
+                xchain_bridge=bridge_obj.to_dict(),
                 other_chain_source=funding_wallet.classic_address,
                 amount=amount,
                 attestation_reward_account=issuing_door,
@@ -412,7 +392,7 @@ def setup_bridge(
                 xchain_account_create_count=str(count),
             )
             signed_attestation = _sign_attestation(
-                init_attestation, bridge_obj, issuing_door_wallet
+                init_attestation, issuing_door_wallet
             )
             _submit_attestation(signed_attestation)
             count += 1
