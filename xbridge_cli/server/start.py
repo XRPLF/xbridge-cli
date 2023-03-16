@@ -191,7 +191,7 @@ def start_server(
         _wait_for_process(
             process,
             name,
-            config_json["RPCEndpoint"]["IP"],
+            config_json["RPCEndpoint"]["Host"],
             config_json["RPCEndpoint"]["Port"],
             output_file,
             exe == "docker",
@@ -202,7 +202,7 @@ def start_server(
             "exe": exe,
             "config": config,
             "pid": process.pid,
-            "http_ip": config_json["RPCEndpoint"]["IP"],
+            "http_ip": config_json["RPCEndpoint"]["Host"],
             "http_port": config_json["RPCEndpoint"]["Port"],
         }
         # add witness to config file
@@ -357,7 +357,7 @@ def start_all_servers(
                 _wait_for_process(
                     process,
                     name,
-                    config_json["RPCEndpoint"]["IP"],
+                    config_json["RPCEndpoint"]["Host"],
                     config_json["RPCEndpoint"]["Port"],
                     output_file,
                     witnessd_exe == "docker",
@@ -369,7 +369,7 @@ def start_all_servers(
                     "exe": "docker",
                     "config": config,
                     "pid": process.pid,
-                    "http_ip": config_json["RPCEndpoint"]["IP"],
+                    "http_ip": config_json["RPCEndpoint"]["Host"],
                     "http_port": config_json["RPCEndpoint"]["Port"],
                 }
                 # add witness to config file
