@@ -223,11 +223,11 @@ def setup_bridge(
                 )
 
     locking_endpoint = bootstrap_locking["Endpoint"]
-    locking_url = f"http://{locking_endpoint['IP']}:{locking_endpoint['JsonRPCPort']}"
+    locking_url = f"http://{locking_endpoint['Host']}:{locking_endpoint['JsonRPCPort']}"
     locking_client = JsonRpcClient(locking_url)
 
     issuing_endpoint = bootstrap_issuing["Endpoint"]
-    issuing_url = f"http://{issuing_endpoint['IP']}:{issuing_endpoint['JsonRPCPort']}"
+    issuing_url = f"http://{issuing_endpoint['Host']}:{issuing_endpoint['JsonRPCPort']}"
     issuing_client = JsonRpcClient(issuing_url)
 
     accounts_locking_check = set(

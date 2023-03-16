@@ -49,7 +49,7 @@ def _signers_equal(signers1: Dict[str, Any], signers2: Dict[str, Any]) -> bool:
 
 def _get_bootstrap_chain_and_door(chain_json: Dict[str, Any]) -> Tuple[str, str]:
     endpoint = chain_json["Endpoint"]
-    chain = f"http://{endpoint['IP']}:{endpoint['JsonRPCPort']}"
+    chain = f"http://{endpoint['Host']}:{endpoint['JsonRPCPort']}"
     door = chain_json["DoorAccount"]["Address"]
     return chain, door
 

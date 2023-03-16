@@ -2,9 +2,9 @@
   "LockingChain": {
     "Endpoint": {
       {% if is_docker %}
-      "IP": "192.168.176.2",
+      "Host": "192.168.176.2",
       {% else %}
-      "IP": "127.0.0.1",
+      "Host": "127.0.0.1",
       {% endif %}
       "Port": {{ locking_chain_port }}
     },
@@ -19,11 +19,11 @@
   "IssuingChain": {
     "Endpoint": {
       {% if is_docker %}
-      "IP": "192.168.176.3",
+      "Host": "192.168.176.3",
       {% elif is_linux %}
-      "IP": "127.0.0.2",
+      "Host": "127.0.0.2",
       {% else %}
-      "IP": "127.0.0.1",
+      "Host": "127.0.0.1",
       {% endif %}
       "Port": {{ issuing_chain_port }}
     },
@@ -37,11 +37,11 @@
   },
   "RPCEndpoint": {
     {% if is_docker %}
-    "IP": "0.0.0.0",
+    "Host": "0.0.0.0",
     {% elif is_linux %}
-    "IP": "127.0.0.3",
+    "Host": "127.0.0.3",
     {% else %}
-    "IP": "127.0.0.1",
+    "Host": "127.0.0.1",
     {% endif %}
     "Port": {{ witness_port }}
   },
