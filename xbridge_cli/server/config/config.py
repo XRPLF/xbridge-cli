@@ -413,10 +413,14 @@ def generate_bootstrap(
         verbose: Whether or not to print more verbose information.
     """  # noqa: D301
     locking_wallet_algo = (
-        CryptoAlgorithm(locking_algorithm) if locking_algorithm else None
+        CryptoAlgorithm(locking_algorithm)
+        if locking_algorithm
+        else CryptoAlgorithm.ED25519
     )
     issuing_wallet_algo = (
-        CryptoAlgorithm(issuing_algorithm) if issuing_algorithm else None
+        CryptoAlgorithm(issuing_algorithm)
+        if issuing_algorithm
+        else CryptoAlgorithm.ED25519
     )
     locking_door = Wallet(locking_seed, 0, algorithm=locking_wallet_algo)
     issuing_door = Wallet(issuing_seed, 0, algorithm=issuing_wallet_algo)
@@ -434,12 +438,14 @@ def generate_bootstrap(
         "locking_node_port": 5005,
         "locking_door_account": locking_door.classic_address,
         "locking_door_seed": locking_door.seed,
+        "locking_door_algo": locking_wallet_algo.value,
         "locking_issue": repr(locking_issue).replace("'", '"'),
         "locking_reward_accounts": reward_accounts,
         "locking_submit_accounts": reward_accounts,
         "issuing_node_port": 5006,
         "issuing_door_account": issuing_door.classic_address,
         "issuing_door_seed": issuing_door.seed,
+        "issuing_door_algo": issuing_wallet_algo.value,
         "issuing_issue": repr(issuing_issue).replace("'", '"'),
         "issuing_reward_accounts": reward_accounts,
         "issuing_submit_accounts": reward_accounts,
@@ -513,19 +519,21 @@ def generate_all_configs(
     # TODO: add support for external networks
     abs_config_dir = os.path.abspath(config_dir)
 
-    mc_port, sc_port = _generate_rippled_configs(abs_config_dir, is_docker)
-    src_door = Wallet.create(CryptoAlgorithm.SECP256K1)
+    locking_port, issuing_port = _generate_rippled_configs(abs_config_dir, is_docker)
+    locking_door = Wallet.create(crypto_algorithm=CryptoAlgorithm.SECP256K1)
 
-    if currency != "XRP":
+    if currency == "XRP":
+        locking_currency = "XRP"
+        issuing_currency = "XRP"
+        issuing_door = Wallet(_GENESIS_SEED, 0, algorithm=CryptoAlgorithm.SECP256K1)
+        issuing_algorithm = "secp256k1"
+    else:
         assert currency.count(".") == 1
         currency_code, _issuer = currency.split(".")
-        src_currency = currency
-        dst_door = Wallet.create()
-        dst_currency = f"{currency_code}.{dst_door.classic_address}"
-    else:
-        src_currency = "XRP"
-        dst_currency = "XRP"
-        dst_door = Wallet(_GENESIS_SEED, 0, algorithm=CryptoAlgorithm.SECP256K1)
+        locking_currency = currency
+        issuing_door = Wallet.create()
+        issuing_algorithm = "ed25519"
+        issuing_currency = f"{currency_code}.{issuing_door.classic_address}"
 
     reward_accounts = []
     signing_accounts = []
@@ -542,14 +550,14 @@ def generate_all_configs(
             generate_witness_config,
             config_dir=abs_config_dir,
             name=f"witness{i}",
-            locking_chain_port=mc_port,
-            issuing_chain_port=sc_port,
+            locking_chain_port=locking_port,
+            issuing_chain_port=issuing_port,
             witness_port=6010 + i,
             signing_seed=signing_wallet.seed,
-            src_door=src_door.classic_address,
-            src_currency=src_currency,
-            dst_door=dst_door.classic_address,
-            dst_currency=dst_currency,
+            src_door=locking_door.classic_address,
+            src_currency=locking_currency,
+            dst_door=issuing_door.classic_address,
+            dst_currency=issuing_currency,
             locking_reward_seed=witness_reward_wallet.seed,
             locking_reward_account=witness_reward_wallet.classic_address,
             issuing_reward_seed=witness_reward_wallet.seed,
@@ -559,10 +567,12 @@ def generate_all_configs(
     ctx.invoke(
         generate_bootstrap,
         config_dir=abs_config_dir,
-        locking_seed=src_door.seed,
-        locking_currency=src_currency,
-        issuing_seed=dst_door.seed,
-        issuing_currency=dst_currency,
+        locking_seed=locking_door.seed,
+        locking_algorithm="secp256k1",
+        locking_currency=locking_currency,
+        issuing_seed=issuing_door.seed,
+        issuing_algorithm=issuing_algorithm,
+        issuing_currency=issuing_currency,
         verbose=verbose,
         reward_accounts=reward_accounts,
         signing_accounts=signing_accounts,
