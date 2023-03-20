@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Updated to match the latest versions of rippled and the witness server
 
+### Fixed
+
+- Fixed a key algorithm-seed type mismatch for IOU bridge config generation
+
 ## [0.1.0] - 2023-02-22
 
 ### Added
