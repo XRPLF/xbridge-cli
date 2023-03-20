@@ -127,12 +127,26 @@ def _generate_rippled_configs(config_dir: str, docker: bool = False) -> Tuple[in
     help="Whether the config files are for a docker setup.",
 )
 @click.option(
+    "--locking_ip",
+    "locking_chain_ip",
+    default="127.0.0.1",
+    type=str,
+    help="The IP address of the locking chain node.",
+)
+@click.option(
     "--locking_port",
     "locking_chain_port",
     required=True,
     prompt=True,
     type=int,
     help="The port used by the locking chain.",
+)
+@click.option(
+    "--issuing_ip",
+    "issuing_chain_ip",
+    default="127.0.0.1",
+    type=str,
+    help="The IP address of the issuing chain node.",
 )
 @click.option(
     "--issuing_port",
@@ -215,7 +229,9 @@ def _generate_rippled_configs(config_dir: str, docker: bool = False) -> Tuple[in
 def generate_witness_config(
     config_dir: str,
     name: str,
+    locking_chain_ip: str,
     locking_chain_port: int,
+    issuing_chain_ip: str,
     issuing_chain_port: int,
     witness_port: int,
     locking_reward_seed: str,
@@ -281,7 +297,9 @@ def generate_witness_config(
     log_file = os.path.join(sub_dir, "witness.log")
 
     template_data = {
+        "locking_chain_ip": locking_chain_ip,
         "locking_chain_port": locking_chain_port,
+        "issuing_chain_ip": issuing_chain_ip,
         "issuing_chain_port": issuing_chain_port,
         "witness_port": witness_port,
         "db_dir": os.path.join(sub_dir, "db"),
