@@ -72,7 +72,7 @@ from xbridge_cli.server.config.config import _generate_template, _get_currency
     "--signing_seed",
     "signing_seed_param",
     prompt="Signing Seed (leave blank to auto-generate)",
-    default=None,
+    default="",
     help="The seed to use for signing attestations.",
 )
 @click.option(
@@ -115,7 +115,7 @@ def generate_prod_witness_config(
     issuing_reward_seed: str,
     issuing_reward_account: str,
     locking_door: str,
-    signing_seed_param: Optional[str] = None,
+    signing_seed_param: str = "",
     locking_currency: str = "XRP",
     issuing_door: str = "rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh",
     verbose: bool = False,
@@ -126,7 +126,7 @@ def generate_prod_witness_config(
     locking_chain_ip, locking_chain_port = locking_chain.split(":")
     issuing_chain_ip, issuing_chain_port = issuing_chain.split(":")
 
-    if signing_seed_param is None:
+    if signing_seed_param == "":
         signing_seed = Wallet.create().seed
     else:
         signing_seed = signing_seed_param
