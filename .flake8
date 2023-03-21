@@ -5,7 +5,8 @@ docstring-convention=google
 # D212 and D213 are mutually exclusive, so we're only allowing D213.
 # D205 and D415 don't like multi-line summary statements, which is annoying.
 # E203 and W503 don't interact well with black
-ignore = D205,D212,D415,E203,W503
+# D417 asks for params in the docstring - it's not necessary because of Click
+ignore = D205,D212,D415,E203,W503,D417
 
 # This is the line length that black uses
 # https://black.readthedocs.io/en/stable/the_black_code_style.html#line-length

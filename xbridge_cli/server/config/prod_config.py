@@ -119,6 +119,7 @@ def generate_prod_witness_config(
     issuing_door: str = "rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh",
     verbose: bool = False,
 ) -> None:
+    """Generate the config file for a production witness server."""
     abs_config_path = os.path.abspath(config_path)
     sub_dir = "/opt/witness"
 

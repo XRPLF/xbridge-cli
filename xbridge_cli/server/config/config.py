@@ -253,6 +253,8 @@ def generate_witness_config(
     Args:
         config_dir: The folder in which to store config files.
         name: The name of the witness server.
+        locking_chain_ip: The IP address of the locking chain node.
+        issuing_chain_ip: The IP address of the issuing chain node.
         locking_chain_port: The port used by the locking chain.
         issuing_chain_port: The port used by the issuing chain.
         witness_port: The port that will be used by the witness server.
