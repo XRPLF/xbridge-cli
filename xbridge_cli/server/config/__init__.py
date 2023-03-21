@@ -7,16 +7,7 @@ from xbridge_cli.server.config.config import (
     generate_bootstrap,
     generate_witness_config,
 )
-from xbridge_cli.server.config.prod_config import generate_prod_witness_config
-
-
-@click.group(name="prod")
-def create_prod_server_configs() -> None:
-    """Subcommand for production server config file generation."""
-    pass
-
-
-create_prod_server_configs.add_command(generate_prod_witness_config, name="witness")
+from xbridge_cli.server.config.prod import create_prod_server_configs
 
 
 @click.group(name="create-config")
