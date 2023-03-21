@@ -1,7 +1,6 @@
 """Prod config generation."""
 import os
 from sys import platform
-from typing import Optional
 
 import click
 from xrpl.wallet import Wallet
