@@ -6,6 +6,7 @@ from sys import platform
 from typing import List, Optional
 
 import click
+from xrpl import CryptoAlgorithm
 from xrpl.wallet import Wallet
 
 from xbridge_cli.server.config.config import _generate_template
@@ -45,14 +46,17 @@ def get_bootstrap_piece_from_witness(
     issuing_reward_account = issuing_config["RewardAccount"]
     issuing_submit_account = issuing_config["TxnSubmit"]["SubmittingAccount"]
     signing_key_seed = witness_config["SigningKeySeed"]
-    # signing_key_algo = witness_config["SigningKeyType"]
-    signing_key_account = Wallet(signing_key_seed, 0).classic_address
+    signing_key_algo = CryptoAlgorithm(witness_config["SigningKeyType"].upper())
+    signing_key_account = Wallet(
+        signing_key_seed, 0, algorithm=signing_key_algo
+    ).classic_address
 
     template_data = {
         "locking_reward_account": locking_reward_account,
         "locking_submit_account": locking_submit_account,
         "issuing_reward_account": issuing_reward_account,
         "issuing_submit_account": issuing_submit_account,
+        "signing_key_type": signing_key_algo.value,
         "signing_key_account": signing_key_account,
     }
 
@@ -103,7 +107,6 @@ def combine_bootstrap_pieces(
     signing_accounts = []
     for bootstrap_piece in bootstrap_pieces:
         with open(os.path.abspath(bootstrap_piece)) as f:
-            # print(f.readlines())
             bootstrap_config = json.load(f)
         locking_reward_accounts.append(
             bootstrap_config["LockingChain"]["RewardAccount"]
