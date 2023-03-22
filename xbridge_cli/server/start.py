@@ -11,6 +11,7 @@ from typing import List, Tuple
 import click
 import docker
 import httpx
+import psutil
 
 from xbridge_cli.exceptions import XBridgeCLIException
 from xbridge_cli.utils import (
@@ -36,12 +37,12 @@ _DOCKER_COMPOSE_FILE = os.path.abspath(
 
 _DOCKER_COMPOSE = ["docker", "compose", "-f", _DOCKER_COMPOSE_FILE]
 
-_START_UP_TIME = 10  # seconds
+_START_UP_TIME = 30  # seconds
 _WAIT_INCREMENT = 0.5  # seconds
 
 
 def _wait_for_process(
-    process: subprocess.Popen[bytes],
+    subprocess_process: subprocess.Popen[bytes],
     name: str,
     http_ip: str,
     http_port: int,
@@ -50,7 +51,10 @@ def _wait_for_process(
 ) -> None:
     http_url = f"http://{http_ip}:{http_port}"
     time_waited = 0.0
+    process = psutil.Process(pid=subprocess_process.pid)
     while time_waited < _START_UP_TIME:
+        if process.status() == psutil.STATUS_ZOMBIE:
+            break
         try:
             request = {"method": "server_info"}
             httpx.post(http_url, json=request)
