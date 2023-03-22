@@ -3,6 +3,7 @@ import os
 from sys import platform
 
 import click
+from xrpl import CryptoAlgorithm
 from xrpl.wallet import Wallet
 
 from xbridge_cli.server.config.config import _generate_template, _get_currency
@@ -127,7 +128,7 @@ def generate_prod_witness_config(
     issuing_chain_ip, issuing_chain_port = issuing_chain.split(":")
 
     if signing_seed_param == "":
-        signing_seed = Wallet.create().seed
+        signing_seed = Wallet.create(crypto_algorithm=CryptoAlgorithm.SECP256K1).seed
     else:
         signing_seed = signing_seed_param
 
