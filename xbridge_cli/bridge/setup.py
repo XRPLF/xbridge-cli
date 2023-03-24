@@ -19,6 +19,7 @@ from xrpl.models import (
     Currency,
     IssuedCurrency,
     Payment,
+    ServerInfo,
     ServerState,
     SignerEntry,
     SignerListSet,
@@ -173,6 +174,21 @@ def setup_bridge(
     bootstrap_locking = bootstrap_config["LockingChain"]
     bootstrap_issuing = bootstrap_config["IssuingChain"]
 
+    locking_endpoint = bootstrap_locking["Endpoint"]
+    locking_url = f"http://{locking_endpoint['Host']}:{locking_endpoint['JsonRPCPort']}"
+    locking_client = JsonRpcClient(locking_url)
+
+    issuing_endpoint = bootstrap_issuing["Endpoint"]
+    issuing_url = f"http://{issuing_endpoint['Host']}:{issuing_endpoint['JsonRPCPort']}"
+    issuing_client = JsonRpcClient(issuing_url)
+
+    locking_server_info = locking_client.request(ServerInfo())
+    locking_validators = locking_server_info.result["info"]["validation_quorum"]
+    if locking_validators != 0 and close_ledgers:
+        raise XBridgeCLIException(
+            "Must use `--no-close-ledgers` on a non-standalone node."
+        )
+
     locking_door = bootstrap_locking["DoorAccount"]["Address"]
     locking_issue = bootstrap_locking["BridgeIssue"]
     issuing_door = bootstrap_issuing["DoorAccount"]["Address"]
@@ -204,14 +220,6 @@ def setup_bridge(
                 raise XBridgeCLIException(
                     "Must include `funding_seed` for external XRP-XRP bridge."
                 )
-
-    locking_endpoint = bootstrap_locking["Endpoint"]
-    locking_url = f"http://{locking_endpoint['Host']}:{locking_endpoint['JsonRPCPort']}"
-    locking_client = JsonRpcClient(locking_url)
-
-    issuing_endpoint = bootstrap_issuing["Endpoint"]
-    issuing_url = f"http://{issuing_endpoint['Host']}:{issuing_endpoint['JsonRPCPort']}"
-    issuing_client = JsonRpcClient(issuing_url)
 
     accounts_locking_check = set(
         [locking_door]
