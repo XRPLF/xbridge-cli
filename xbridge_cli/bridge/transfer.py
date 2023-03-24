@@ -20,9 +20,6 @@ from xrpl.wallet import Wallet
 from xbridge_cli.exceptions import XBridgeCLIException
 from xbridge_cli.utils import get_config, submit_tx, wait_for_attestations
 
-_ATTESTATION_TIME_LIMIT = 10  # in seconds
-_WAIT_STEP_LENGTH = 0.05
-
 
 def _submit_tx(
     tx: Transaction,

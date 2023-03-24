@@ -3,19 +3,16 @@
 import json
 import os
 from pprint import pformat
-from typing import Any, Dict, List, Literal, Optional, TypedDict, Union, cast
+from typing import List, Optional
 
 import click
 from xrpl import CryptoAlgorithm
 from xrpl.account import does_account_exist
 from xrpl.clients import JsonRpcClient
-from xrpl.core.binarycodec import encode
-from xrpl.core.keypairs import sign
 from xrpl.models import (
     XRP,
     AccountSet,
     AccountSetFlag,
-    Amount,
     Currency,
     IssuedCurrency,
     Payment,
@@ -28,7 +25,6 @@ from xrpl.models import (
     XChainBridge,
     XChainCreateBridge,
 )
-from xrpl.models.transactions.transaction import transaction_json_to_binary_codec_form
 from xrpl.wallet import Wallet
 
 from xbridge_cli.exceptions import XBridgeCLIException
@@ -43,42 +39,6 @@ from xbridge_cli.utils import (
 _GENESIS_ACCOUNT = "rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh"
 _GENESIS_SEED = "snoPBrXtMeMyMHUVTgbuqAfg1SUTb"
 _GENESIS_WALLET = Wallet(_GENESIS_SEED, 0)
-
-
-class _UnsignedAttestation(TypedDict):
-    xchain_bridge: Dict[str, Any]
-    other_chain_source: str
-    amount: Amount
-    attestation_reward_account: str
-    was_locking_chain_send: Union[Literal[0], Literal[1]]
-    xchain_account_create_count: str
-    destination: str
-    signature_reward: Amount
-
-
-class _SignedAttestation(_UnsignedAttestation):
-    public_key: str
-    signature: str
-
-
-def _sign_attestation(
-    attestation: _UnsignedAttestation,
-    wallet: Wallet,
-) -> _SignedAttestation:
-    attestation_xrpl = transaction_json_to_binary_codec_form(
-        cast(Dict[str, Any], attestation)
-    )
-    encoded_obj = encode(attestation_xrpl)
-    signature = sign(bytes.fromhex(encoded_obj), wallet.private_key)
-    signed_attestation: _SignedAttestation = cast(
-        _SignedAttestation,
-        {
-            **attestation,
-            "signature": signature,
-            "public_key": wallet.public_key,
-        },
-    )
-    return signed_attestation
 
 
 @click.command(name="build")
