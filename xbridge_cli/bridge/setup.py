@@ -84,6 +84,12 @@ _GENESIS_WALLET = Wallet(_GENESIS_SEED, 0)
     ),
 )
 @click.option(
+    "--skip",
+    type=int,
+    default=0,
+    help="The number of steps to skip.",  # TODO: document better
+)
+@click.option(
     "-v",
     "--verbose",
     help="Whether or not to print more verbose information. Also supports `-vv`.",
@@ -93,6 +99,7 @@ def setup_bridge(
     name: str,
     bootstrap: str,
     signature_reward: str,
+    skip: int = 0,
     funding_seed: Optional[str] = None,
     funding_algorithm: Optional[str] = None,
     close_ledgers: bool = True,
@@ -101,21 +108,6 @@ def setup_bridge(
     """
     Keep track of a bridge between a locking chain and issuing chain.
     \f
-
-    Args:
-        name: The name of the bridge (used for differentiation purposes).
-        bootstrap: The filepath to the bootstrap config file.
-        signature_reward: The reward for witnesses providing a signature.
-        funding_seed: The master key of an account on the locking chain that can fund
-            accounts on the issuing chain. This is only needed for an XRP-XRP bridge.
-            If not provided, uses the genesis seed.
-        funding_algorithm: The algorithm used to generate the keypair from the funding
-            seed.
-        close_ledgers: Whether to close ledgers manually (via `ledger_accept`) or wait
-            for ledgers to close automatically. A standalone node requires ledgers to
-            be closed; an external network does not support ledger closing.
-        verbose: Whether or not to print more verbose information. Add more v's for
-            more verbosity.
 
     Raises:
         XBridgeCLIException: If an account on the locking chain doesn't exist
@@ -248,39 +240,43 @@ def setup_bridge(
     transactions: List[Transaction] = []
 
     # create the trustline (if IOU)
-    if bridge_obj.locking_chain_issue != XRP():
-        assert isinstance(bridge_obj.locking_chain_issue, IssuedCurrency)
+    if skip <= 0:
+        if bridge_obj.locking_chain_issue != XRP():
+            assert isinstance(bridge_obj.locking_chain_issue, IssuedCurrency)
+            transactions.append(
+                TrustSet(
+                    account=locking_door,
+                    limit_amount=bridge_obj.locking_chain_issue.to_amount("1000000000"),
+                )
+            )
+
+    if skip <= 1:
+        # create the bridge
+        min_create2_rippled = str(min_create2) if min_create2 is not None else None
         transactions.append(
-            TrustSet(
+            XChainCreateBridge(
                 account=locking_door,
-                limit_amount=bridge_obj.locking_chain_issue.to_amount("1000000000"),
+                xchain_bridge=bridge_obj,
+                signature_reward=signature_reward,
+                min_account_create_amount=min_create2_rippled,
             )
         )
 
-    # create the bridge
-    min_create2_rippled = str(min_create2) if min_create2 is not None else None
-    transactions.append(
-        XChainCreateBridge(
-            account=locking_door,
-            xchain_bridge=bridge_obj,
-            signature_reward=signature_reward,
-            min_account_create_amount=min_create2_rippled,
+    if skip <= 2:
+        # set up multisign on the door account
+        transactions.append(
+            SignerListSet(
+                account=locking_door,
+                signer_quorum=max(1, len(signer_entries) - 1),
+                signer_entries=signer_entries,
+            )
         )
-    )
 
-    # set up multisign on the door account
-    transactions.append(
-        SignerListSet(
-            account=locking_door,
-            signer_quorum=max(1, len(signer_entries) - 1),
-            signer_entries=signer_entries,
+    if skip <= 3:
+        # disable the master key
+        transactions.append(
+            AccountSet(account=locking_door, set_flag=AccountSetFlag.ASF_DISABLE_MASTER)
         )
-    )
-
-    # disable the master key
-    transactions.append(
-        AccountSet(account=locking_door, set_flag=AccountSetFlag.ASF_DISABLE_MASTER)
-    )
 
     # submit transactions
     submit_tx(
@@ -294,53 +290,57 @@ def setup_bridge(
     ###################################################################################
     # set up issuing chain
 
-    # create the bridge
-    min_create1_rippled = str(min_create1) if min_create2 is not None else None
-    create_tx2 = XChainCreateBridge(
-        account=issuing_door,
-        xchain_bridge=bridge_obj,
-        signature_reward=signature_reward,
-        min_account_create_amount=min_create1_rippled,
-    )
-    submit_tx(create_tx2, issuing_client, issuing_door_wallet, verbose, close_ledgers)
-
-    if bridge_obj.issuing_chain_issue == XRP():
-        # we need to create the witness reward + submission accounts
-
-        assert funding_seed is not None  # for typing purposes - checked earlier
-        funding_wallet_algo = (
-            CryptoAlgorithm(funding_algorithm) if funding_algorithm else None
+    if skip <= 4:
+        # create the bridge
+        min_create1_rippled = str(min_create1) if min_create2 is not None else None
+        create_tx2 = XChainCreateBridge(
+            account=issuing_door,
+            xchain_bridge=bridge_obj,
+            signature_reward=signature_reward,
+            min_account_create_amount=min_create1_rippled,
         )
-        funding_wallet = Wallet(funding_seed, 0, algorithm=funding_wallet_algo)
+        submit_tx(
+            create_tx2, issuing_client, issuing_door_wallet, verbose, close_ledgers
+        )
 
-        # TODO: add param to customize amount
-        amount = str(min_create2 * 2)  # submit accounts need spare funds
-        total_amount = 0
+    if skip <= 5:
+        if bridge_obj.issuing_chain_issue == XRP():
+            # we need to create the witness reward + submission accounts
 
-        # create the accounts
-        acct_txs: List[Transaction] = []
-        # send the funds for the accounts on the issuing chain from the genesis account
-        for account in accounts_issuing_check:
-            acct_txs.append(
-                Payment(
-                    account=_GENESIS_ACCOUNT,
-                    destination=account,
-                    amount=amount,
+            assert funding_seed is not None  # for typing purposes - checked earlier
+            funding_wallet_algo = (
+                CryptoAlgorithm(funding_algorithm) if funding_algorithm else None
+            )
+            funding_wallet = Wallet(funding_seed, 0, algorithm=funding_wallet_algo)
+
+            # TODO: add param to customize amount
+            amount = str(min_create2 * 2)  # submit accounts need spare funds
+            total_amount = 0
+
+            # create the accounts
+            acct_txs: List[Transaction] = []
+            # send the funds for the accounts on the issuing chain from the genesis account
+            for account in accounts_issuing_check:
+                acct_txs.append(
+                    Payment(
+                        account=_GENESIS_ACCOUNT,
+                        destination=account,
+                        amount=amount,
+                    )
                 )
-            )
-            total_amount += int(amount)
-        submit_tx(acct_txs, issuing_client, _GENESIS_WALLET, verbose, close_ledgers)
+                total_amount += int(amount)
+            submit_tx(acct_txs, issuing_client, _GENESIS_WALLET, verbose, close_ledgers)
 
-        # set up the attestations for the commit
-        for account in accounts_issuing_check:
-            door_payment = Payment(
-                account=funding_wallet.classic_address,
-                destination=locking_door,
-                amount=str(total_amount),
-            )
-            submit_tx(
-                door_payment, locking_client, funding_wallet, verbose, close_ledgers
-            )
+            # set up the attestations for the commit
+            for account in accounts_issuing_check:
+                door_payment = Payment(
+                    account=funding_wallet.classic_address,
+                    destination=locking_door,
+                    amount=str(total_amount),
+                )
+                submit_tx(
+                    door_payment, locking_client, funding_wallet, verbose, close_ledgers
+                )
 
     # set up multisign on the door account
     signer_tx2 = SignerListSet(
