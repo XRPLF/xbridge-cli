@@ -9,6 +9,7 @@ from xrpl.models import (
     Currency,
     IssuedCurrency,
     Response,
+    ServerInfo,
     Transaction,
     Tx,
     XChainCommit,
@@ -152,6 +153,13 @@ def send_transfer(
         src_client = issuing_client
         dst_client = locking_client
         from_issue = bridge_obj.issuing_chain_issue
+
+    locking_server_info = locking_client.request(ServerInfo())
+    locking_validators = locking_server_info.result["info"]["validation_quorum"]
+    if locking_validators != 0 and close_ledgers:
+        raise XBridgeCLIException(
+            "Must use `--no-close-ledgers` on a non-standalone node."
+        )
 
     if isinstance(from_issue, IssuedCurrency):
         original_issue: Currency = from_issue
