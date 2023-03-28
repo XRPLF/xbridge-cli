@@ -3,32 +3,27 @@
 import json
 import os
 from pprint import pformat
-from typing import Any, Dict, List, Literal, Optional, TypedDict, Union, cast
+from typing import List, Optional
 
 import click
 from xrpl import CryptoAlgorithm
 from xrpl.account import does_account_exist
 from xrpl.clients import JsonRpcClient
-from xrpl.core.binarycodec import encode
-from xrpl.core.keypairs import sign
 from xrpl.models import (
     XRP,
     AccountSet,
     AccountSetFlag,
-    Amount,
     Currency,
     IssuedCurrency,
+    Payment,
     ServerState,
     SignerEntry,
     SignerListSet,
     Transaction,
     TrustSet,
-    XChainAccountCreateCommit,
-    XChainAddAccountCreateAttestation,
     XChainBridge,
     XChainCreateBridge,
 )
-from xrpl.models.transactions.transaction import transaction_json_to_binary_codec_form
 from xrpl.wallet import Wallet
 
 from xbridge_cli.exceptions import XBridgeCLIException
@@ -39,42 +34,11 @@ from xbridge_cli.utils import (
     check_bridge_exists,
     submit_tx,
 )
+from xbridge_cli.utils.misc import is_standalone_network
 
-
-class _UnsignedAttestation(TypedDict):
-    xchain_bridge: Dict[str, Any]
-    other_chain_source: str
-    amount: Amount
-    attestation_reward_account: str
-    was_locking_chain_send: Union[Literal[0], Literal[1]]
-    xchain_account_create_count: str
-    destination: str
-    signature_reward: Amount
-
-
-class _SignedAttestation(_UnsignedAttestation):
-    public_key: str
-    signature: str
-
-
-def _sign_attestation(
-    attestation: _UnsignedAttestation,
-    wallet: Wallet,
-) -> _SignedAttestation:
-    attestation_xrpl = transaction_json_to_binary_codec_form(
-        cast(Dict[str, Any], attestation)
-    )
-    encoded_obj = encode(attestation_xrpl)
-    signature = sign(bytes.fromhex(encoded_obj), wallet.private_key)
-    signed_attestation: _SignedAttestation = cast(
-        _SignedAttestation,
-        {
-            **attestation,
-            "signature": signature,
-            "public_key": wallet.public_key,
-        },
-    )
-    return signed_attestation
+_GENESIS_ACCOUNT = "rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh"
+_GENESIS_SEED = "snoPBrXtMeMyMHUVTgbuqAfg1SUTb"
+_GENESIS_WALLET = Wallet(_GENESIS_SEED, 0)
 
 
 @click.command(name="build")
@@ -170,6 +134,19 @@ def setup_bridge(
     bootstrap_locking = bootstrap_config["LockingChain"]
     bootstrap_issuing = bootstrap_config["IssuingChain"]
 
+    locking_endpoint = bootstrap_locking["Endpoint"]
+    locking_url = f"http://{locking_endpoint['Host']}:{locking_endpoint['JsonRPCPort']}"
+    locking_client = JsonRpcClient(locking_url)
+
+    issuing_endpoint = bootstrap_issuing["Endpoint"]
+    issuing_url = f"http://{issuing_endpoint['Host']}:{issuing_endpoint['JsonRPCPort']}"
+    issuing_client = JsonRpcClient(issuing_url)
+
+    if not is_standalone_network(locking_client) and close_ledgers:
+        raise XBridgeCLIException(
+            "Must use `--no-close-ledgers` on a non-standalone node."
+        )
+
     locking_door = bootstrap_locking["DoorAccount"]["Address"]
     locking_issue = bootstrap_locking["BridgeIssue"]
     issuing_door = bootstrap_issuing["DoorAccount"]["Address"]
@@ -201,14 +178,6 @@ def setup_bridge(
                 raise XBridgeCLIException(
                     "Must include `funding_seed` for external XRP-XRP bridge."
                 )
-
-    locking_endpoint = bootstrap_locking["Endpoint"]
-    locking_url = f"http://{locking_endpoint['Host']}:{locking_endpoint['JsonRPCPort']}"
-    locking_client = JsonRpcClient(locking_url)
-
-    issuing_endpoint = bootstrap_issuing["Endpoint"]
-    issuing_url = f"http://{issuing_endpoint['Host']}:{issuing_endpoint['JsonRPCPort']}"
-    issuing_client = JsonRpcClient(issuing_url)
 
     accounts_locking_check = set(
         [locking_door]
@@ -334,26 +303,7 @@ def setup_bridge(
     submit_tx(create_tx2, issuing_client, issuing_door_wallet, verbose, close_ledgers)
 
     if bridge_obj.issuing_chain_issue == XRP():
-        # we need to create the witness reward + submission accounts via the bridge
-
-        # helper function for submitting the attestations
-        def _submit_attestation(
-            attestation: _SignedAttestation,
-        ) -> None:
-            attestation_tx = XChainAddAccountCreateAttestation.from_dict(
-                {
-                    **attestation,
-                    "account": issuing_door,
-                    "attestation_signer_account": issuing_door,
-                }
-            )
-            submit_tx(
-                attestation_tx,
-                issuing_client,
-                issuing_door_wallet,
-                verbose,
-                close_ledgers,
-            )
+        # we need to create the witness reward + submission accounts
 
         assert funding_seed is not None  # for typing purposes - checked earlier
         funding_wallet_algo = (
@@ -361,41 +311,34 @@ def setup_bridge(
         )
         funding_wallet = Wallet(funding_seed, 0, algorithm=funding_wallet_algo)
 
+        # TODO: add param to customize amount
         amount = str(min_create2 * 2)  # submit accounts need spare funds
-        count = 1
+        total_amount = 0
 
         # create the accounts
         acct_txs: List[Transaction] = []
-        # commit the funds for the account
+        # send the funds for the accounts on the issuing chain from the genesis account
         for account in accounts_issuing_check:
             acct_txs.append(
-                XChainAccountCreateCommit(
-                    account=funding_wallet.classic_address,
-                    xchain_bridge=bridge_obj,
-                    signature_reward=signature_reward,
+                Payment(
+                    account=_GENESIS_ACCOUNT,
                     destination=account,
                     amount=amount,
                 )
             )
-        submit_tx(acct_txs, locking_client, funding_wallet, verbose, close_ledgers)
+            total_amount += int(amount)
+        submit_tx(acct_txs, issuing_client, _GENESIS_WALLET, verbose, close_ledgers)
 
         # set up the attestations for the commit
         for account in accounts_issuing_check:
-            init_attestation = _UnsignedAttestation(
-                xchain_bridge=bridge_obj.to_dict(),
-                other_chain_source=funding_wallet.classic_address,
-                amount=amount,
-                attestation_reward_account=issuing_door,
-                destination=account,
-                signature_reward=signature_reward,
-                was_locking_chain_send=1,
-                xchain_account_create_count=str(count),
+            door_payment = Payment(
+                account=funding_wallet.classic_address,
+                destination=locking_door,
+                amount=str(total_amount),
             )
-            signed_attestation = _sign_attestation(
-                init_attestation, issuing_door_wallet
+            submit_tx(
+                door_payment, locking_client, funding_wallet, verbose, close_ledgers
             )
-            _submit_attestation(signed_attestation)
-            count += 1
 
     # set up multisign on the door account
     signer_tx2 = SignerListSet(

@@ -18,9 +18,7 @@ from xrpl.wallet import Wallet
 
 from xbridge_cli.exceptions import XBridgeCLIException
 from xbridge_cli.utils import get_config, submit_tx, wait_for_attestations
-
-_ATTESTATION_TIME_LIMIT = 10  # in seconds
-_WAIT_STEP_LENGTH = 0.05
+from xbridge_cli.utils.misc import is_standalone_network
 
 
 def _submit_tx(
@@ -152,6 +150,11 @@ def send_transfer(
         src_client = issuing_client
         dst_client = locking_client
         from_issue = bridge_obj.issuing_chain_issue
+
+    if not is_standalone_network(locking_client) and close_ledgers:
+        raise XBridgeCLIException(
+            "Must use `--no-close-ledgers` on a non-standalone node."
+        )
 
     if isinstance(from_issue, IssuedCurrency):
         original_issue: Currency = from_issue

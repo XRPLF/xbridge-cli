@@ -16,6 +16,7 @@ from xbridge_cli.utils import (
     submit_tx,
     wait_for_attestations,
 )
+from xbridge_cli.utils.misc import is_standalone_network
 
 
 @click.command(name="create-account")
@@ -125,6 +126,11 @@ def create_xchain_account(
     else:
         from_client = issuing_client
         to_client = locking_client
+
+    if not is_standalone_network(locking_client) and close_ledgers:
+        raise XBridgeCLIException(
+            "Must use `--no-close-ledgers` on a non-standalone node."
+        )
 
     min_create_account_amount = bridge_config.create_account_amounts[
         0 if from_locking else 1
