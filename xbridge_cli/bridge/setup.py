@@ -16,7 +16,6 @@ from xrpl.models import (
     Currency,
     IssuedCurrency,
     Payment,
-    ServerInfo,
     ServerState,
     SignerEntry,
     SignerListSet,
@@ -35,6 +34,7 @@ from xbridge_cli.utils import (
     check_bridge_exists,
     submit_tx,
 )
+from xbridge_cli.utils.misc import is_standalone_network
 
 _GENESIS_ACCOUNT = "rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh"
 _GENESIS_SEED = "snoPBrXtMeMyMHUVTgbuqAfg1SUTb"
@@ -142,9 +142,7 @@ def setup_bridge(
     issuing_url = f"http://{issuing_endpoint['Host']}:{issuing_endpoint['JsonRPCPort']}"
     issuing_client = JsonRpcClient(issuing_url)
 
-    locking_server_info = locking_client.request(ServerInfo())
-    locking_validators = locking_server_info.result["info"]["validation_quorum"]
-    if locking_validators != 0 and close_ledgers:
+    if is_standalone_network(locking_client) and close_ledgers:
         raise XBridgeCLIException(
             "Must use `--no-close-ledgers` on a non-standalone node."
         )

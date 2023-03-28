@@ -5,7 +5,7 @@ from typing import Optional
 
 import click
 from xrpl import CryptoAlgorithm
-from xrpl.models import AccountInfo, ServerInfo, XChainAccountCreateCommit
+from xrpl.models import AccountInfo, XChainAccountCreateCommit
 from xrpl.utils import drops_to_xrp, xrp_to_drops
 from xrpl.wallet import Wallet
 
@@ -16,6 +16,7 @@ from xbridge_cli.utils import (
     submit_tx,
     wait_for_attestations,
 )
+from xbridge_cli.utils.misc import is_standalone_network
 
 
 @click.command(name="create-account")
@@ -126,9 +127,7 @@ def create_xchain_account(
         from_client = issuing_client
         to_client = locking_client
 
-    locking_server_info = locking_client.request(ServerInfo())
-    locking_validators = locking_server_info.result["info"]["validation_quorum"]
-    if locking_validators != 0 and close_ledgers:
+    if is_standalone_network(locking_client) and close_ledgers:
         raise XBridgeCLIException(
             "Must use `--no-close-ledgers` on a non-standalone node."
         )
