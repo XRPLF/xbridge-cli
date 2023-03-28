@@ -142,7 +142,7 @@ def setup_bridge(
     issuing_url = f"http://{issuing_endpoint['Host']}:{issuing_endpoint['JsonRPCPort']}"
     issuing_client = JsonRpcClient(issuing_url)
 
-    if is_standalone_network(locking_client) and close_ledgers:
+    if not is_standalone_network(locking_client) and close_ledgers:
         raise XBridgeCLIException(
             "Must use `--no-close-ledgers` on a non-standalone node."
         )

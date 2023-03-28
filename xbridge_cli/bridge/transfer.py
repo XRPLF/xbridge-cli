@@ -151,7 +151,7 @@ def send_transfer(
         dst_client = locking_client
         from_issue = bridge_obj.issuing_chain_issue
 
-    if is_standalone_network(locking_client) and close_ledgers:
+    if not is_standalone_network(locking_client) and close_ledgers:
         raise XBridgeCLIException(
             "Must use `--no-close-ledgers` on a non-standalone node."
         )

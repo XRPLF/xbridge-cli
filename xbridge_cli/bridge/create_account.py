@@ -127,7 +127,7 @@ def create_xchain_account(
         from_client = issuing_client
         to_client = locking_client
 
-    if is_standalone_network(locking_client) and close_ledgers:
+    if not is_standalone_network(locking_client) and close_ledgers:
         raise XBridgeCLIException(
             "Must use `--no-close-ledgers` on a non-standalone node."
         )
