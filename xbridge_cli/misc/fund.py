@@ -14,15 +14,17 @@ from xbridge_cli.utils import get_config, submit_tx
 
 @click.command(name="fund")
 @click.argument(
-    "chain",
-    required=True,
-    type=str,
+    "chain", required=True, type=str, help="The chain to fund an account on."
+)
+@click.argument(
+    "amount", type=int, default=1000, help="The amount to fund each account."
 )
 @click.argument(
     "accounts",
     required=True,
     type=str,
     nargs=-1,
+    help="The account(s) to fund.",
 )
 @click.option(
     "-v",
@@ -30,7 +32,9 @@ from xbridge_cli.utils import get_config, submit_tx
     is_flag=True,
     help="Whether or not to print more verbose information.",
 )
-def fund_account(chain: str, accounts: List[str], verbose: bool = False) -> None:
+def fund_account(
+    chain: str, accounts: List[str], amount: int = 1000, verbose: bool = False
+) -> None:
     """
     Of the form `xbridge-cli fund CHAIN ACCOUNT1 [ACCOUNT2 ...].
 
@@ -41,6 +45,7 @@ def fund_account(chain: str, accounts: List[str], verbose: bool = False) -> None
     Args:
         chain: The chain to fund an account on.
         accounts: The account(s) to fund.
+        amount: The amount to fund each account.
         verbose: Whether or not to print more verbose information.
 
     Raises:
@@ -61,7 +66,7 @@ def fund_account(chain: str, accounts: List[str], verbose: bool = False) -> None
             Payment(
                 account=wallet.classic_address,
                 destination=account,
-                amount=xrp_to_drops(1000),
+                amount=xrp_to_drops(amount),
             )
         )
     submit_tx(payments, client, wallet)
