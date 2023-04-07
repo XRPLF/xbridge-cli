@@ -424,23 +424,23 @@ def setup_bridge(
     # set up multisign on the door account
 
     # check if multisign exists
-    signer_list_exists = False
-    issuing_account_info = locking_client.request(
-        AccountInfo(account=locking_door, signer_lists=True)
+    issuing_signer_list_exists = False
+    issuing_account_info = issuing_client.request(
+        AccountInfo(account=issuing_door, signer_lists=True)
     ).result["account_data"]
     issuing_signer_list = issuing_account_info["signer_lists"]
     if len(issuing_signer_list) > 0:
         assert len(issuing_signer_list) == 1
-        locking_signer_entries = issuing_signer_list[0]["SignerEntries"]
+        issuing_signer_entries = issuing_signer_list[0]["SignerEntries"]
         if all(
             SignerEntry.from_xrpl(entry) in signer_entries
-            for entry in locking_signer_entries
+            for entry in issuing_signer_entries
         ):
-            if len(locking_signer_entries) == len(signer_entries):
-                signer_list_exists = True
+            if len(issuing_signer_entries) == len(signer_entries):
+                issuing_signer_list_exists = True
 
     # set up if not
-    if not signer_list_exists:
+    if not issuing_signer_list_exists:
         issuing_txs.append(
             SignerListSet(
                 account=issuing_door,
