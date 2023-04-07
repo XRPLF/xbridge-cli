@@ -163,12 +163,12 @@ def send_transfer(
 
     try:
         from_wallet = Wallet(from_account, 0)
-    except ValueError:
-        raise XBridgeCLIException(f"Invalid `from` seed: {from_account}")
+    except ValueError as error:
+        raise XBridgeCLIException(f"Invalid `from` seed: {from_account}") from error
     try:
         to_wallet = Wallet(to_account, 0)
-    except ValueError:
-        raise XBridgeCLIException(f"Invalid `to` seed: {to_account}")
+    except ValueError as error:
+        raise XBridgeCLIException(f"Invalid `to` seed: {to_account}") from error
 
     transfer_amount = original_issue.to_amount(amount)
 
