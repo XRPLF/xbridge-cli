@@ -13,18 +13,15 @@ from xbridge_cli.utils import get_config, submit_tx
 
 
 @click.command(name="fund")
-@click.argument(
-    "chain", required=True, type=str, help="The chain to fund an account on."
-)
-@click.argument(
-    "amount", type=int, default=1000, help="The amount to fund each account."
-)
+@click.argument("chain", required=True, type=str)
 @click.argument(
     "accounts",
     required=True,
     type=str,
     nargs=-1,
-    help="The account(s) to fund.",
+)
+@click.option(
+    "--amount", type=int, default=1000, help="The amount to fund each account."
 )
 @click.option(
     "-v",
