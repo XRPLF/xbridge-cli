@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Fixed a key algorithm-seed type mismatch for IOU bridge config generation
+- In the `bridge build` command, only submit a tx if it hasn't already been submitted
 
 ## [0.1.0] - 2023-02-22
 
