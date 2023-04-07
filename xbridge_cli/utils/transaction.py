@@ -37,6 +37,8 @@ def submit_tx(
     """
     if isinstance(txs, Transaction):
         txs = [txs]
+    if len(txs) == 0:
+        return []
     if verbose > 0:
         tx_types = ", ".join([tx.transaction_type.value for tx in txs])
         click.secho(f"Submitting {tx_types} tx to {client.url}...", fg="blue")
