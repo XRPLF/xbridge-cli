@@ -9,8 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Updated to match the latest versions of rippled and the witness server
+- Change the `bridge build` flow to use payments instead of `XChainAccountCreateCommit`s
 - In the `bridge build` command, only submit a tx if it hasn't already been submitted
+
+### Fixed
+
+- Handle long server startup times better
+
+## [0.2.0] - 2023-03-20
+
+### Changed
+
+- Updated to match the latest versions of rippled and the witness server
 
 ### Fixed
 
