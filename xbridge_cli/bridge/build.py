@@ -11,6 +11,10 @@ from xrpl.account import does_account_exist
 from xrpl.clients import JsonRpcClient
 from xrpl.models import (
     XRP,
+    AccountInfo,
+    AccountLines,
+    AccountObjects,
+    AccountObjectType,
     AccountSet,
     AccountSetFlag,
     Currency,
@@ -39,6 +43,8 @@ from xbridge_cli.utils.misc import is_standalone_network
 _GENESIS_ACCOUNT = "rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh"
 _GENESIS_SEED = "snoPBrXtMeMyMHUVTgbuqAfg1SUTb"
 _GENESIS_WALLET = Wallet(_GENESIS_SEED, 0)
+
+LSF_DISABLE_MASTER = 0x00100000
 
 
 @click.command(name="build")
@@ -220,9 +226,11 @@ def setup_bridge(
     else:
         min_create1 = None
         min_create2 = None
+    min_create1_rippled = str(min_create1) if min_create1 is not None else None
+    min_create2_rippled = str(min_create2) if min_create2 is not None else None
 
     # set up signer entries for multisign on the door accounts
-    signer_entries = []
+    signer_entries: List[SignerEntry] = []
     for witness_entry in bootstrap_config["Witnesses"]["SignerList"]:
         signer_entries.append(
             SignerEntry(
@@ -243,46 +251,97 @@ def setup_bridge(
 
     ###################################################################################
     # set up locking chain
-    transactions: List[Transaction] = []
+    locking_txs: List[Transaction] = []
 
     # create the trustline (if IOU)
     if bridge_obj.locking_chain_issue != XRP():
         assert isinstance(bridge_obj.locking_chain_issue, IssuedCurrency)
-        transactions.append(
-            TrustSet(
+
+        # check if the trustline already exists
+        account_lines = locking_client.request(AccountLines(locking_door)).result[
+            "lines"
+        ]
+        filtered_lines = [
+            line
+            for line in account_lines
+            if line["account"] == bridge_obj.locking_chain_issue.issuer
+            and line["currency"] == bridge_obj.locking_chain_issue.currency
+        ]
+        # TODO: perhaps add a check to make sure the trustline is large enough
+        if len(filtered_lines) == 0:  # no trustline set yet
+            locking_txs.append(
+                TrustSet(
+                    account=locking_door,
+                    limit_amount=bridge_obj.locking_chain_issue.to_amount("1000000000"),
+                )
+            )
+
+    # create the bridge
+
+    # check if the bridge already exists
+    locking_bridge_exists = False
+    locking_door_objs = locking_client.request(
+        AccountObjects(account=locking_door, type=AccountObjectType.BRIDGE)
+    ).result["account_objects"]
+    if len(locking_door_objs) > 0:
+        assert (
+            len(locking_door_objs) == 1
+        ), "Cannot have multiple bridges on one account"
+        if XChainBridge.from_xrpl(locking_door_objs[0]["XChainBridge"]) == bridge_obj:
+            locking_bridge_exists = True
+        else:
+            raise XBridgeCLIException(
+                f"Locking chain door account {locking_door} already has a bridge."
+            )
+
+    # build if not
+    if not locking_bridge_exists:
+        locking_txs.append(
+            XChainCreateBridge(
                 account=locking_door,
-                limit_amount=bridge_obj.locking_chain_issue.to_amount("1000000000"),
+                xchain_bridge=bridge_obj,
+                signature_reward=signature_reward,
+                min_account_create_amount=min_create2_rippled,
             )
         )
 
-    # create the bridge
-    min_create2_rippled = str(min_create2) if min_create2 is not None else None
-    transactions.append(
-        XChainCreateBridge(
-            account=locking_door,
-            xchain_bridge=bridge_obj,
-            signature_reward=signature_reward,
-            min_account_create_amount=min_create2_rippled,
-        )
-    )
-
     # set up multisign on the door account
-    transactions.append(
-        SignerListSet(
-            account=locking_door,
-            signer_quorum=max(1, len(signer_entries) - 1),
-            signer_entries=signer_entries,
+
+    # check if multisign exists
+    locking_signer_list_exists = False
+    locking_account_info = locking_client.request(
+        AccountInfo(account=locking_door, signer_lists=True)
+    ).result["account_data"]
+    locking_signer_list = locking_account_info["signer_lists"]
+    if len(locking_signer_list) > 0:
+        assert len(locking_signer_list) == 1
+        locking_signer_entries = locking_signer_list[0]["SignerEntries"]
+        if all(
+            SignerEntry.from_xrpl(entry) in signer_entries
+            for entry in locking_signer_entries
+        ):
+            if len(locking_signer_entries) == len(signer_entries):
+                locking_signer_list_exists = True
+
+    # set up if not
+    if not locking_signer_list_exists:
+        locking_txs.append(
+            SignerListSet(
+                account=locking_door,
+                signer_quorum=max(1, len(signer_entries) - 1),
+                signer_entries=signer_entries,
+            )
         )
-    )
 
     # disable the master key
-    transactions.append(
-        AccountSet(account=locking_door, set_flag=AccountSetFlag.ASF_DISABLE_MASTER)
-    )
+    if not locking_account_info["Flags"] & LSF_DISABLE_MASTER:
+        locking_txs.append(
+            AccountSet(account=locking_door, set_flag=AccountSetFlag.ASF_DISABLE_MASTER)
+        )
 
     # submit transactions
     submit_tx(
-        transactions,
+        locking_txs,
         locking_client,
         locking_door_wallet,
         verbose,
@@ -291,16 +350,6 @@ def setup_bridge(
 
     ###################################################################################
     # set up issuing chain
-
-    # create the bridge
-    min_create1_rippled = str(min_create1) if min_create2 is not None else None
-    create_tx2 = XChainCreateBridge(
-        account=issuing_door,
-        xchain_bridge=bridge_obj,
-        signature_reward=signature_reward,
-        min_account_create_amount=min_create1_rippled,
-    )
-    submit_tx(create_tx2, issuing_client, issuing_door_wallet, verbose, close_ledgers)
 
     if bridge_obj.issuing_chain_issue == XRP():
         # we need to create the witness reward + submission accounts
@@ -319,18 +368,19 @@ def setup_bridge(
         acct_txs: List[Transaction] = []
         # send the funds for the accounts on the issuing chain from the genesis account
         for account in accounts_issuing_check:
-            acct_txs.append(
-                Payment(
-                    account=_GENESIS_ACCOUNT,
-                    destination=account,
-                    amount=amount,
+            if not does_account_exist(account, issuing_client):
+                acct_txs.append(
+                    Payment(
+                        account=_GENESIS_ACCOUNT,
+                        destination=account,
+                        amount=amount,
+                    )
                 )
-            )
-            total_amount += int(amount)
+                total_amount += int(amount)
         submit_tx(acct_txs, issuing_client, _GENESIS_WALLET, verbose, close_ledgers)
 
         # set up the attestations for the commit
-        for account in accounts_issuing_check:
+        if total_amount > 0:
             door_payment = Payment(
                 account=funding_wallet.classic_address,
                 destination=locking_door,
@@ -340,21 +390,74 @@ def setup_bridge(
                 door_payment, locking_client, funding_wallet, verbose, close_ledgers
             )
 
+    issuing_txs: List[Transaction] = []
+
+    # create the bridge
+
+    # check if the bridge already exists
+    issuing_bridge_exists = False
+    issuing_door_objs = issuing_client.request(
+        AccountObjects(account=issuing_door, type=AccountObjectType.BRIDGE)
+    ).result["account_objects"]
+    if len(issuing_door_objs) > 0:
+        assert (
+            len(issuing_door_objs) == 1
+        ), "Cannot have multiple bridges on one account"
+        if XChainBridge.from_xrpl(issuing_door_objs[0]["XChainBridge"]) == bridge_obj:
+            issuing_bridge_exists = True
+        else:
+            raise XBridgeCLIException(
+                f"Issuing chain door account {issuing_door} already has a bridge."
+            )
+
+    # build if not
+    if not issuing_bridge_exists:
+        issuing_txs.append(
+            XChainCreateBridge(
+                account=issuing_door,
+                xchain_bridge=bridge_obj,
+                signature_reward=signature_reward,
+                min_account_create_amount=min_create1_rippled,
+            )
+        )
+
     # set up multisign on the door account
-    signer_tx2 = SignerListSet(
-        account=issuing_door,
-        signer_quorum=max(1, len(signer_entries) - 1),
-        signer_entries=signer_entries,
-    )
+
+    # check if multisign exists
+    issuing_signer_list_exists = False
+    issuing_account_info = issuing_client.request(
+        AccountInfo(account=issuing_door, signer_lists=True)
+    ).result["account_data"]
+    issuing_signer_list = issuing_account_info["signer_lists"]
+    if len(issuing_signer_list) > 0:
+        assert len(issuing_signer_list) == 1
+        issuing_signer_entries = issuing_signer_list[0]["SignerEntries"]
+        if all(
+            SignerEntry.from_xrpl(entry) in signer_entries
+            for entry in issuing_signer_entries
+        ):
+            if len(issuing_signer_entries) == len(signer_entries):
+                issuing_signer_list_exists = True
+
+    # set up if not
+    if not issuing_signer_list_exists:
+        issuing_txs.append(
+            SignerListSet(
+                account=issuing_door,
+                signer_quorum=max(1, len(signer_entries) - 1),
+                signer_entries=signer_entries,
+            )
+        )
 
     # disable the master key
-    disable_master_tx2 = AccountSet(
-        account=issuing_door, set_flag=AccountSetFlag.ASF_DISABLE_MASTER
-    )
+    if not issuing_account_info["Flags"] & LSF_DISABLE_MASTER:
+        issuing_txs.append(
+            AccountSet(account=issuing_door, set_flag=AccountSetFlag.ASF_DISABLE_MASTER)
+        )
 
     # submit transactions
     submit_tx(
-        [signer_tx2, disable_master_tx2],
+        issuing_txs,
         issuing_client,
         issuing_door_wallet,
         verbose,
