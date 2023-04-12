@@ -4,7 +4,7 @@ import click
 
 from xbridge_cli.bridge import bridge
 from xbridge_cli.misc.explorer import launch_explorer
-from xbridge_cli.misc.fund import fund_account
+from xbridge_cli.misc.fund import fund_accounts, fund_bootstrap_accounts
 from xbridge_cli.misc.trust import set_trustline
 from xbridge_cli.server import server
 
@@ -20,7 +20,8 @@ def main() -> None:
 main.add_command(server)
 main.add_command(bridge)
 
-main.add_command(fund_account)
+main.add_command(fund_accounts)
+main.add_command(fund_bootstrap_accounts)
 main.add_command(launch_explorer)
 main.add_command(set_trustline)
 
