@@ -98,28 +98,6 @@ def _create_config_files() -> None:
     assert result.exit_code == 0, result.output
 
 
-def _fund_locking_accounts(cli_runner: CliRunner) -> None:
-    raw_xchain_config_dir = os.getenv("XCHAIN_CONFIG_DIR")
-    if raw_xchain_config_dir is None:
-        raise Exception("Error: $XCHAIN_CONFIG_DIR is not defined.")
-    xchain_config_dir = os.path.abspath(raw_xchain_config_dir)
-    with open(os.path.join(xchain_config_dir, "bridge_bootstrap.json")) as f:
-        bootstrap = json.load(f)
-
-    locking_door = bootstrap["LockingChain"]["DoorAccount"]["Address"]
-
-    # fund needed accounts on the locking chain
-    accounts_locking_fund = set(
-        [locking_door]
-        + bootstrap["LockingChain"]["WitnessRewardAccounts"]
-        + bootstrap["LockingChain"]["WitnessSubmitAccounts"]
-    )
-    fund_result = cli_runner.invoke(
-        main, ["fund", "locking_chain", *accounts_locking_fund]
-    )
-    assert fund_result.exit_code == 0, fund_result.output
-
-
 @contextmanager
 def _base_fixture():
     _reset_cli_config()
@@ -148,8 +126,6 @@ def runner():
 @pytest.fixture(scope="class")
 def create_bridge():
     with _base_fixture() as cli_runner:
-        _fund_locking_accounts(cli_runner)
-
         # build bridge
         build_result = cli_runner.invoke(
             main,
@@ -157,6 +133,7 @@ def create_bridge():
                 "bridge",
                 "build",
                 "--name=test_bridge",
+                "--fund-locking",
                 "--verbose",
             ],
         )
@@ -167,6 +144,5 @@ def create_bridge():
 
 @pytest.fixture(scope="function")
 def bridge_build_setup():
-    with _base_fixture() as cli_runner:
-        _fund_locking_accounts(cli_runner)
+    with _base_fixture():
         yield
