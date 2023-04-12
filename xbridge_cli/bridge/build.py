@@ -63,7 +63,7 @@ LSF_DISABLE_MASTER = 0x00100000
     help="The filepath to the bootstrap config file.",
 )
 @click.option(
-    "--signature_reward",
+    "--signature-reward",
     default="100",
     help="The reward for witnesses providing a signature.",
 )
@@ -75,7 +75,7 @@ LSF_DISABLE_MASTER = 0x00100000
     ),
 )
 @click.option(
-    "--funding_algorithm",
+    "--funding-algorithm",
     type=CryptoAlgorithmChoice,
     help="The algorithm used to generate the keypair from the funding seed.",
 )

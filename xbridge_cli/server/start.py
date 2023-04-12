@@ -219,7 +219,8 @@ def start_server(
 
 @click.command(name="start-all")
 @click.option(
-    "--config_dir",
+    "--config-dir",
+    "config_dir",
     envvar="XCHAIN_CONFIG_DIR",
     required=True,
     prompt=True,
@@ -227,7 +228,8 @@ def start_server(
     help="The folder in which config files are storeds.",
 )
 @click.option(
-    "--rippled_exe",
+    "--rippled-exe",
+    "rippled_exe",
     envvar="RIPPLED_EXE",
     required=True,
     prompt=True,
@@ -235,7 +237,7 @@ def start_server(
     help="The filepath to the rippled executable.",
 )
 @click.option(
-    "--witnessd_exe",
+    "--witnessd-exe",
     envvar="WITNESSD_EXE",
     required=True,
     prompt=True,
