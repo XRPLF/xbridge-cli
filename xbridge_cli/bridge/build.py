@@ -68,7 +68,7 @@ LSF_DISABLE_MASTER = 0x00100000
     help="The reward for witnesses providing a signature.",
 )
 @click.option(
-    "--funding_seed",
+    "--funding-seed",
     help=(
         "The master key of an account on the locking chain that can fund accounts on "
         "the issuing chain. This is only needed for an XRP-XRP bridge."
