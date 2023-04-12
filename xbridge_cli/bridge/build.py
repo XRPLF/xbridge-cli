@@ -95,6 +95,12 @@ LSF_DISABLE_MASTER = 0x00100000
     help="Whether or not to print more verbose information. Also supports `-vv`.",
     count=True,
 )
+@click.option(
+    "-s",
+    "--silent",
+    is_flag=True,
+    help="Whether or not to print no information. Cannot be used with -v.",
+)
 def setup_bridge(
     name: str,
     bootstrap: str,
@@ -103,6 +109,7 @@ def setup_bridge(
     funding_algorithm: Optional[str] = None,
     close_ledgers: bool = True,
     verbose: int = 0,
+    silent: bool = False,
 ) -> None:
     """
     Keep track of a bridge between a locking chain and issuing chain.
@@ -122,11 +129,15 @@ def setup_bridge(
             be closed; an external network does not support ledger closing.
         verbose: Whether or not to print more verbose information. Add more v's for
             more verbosity.
+        silent: Whether or not to print no information. Cannot be used with -v.
 
     Raises:
         XBridgeCLIException: If an account on the locking chain doesn't exist
             (namely, the witness reward or submit accounts or the door account).
     """  # noqa: D301
+    if silent and verbose > 0:
+        raise XBridgeCLIException("Cannot have verbose and silent flags.")
+    verbosity = 0 if silent else 1 + verbose
     # check name
     if check_bridge_exists(name):
         raise XBridgeCLIException(f"Bridge named {name} already exists.")
@@ -344,7 +355,7 @@ def setup_bridge(
         locking_txs,
         locking_client,
         locking_door_wallet,
-        verbose,
+        verbosity,
         close_ledgers,
     )
 
@@ -377,7 +388,7 @@ def setup_bridge(
                     )
                 )
                 total_amount += int(amount)
-        submit_tx(acct_txs, issuing_client, _GENESIS_WALLET, verbose, close_ledgers)
+        submit_tx(acct_txs, issuing_client, _GENESIS_WALLET, verbosity, close_ledgers)
 
         # set up the attestations for the commit
         if total_amount > 0:
@@ -387,7 +398,7 @@ def setup_bridge(
                 amount=str(total_amount),
             )
             submit_tx(
-                door_payment, locking_client, funding_wallet, verbose, close_ledgers
+                door_payment, locking_client, funding_wallet, verbosity, close_ledgers
             )
 
     issuing_txs: List[Transaction] = []
@@ -460,7 +471,7 @@ def setup_bridge(
         issuing_txs,
         issuing_client,
         issuing_door_wallet,
-        verbose,
+        verbosity,
         close_ledgers,
     )
 
@@ -475,6 +486,6 @@ def setup_bridge(
         "create_account_amounts": (str(min_create2), str(min_create1)),
     }
 
-    if verbose:
+    if verbosity > 1:
         click.echo(pformat(bridge_data))
     add_bridge(bridge_data)
