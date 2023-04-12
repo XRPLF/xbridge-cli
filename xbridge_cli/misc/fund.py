@@ -1,6 +1,5 @@
 """Fund an account from the genesis account."""
 
-import json
 from pprint import pformat
 from typing import List
 
@@ -30,10 +29,12 @@ from xbridge_cli.utils import get_config, submit_tx
     is_flag=True,
     help="Whether or not to print more verbose information.",
 )
-def fund_accounts(
+def fund_account(
     chain: str, accounts: List[str], amount: int = 1000, verbose: bool = False
 ) -> None:
     """
+    Of the form `xbridge-cli fund CHAIN ACCOUNT1 [ACCOUNT2 ...].
+
     Fund an account from the genesis account. Only works on a normal standalone rippled
     node.
     \f
@@ -69,60 +70,3 @@ def fund_accounts(
     if verbose:
         for account in accounts:
             click.echo(pformat(client.request(AccountInfo(account=account)).result))
-
-
-@click.command(name="fund-bootstrap")
-@click.argument("chain", required=True, type=str)
-@click.argument(
-    "bootstrap",
-    required=True,
-    type=click.Path(exists=True),
-)
-@click.option(
-    "--amount", type=int, default=1000, help="The amount to fund each account."
-)
-@click.option(
-    "-v",
-    "--verbose",
-    is_flag=True,
-    help="Whether or not to print more verbose information.",
-)
-@click.pass_context
-def fund_bootstrap_accounts(
-    ctx: click.Context,
-    chain: str,
-    bootstrap: str,
-    amount: int = 1000,
-    verbose: bool = False,
-) -> None:
-    """
-    Fund all the locking chain accounts in the bootstrap file from the genesis account.
-    Only works on a normal standalone rippled node.
-    \f
-
-    Args:
-        ctx: The click context.
-        chain: The chain to fund an account on.
-        bootstrap: The bootstrap file.
-        amount: The amount to fund each account.
-        verbose: Whether or not to print more verbose information.
-
-    Raises:
-        XBridgeCLIException: If the chain is the issuing chain.
-    """  # noqa: D301
-    with open(bootstrap) as f:
-        bootstrap_config = json.load(f)
-
-    bootstrap_locking = bootstrap_config["LockingChain"]
-    accounts_to_fund = (
-        [bootstrap_locking["DoorAccount"]["Address"]]
-        + bootstrap_locking["WitnessRewardAccounts"]
-        + bootstrap_locking["WitnessSubmitAccounts"]
-    )
-    ctx.invoke(
-        fund_accounts,
-        chain=chain,
-        accounts=accounts_to_fund,
-        amount=amount,
-        verbose=verbose,
-    )
