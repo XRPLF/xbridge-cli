@@ -57,7 +57,7 @@ def _submit_tx(
     help="The bridge to transfer across.",
 )
 @click.option(
-    "--from-locking/--from_issuing",
+    "--from-locking/--from-issuing",
     "from_locking",
     required=True,
     prompt=True,
