@@ -177,7 +177,7 @@ def setup_bridge(
     is_xrp_bridge = locking_chain_issue == XRP()
 
     if funding_seed is None:
-        if bridge_obj.issuing_chain_issue == XRP() and funding_seed is None:
+        if is_xrp_bridge and funding_seed is None:
             if close_ledgers:
                 funding_seed = "snoPBrXtMeMyMHUVTgbuqAfg1SUTb"
             else:
@@ -206,7 +206,7 @@ def setup_bridge(
         raise XBridgeCLIException(
             f"Issuing chain door {issuing_door} does not exist on the locking chain."
         )
-    if bridge_obj.issuing_chain_issue != XRP():
+    if not is_xrp_bridge:
         # if a bridge is an XRP bridge, then the accounts need to be created via the
         # bridge (the bridge that doesn't exist yet)
         # so we only check if accounts already exist on the issuing chain for IOU
@@ -254,7 +254,7 @@ def setup_bridge(
     locking_txs: List[Transaction] = []
 
     # create the trustline (if IOU)
-    if bridge_obj.locking_chain_issue != XRP():
+    if not is_xrp_bridge:
         assert isinstance(bridge_obj.locking_chain_issue, IssuedCurrency)
 
         # check if the trustline already exists
@@ -351,7 +351,7 @@ def setup_bridge(
     ###################################################################################
     # set up issuing chain
 
-    if bridge_obj.issuing_chain_issue == XRP():
+    if is_xrp_bridge:
         # we need to create the witness reward + submission accounts
 
         assert funding_seed is not None  # for typing purposes - checked earlier
