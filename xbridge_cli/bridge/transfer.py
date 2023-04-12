@@ -26,10 +26,10 @@ def _submit_tx(
     tx: Transaction,
     client: JsonRpcClient,
     wallet: Wallet,
-    verbose: int,
+    verbosity: int,
     close_ledgers: bool,
 ) -> Response:
-    result = submit_tx(tx, client, wallet, verbose, close_ledgers)[0]
+    result = submit_tx(tx, client, wallet, verbosity, close_ledgers)[0]
     tx_result = (
         result.result.get("error")
         or result.result.get("engine_result")
@@ -263,5 +263,5 @@ def send_transfer(
         transfer_amount,
         xchain_claim_id,
         close_ledgers,
-        verbose,
+        verbosity,
     )
