@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Optional parameter to `fund` to supply the amount funded
+- Optional flag to `bridge build` to fund the locking chain witness accounts
 
 ### Changed
 
