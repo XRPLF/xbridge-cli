@@ -129,7 +129,7 @@ def setup_bridge(
             be closed; an external network does not support ledger closing.
         verbose: Whether or not to print more verbose information. Add more v's for
             more verbosity.
-        silent: Whether or not to print no information. Cannot be used with -v.
+        silent: Whether or not to print no information. Cannot be used with `-v`.
 
     Raises:
         XBridgeCLIException: If an account on the locking chain doesn't exist

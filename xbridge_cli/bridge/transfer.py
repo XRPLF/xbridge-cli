@@ -106,6 +106,12 @@ def _submit_tx(
     help="Whether or not to print more verbose information. Supports `-vv`.",
 )
 @click.option(
+    "-s",
+    "--silent",
+    is_flag=True,
+    help="Whether or not to print no information. Cannot be used with -v.",
+)
+@click.option(
     "--tutorial",
     is_flag=True,
     help="Turn this flag on if you want to slow down and really understand each step.",
@@ -118,6 +124,7 @@ def send_transfer(
     to_account: str,
     close_ledgers: bool = True,
     verbose: int = 0,
+    silent: bool = False,
     tutorial: bool = False,
 ) -> None:
     """
@@ -135,6 +142,7 @@ def send_transfer(
             for ledgers to close automatically. A standalone node requires ledgers to
             be closed; an external network does not support ledger closing.
         verbose: Whether or not to print more verbose information. Supports `-vv`.
+        silent: Whether or not to print no information. Cannot be used with `-v`.
         tutorial: Whether to slow down and explain each step.
 
     Raises:
@@ -143,7 +151,13 @@ def send_transfer(
         AttestationTimeoutException: If there is a timeout when waiting for
             attestations.
     """  # noqa: D301
-    print_level = max(verbose, 2 if tutorial else 0)
+    if silent and verbose > 0:
+        raise XBridgeCLIException("Cannot have verbose and silent flags.")
+    if silent and tutorial:
+        raise XBridgeCLIException("Cannot have tutorial and silent flags.")
+
+    verbosity = 0 if silent else 1 + verbose
+    print_level = max(verbosity, 2 if tutorial else 0)
     bridge_config = get_config().get_bridge(bridge)
     bridge_obj = bridge_config.get_bridge()
     locking_client, issuing_client = bridge_config.get_clients()
