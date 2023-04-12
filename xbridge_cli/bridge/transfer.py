@@ -14,6 +14,7 @@ from xrpl.models import (
     XChainCommit,
     XChainCreateClaimID,
 )
+from xrpl.utils import xrp_to_drops
 from xrpl.wallet import Wallet
 
 from xbridge_cli.exceptions import XBridgeCLIException
@@ -66,7 +67,11 @@ def _submit_tx(
     ),
 )
 @click.option(
-    "--amount", required=True, prompt=True, type=str, help="The amount to transfer."
+    "--amount",
+    required=True,
+    prompt=True,
+    type=float,
+    help="The amount to transfer.",
 )
 @click.option(
     "--from",
@@ -108,7 +113,7 @@ def _submit_tx(
 def send_transfer(
     bridge: str,
     from_locking: bool,
-    amount: str,
+    amount: int | float,
     from_account: str,
     to_account: str,
     close_ledgers: bool = True,
@@ -123,7 +128,7 @@ def send_transfer(
         bridge: The bridge to transfer across.
         from_locking: Whether funding from the locking chain or the issuing chain.
             Defaults to the locking chain.
-        amount: The amount to transfer.
+        amount: The amount to transfer (in XRP).
         from_account: The seed of the account to transfer from.
         to_account: The seed of the account to transfer to.
         close_ledgers: Whether to close ledgers manually (via `ledger_accept`) or wait
@@ -160,6 +165,7 @@ def send_transfer(
         original_issue: Currency = from_issue
     else:
         original_issue = XRP()
+        amount = int(xrp_to_drops(amount))
 
     try:
         from_wallet = Wallet(from_account, 0)
@@ -170,7 +176,7 @@ def send_transfer(
     except ValueError as error:
         raise XBridgeCLIException(f"Invalid `to` seed: {to_account}") from error
 
-    transfer_amount = original_issue.to_amount(amount)
+    transfer_amount = original_issue.to_amount(amount)  # type: ignore
 
     # XChainSeqNumCreate
     if tutorial:

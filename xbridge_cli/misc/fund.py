@@ -21,7 +21,7 @@ from xbridge_cli.utils import get_config, submit_tx
     nargs=-1,
 )
 @click.option(
-    "--amount", type=int, default=1000, help="The amount to fund each account."
+    "--amount", type=int, default=1000, help="The amount to fund each account (in XRP)."
 )
 @click.option(
     "-v",
@@ -42,7 +42,7 @@ def fund_account(
     Args:
         chain: The chain to fund an account on.
         accounts: The account(s) to fund.
-        amount: The amount to fund each account.
+        amount: The amount to fund each account (in XRP).
         verbose: Whether or not to print more verbose information.
 
     Raises:
