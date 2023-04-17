@@ -125,7 +125,7 @@ class TestBridgeBuild:
                 "test_bridge",
                 "--no-close-ledgers",
                 "--fund-locking",
-                "--funding_seed",
+                "--funding-seed",
                 "snoPBrXtMeMyMHUVTgbuqAfg1SUTb",
                 "--verbose",
             ],
