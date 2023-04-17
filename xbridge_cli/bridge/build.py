@@ -90,6 +90,12 @@ LSF_DISABLE_MASTER = 0x00100000
     ),
 )
 @click.option(
+    "--fund-locking",
+    "fund_locking",
+    is_flag=True,
+    help="Whether to fund the locking chain accounts from the funding seed.",
+)
+@click.option(
     "-v",
     "--verbose",
     help="Whether or not to print more verbose information. Also supports `-vv`.",
@@ -108,6 +114,7 @@ def setup_bridge(
     funding_seed: Optional[str] = None,
     funding_algorithm: Optional[str] = None,
     close_ledgers: bool = True,
+    fund_locking: bool = False,
     verbose: int = 0,
     silent: bool = False,
 ) -> None:
@@ -127,6 +134,7 @@ def setup_bridge(
         close_ledgers: Whether to close ledgers manually (via `ledger_accept`) or wait
             for ledgers to close automatically. A standalone node requires ledgers to
             be closed; an external network does not support ledger closing.
+        fund_locking: Whether to fund the locking chain accounts from the funding seed.
         verbose: Whether or not to print more verbose information. Add more v's for
             more verbosity.
         silent: Whether or not to print no information. Cannot be used with `-v`.
@@ -187,47 +195,6 @@ def setup_bridge(
 
     is_xrp_bridge = locking_chain_issue == XRP()
 
-    if funding_seed is None:
-        if bridge_obj.issuing_chain_issue == XRP() and funding_seed is None:
-            if close_ledgers:
-                funding_seed = "snoPBrXtMeMyMHUVTgbuqAfg1SUTb"
-            else:
-                raise XBridgeCLIException(
-                    "Must include `funding_seed` for external XRP-XRP bridge."
-                )
-
-    accounts_locking_check = set(
-        [locking_door]
-        + bootstrap_locking["WitnessRewardAccounts"]
-        + bootstrap_locking["WitnessSubmitAccounts"]
-    )
-    accounts_issuing_check = set(
-        bootstrap_issuing["WitnessRewardAccounts"]
-        + bootstrap_issuing["WitnessSubmitAccounts"]
-    )
-
-    # check locking chain for accounts that should already exist
-    for account in accounts_locking_check:
-        if not does_account_exist(account, locking_client):
-            raise XBridgeCLIException(
-                f"Account {account} does not exist on the locking chain."
-            )
-    # make sure issuing door account exists
-    if not does_account_exist(issuing_door, issuing_client):
-        raise XBridgeCLIException(
-            f"Issuing chain door {issuing_door} does not exist on the locking chain."
-        )
-    if bridge_obj.issuing_chain_issue != XRP():
-        # if a bridge is an XRP bridge, then the accounts need to be created via the
-        # bridge (the bridge that doesn't exist yet)
-        # so we only check if accounts already exist on the issuing chain for IOU
-        # bridges
-        for account in accounts_issuing_check:
-            if not does_account_exist(account, issuing_client):
-                raise XBridgeCLIException(
-                    f"Account {account} does not exist on the issuing chain."
-                )
-
     # get min create account amount values
     if is_xrp_bridge:
         server_state1 = locking_client.request(ServerState())
@@ -239,6 +206,69 @@ def setup_bridge(
         min_create2 = None
     min_create1_rippled = str(min_create1) if min_create1 is not None else None
     min_create2_rippled = str(min_create2) if min_create2 is not None else None
+
+    if funding_seed is None:
+        if is_xrp_bridge and funding_seed is None:
+            if close_ledgers:
+                funding_seed = "snoPBrXtMeMyMHUVTgbuqAfg1SUTb"
+            else:
+                raise XBridgeCLIException(
+                    "Must include `funding_seed` for external XRP-XRP bridge."
+                )
+    funding_wallet_algo = (
+        CryptoAlgorithm(funding_algorithm) if funding_algorithm else None
+    )
+    funding_wallet = (
+        Wallet(funding_seed, 0, algorithm=funding_wallet_algo) if funding_seed else None
+    )
+
+    accounts_locking_check = set(
+        [locking_door]
+        + bootstrap_locking["WitnessRewardAccounts"]
+        + bootstrap_locking["WitnessSubmitAccounts"]
+    )
+    accounts_issuing_check = set(
+        bootstrap_issuing["WitnessRewardAccounts"]
+        + bootstrap_issuing["WitnessSubmitAccounts"]
+    )
+
+    funding_txs: List[Transaction] = []
+
+    # check locking chain for accounts that should already exist
+    for account in accounts_locking_check:
+        if not does_account_exist(account, locking_client):
+            if is_xrp_bridge and fund_locking:
+                assert funding_wallet is not None  # for type reasons
+                funding_txs.append(
+                    Payment(
+                        account=funding_wallet.classic_address,
+                        destination=account,
+                        amount=str(min_create1 * 2),
+                    )
+                )
+            else:
+                raise XBridgeCLIException(
+                    f"Account {account} does not exist on the locking chain."
+                )
+    if len(funding_txs) > 0:
+        assert funding_wallet is not None  # for type reasons
+        submit_tx(funding_txs, locking_client, funding_wallet, verbose, close_ledgers)
+
+    # make sure issuing door account exists
+    if not does_account_exist(issuing_door, issuing_client):
+        raise XBridgeCLIException(
+            f"Issuing chain door {issuing_door} does not exist on the locking chain."
+        )
+    if not is_xrp_bridge:
+        # if a bridge is an XRP bridge, then the accounts need to be created via the
+        # bridge (the bridge that doesn't exist yet)
+        # so we only check if accounts already exist on the issuing chain for IOU
+        # bridges
+        for account in accounts_issuing_check:
+            if not does_account_exist(account, issuing_client):
+                raise XBridgeCLIException(
+                    f"Account {account} does not exist on the issuing chain."
+                )
 
     # set up signer entries for multisign on the door accounts
     signer_entries: List[SignerEntry] = []
@@ -265,7 +295,7 @@ def setup_bridge(
     locking_txs: List[Transaction] = []
 
     # create the trustline (if IOU)
-    if bridge_obj.locking_chain_issue != XRP():
+    if not is_xrp_bridge:
         assert isinstance(bridge_obj.locking_chain_issue, IssuedCurrency)
 
         # check if the trustline already exists
@@ -362,7 +392,7 @@ def setup_bridge(
     ###################################################################################
     # set up issuing chain
 
-    if bridge_obj.issuing_chain_issue == XRP():
+    if is_xrp_bridge:
         # we need to create the witness reward + submission accounts
 
         assert funding_seed is not None  # for typing purposes - checked earlier

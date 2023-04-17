@@ -3,10 +3,7 @@ xbridge-cli server create-config all
 xbridge-cli server start-all --rippled-only
 xbridge-cli server list
 xbridge-cli explorer
-jq .LockingChain.DoorAccount.Address $XCHAIN_CONFIG_DIR/bridge_bootstrap.json | tr -d '"' | xargs xbridge-cli fund locking_chain
-jq '.LockingChain.WitnessSubmitAccounts[]' $XCHAIN_CONFIG_DIR/bridge_bootstrap.json | tr -d '"' | xargs xbridge-cli fund locking_chain
-jq '.LockingChain.WitnessRewardAccounts[]' $XCHAIN_CONFIG_DIR/bridge_bootstrap.json | tr -d '"' | xargs xbridge-cli fund locking_chain
-xbridge-cli bridge build --name=bridge
+xbridge-cli bridge build --name=bridge --fund-locking
 xbridge-cli server start-all --witness-only
 xbridge-cli server list
 xbridge-cli fund locking_chain raFcdz1g8LWJDJWJE2ZKLRGdmUmsTyxaym
