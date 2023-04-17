@@ -123,7 +123,7 @@ class TestBridgeBuild:
                 "--name",
                 "test_bridge",
                 "--no-close-ledgers",
-                "--funding_seed",
+                "--funding-seed",
                 "snoPBrXtMeMyMHUVTgbuqAfg1SUTb",
                 "--verbose",
             ],

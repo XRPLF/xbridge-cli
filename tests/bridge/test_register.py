@@ -68,7 +68,7 @@ class TestRegister:
             [
                 "bridge",
                 "create-account",
-                "--from_locking",
+                "--from-locking",
                 "--bridge",
                 bridge_name,
                 "--from",
@@ -148,7 +148,7 @@ class TestRegister:
             [
                 "bridge",
                 "create-account",
-                "--from_locking",
+                "--from-locking",
                 "--bridge",
                 bridge_name,
                 "--from",

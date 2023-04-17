@@ -110,7 +110,8 @@ def _generate_rippled_configs(config_dir: str, docker: bool = False) -> Tuple[in
 
 @click.command(name="witness")
 @click.option(
-    "--config_dir",
+    "--config-dir",
+    "config_dir",
     required=True,
     prompt=True,
     help="The folder in which to store config files.",
@@ -127,7 +128,7 @@ def _generate_rippled_configs(config_dir: str, docker: bool = False) -> Tuple[in
     help="Whether the config files are for a docker setup.",
 )
 @click.option(
-    "--locking_port",
+    "--locking-port",
     "locking_chain_port",
     required=True,
     prompt=True,
@@ -135,7 +136,7 @@ def _generate_rippled_configs(config_dir: str, docker: bool = False) -> Tuple[in
     help="The port used by the locking chain.",
 )
 @click.option(
-    "--issuing_port",
+    "--issuing-port",
     "issuing_chain_port",
     required=True,
     prompt=True,
@@ -143,20 +144,23 @@ def _generate_rippled_configs(config_dir: str, docker: bool = False) -> Tuple[in
     help="The port used by the issuing chain.",
 )
 @click.option(
-    "--witness_port",
+    "--witness-port",
+    "witness_port",
     required=True,
     prompt=True,
     type=int,
     help="The port that will be used by the witness server.",
 )
 @click.option(
-    "--src_door",
+    "--src-door",
+    "src_door",
     required=True,
     prompt=True,
     help="The door account on the source chain.",
 )
 @click.option(
-    "--src_currency",
+    "--src-currency",
+    "src_currency",
     default="XRP",
     help=(
         "The currency on the source chain. Defaults to XRP. An issued currency is of "
@@ -164,12 +168,14 @@ def _generate_rippled_configs(config_dir: str, docker: bool = False) -> Tuple[in
     ),
 )
 @click.option(
-    "--dst_door",
+    "--dst-door",
+    "dst_door",
     default="rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh",
     help="The door account on the destination chain. Defaults to the genesis account.",
 )
 @click.option(
-    "--dst_currency",
+    "--dst-currency",
+    "dst_currency",
     default="XRP",
     help=(
         "The currency on the destination chain. Defaults to XRP. An issued currency "
@@ -177,31 +183,36 @@ def _generate_rippled_configs(config_dir: str, docker: bool = False) -> Tuple[in
     ),
 )
 @click.option(
-    "--locking_reward_seed",
+    "--locking-reward-seed",
+    "locking_reward_seed",
     required=True,
     prompt=True,
     help="The seed for the reward account for the witness on the locking chain.",
 )
 @click.option(
-    "--locking_reward_account",
+    "--locking-reward-account",
+    "locking_reward_account",
     required=True,
     prompt=True,
     help="The reward account for the witness on the locking chain.",
 )
 @click.option(
-    "--signing_seed",
+    "--signing-seed",
+    "signing_seed",
     required=True,
     prompt=True,
     help="The seed to use for signing attestations.",
 )
 @click.option(
-    "--issuing_reward_seed",
+    "--issuing-reward-seed",
+    "issuing_reward_seed",
     required=True,
     prompt=True,
     help="The seed for the reward account for the witness on the issuing chain.",
 )
 @click.option(
-    "--issuing_reward_account",
+    "--issuing-reward-account",
+    "issuing_reward_account",
     required=True,
     prompt=True,
     help="The reward account for the witness on the issuing chain.",
@@ -319,19 +330,20 @@ def generate_witness_config(
     help="The folder in which to store the bridge bootstrap file.",
 )
 @click.option(
-    "--locking_seed",
+    "--locking-seed",
     "locking_seed",
     required=True,
     prompt=True,
     help="The seed of the locking chain door account.",
 )
 @click.option(
-    "--locking_algorithm",
+    "--locking-algorithm",
+    "locking_algorithm",
     type=CryptoAlgorithmChoice,
     help="The algorithm used to generate the keypair from the locking door's seed.",
 )
 @click.option(
-    "--locking_currency",
+    "--locking-currency",
     "locking_currency",
     default="XRP",
     help=(
@@ -340,18 +352,19 @@ def generate_witness_config(
     ),
 )
 @click.option(
-    "--issuing_seed",
+    "--issuing-seed",
     "issuing_seed",
     default="snoPBrXtMeMyMHUVTgbuqAfg1SUTb",
     help="The seed of the issuing chain door account. Defaults to the genesis account.",
 )
 @click.option(
-    "--issuing_algorithm",
+    "--issuing-algorithm",
+    "issuing_algorithm",
     type=CryptoAlgorithmChoice,
     help="The algorithm used to generate the keypair from the issuing door's seed.",
 )
 @click.option(
-    "--issuing_currency",
+    "--issuing-currency",
     "issuing_currency",
     default="XRP",
     help=(
@@ -360,7 +373,7 @@ def generate_witness_config(
     ),
 )
 @click.option(
-    "--reward_account",
+    "--reward-account",
     "reward_accounts",
     required=True,
     prompt=True,
@@ -368,7 +381,7 @@ def generate_witness_config(
     help="The seed of the witness reward account.",
 )
 @click.option(
-    "--signing_account",
+    "--signing-account",
     "signing_accounts",
     required=True,
     prompt=True,
@@ -463,7 +476,8 @@ def generate_bootstrap(
 
 @click.command(name="all")
 @click.option(
-    "--config_dir",
+    "--config-dir",
+    "config_dir",
     envvar="XCHAIN_CONFIG_DIR",
     required=True,
     prompt=True,
@@ -471,7 +485,8 @@ def generate_bootstrap(
     help="The folder in which to store config files.",
 )
 @click.option(
-    "--num_witnesses",
+    "--num-witnesses",
+    "num_witnesses",
     default=5,
     type=int,
     help="The number of witness configs to generate. Defaults to 5.",

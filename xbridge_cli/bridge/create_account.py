@@ -21,7 +21,7 @@ from xbridge_cli.utils.misc import is_standalone_network
 
 @click.command(name="create-account")
 @click.option(
-    "--from_locking/--from_issuing",
+    "--from-locking/--from-issuing",
     "from_locking",
     required=True,
     prompt=True,
