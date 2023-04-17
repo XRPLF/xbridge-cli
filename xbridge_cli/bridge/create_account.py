@@ -83,6 +83,12 @@ from xbridge_cli.utils.misc import is_standalone_network
     help="Whether or not to print more verbose information. Also supports `-vv`.",
     count=True,
 )
+@click.option(
+    "-s",
+    "--silent",
+    is_flag=True,
+    help="Whether or not to print no information. Cannot be used with -v.",
+)
 def create_xchain_account(
     from_locking: bool,
     bridge: str,
@@ -92,6 +98,7 @@ def create_xchain_account(
     amount: Optional[int] = None,
     close_ledgers: bool = True,
     verbose: int = 0,
+    silent: bool = False,
 ) -> None:
     """
     Create an account on the opposite chain via a cross-chain transfer.
@@ -111,6 +118,7 @@ def create_xchain_account(
             be closed; an external network does not support ledger closing.
         verbose: Whether or not to print more verbose information. Add more v's for
             more verbosity.
+        silent: Whether or not to print no information. Cannot be used with `-v`.
 
     Raises:
         XBridgeCLIException: Min create account isn't set or amount is less than the
@@ -118,6 +126,9 @@ def create_xchain_account(
         AttestationTimeoutException: If there is a timeout when waiting for
             attestations.
     """  # noqa: D301
+    if silent and verbose > 0:
+        raise XBridgeCLIException("Cannot have verbose and silent flags.")
+    verbosity = 0 if silent else 1 + verbose
     bridge_config = get_config().get_bridge(bridge)
     locking_client, issuing_client = bridge_config.get_clients()
     if from_locking:
@@ -163,10 +174,10 @@ def create_xchain_account(
         destination=to_account,
         amount=create_amount,
     )
-    submit_tx(fund_tx, from_client, from_wallet, verbose, close_ledgers)
+    submit_tx(fund_tx, from_client, from_wallet, verbosity, close_ledgers)
 
     # wait for attestations
-    if verbose > 0:
+    if verbosity > 0:
         click.secho(
             f"Waiting for attestations from the witness servers on {to_client.url}...",
             fg="blue",
@@ -181,8 +192,8 @@ def create_xchain_account(
         create_amount,
         None,
         close_ledgers,
-        verbose,
+        verbosity,
     )
 
-    if verbose > 0:
+    if verbosity > 1:
         click.echo(pformat(to_client.request(AccountInfo(account=to_account)).result))
