@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - In the `bridge build` command, only submit a tx if it hasn't already been submitted
 - Accept XRP in the `bridge build` command instead of drops
 - Adjust default verbosity for bridge commands and add `--silent` flags
+- Use `-` instead of `_` in all flags and parameters
 
 ### Fixed
 
