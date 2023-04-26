@@ -13,6 +13,8 @@ from xrpl.transaction import (
 )
 from xrpl.wallet import Wallet
 
+from xbridge_cli.exceptions import XBridgeCLIException
+
 
 def submit_tx(
     txs: Union[Transaction, List[Transaction]],
@@ -34,6 +36,9 @@ def submit_tx(
 
     Returns:
         The response from rippled.
+
+    Raises:
+        XBridgeCLIException: If there is an exception.
     """
     if isinstance(txs, Transaction):
         txs = [txs]
@@ -48,14 +53,17 @@ def submit_tx(
 
     if close_ledgers:
         results = []
+        tx_results = []
         for tx in txs:
             signed_tx = safe_sign_and_autofill_transaction(tx, wallet, client)
-            results.append(submit_transaction(signed_tx, client))
+            result = submit_transaction(signed_tx, client)
+            tx_result = result.result.get("error") or result.result.get("engine_result")
+            if tx_result != "tesSUCCESS":
+                raise XBridgeCLIException(f"Transaction failed: {tx_result}")
+            results.append(result)
+            tx_results.append(tx_result)
         client.request(GenericRequest(method="ledger_accept"))
-        tx_results = [
-            result.result.get("error") or result.result.get("engine_result")
-            for result in results
-        ]
+
     else:
         # TODO: improve runtime when there is a batch send_reliable_submission
         results = []
