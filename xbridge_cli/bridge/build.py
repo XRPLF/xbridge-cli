@@ -321,9 +321,15 @@ def setup_bridge(
 
     # check if the bridge already exists
     locking_bridge_exists = False
-    locking_door_objs = locking_client.request(
+    locking_objs_result = locking_client.request(
         AccountObjects(account=locking_door, type=AccountObjectType.BRIDGE)
-    ).result["account_objects"]
+    ).result
+    if "account_objects" not in locking_objs_result:
+        obj_error = locking_objs_result.get("error_message") or json.dumps(
+            locking_objs_result
+        )
+        raise XBridgeCLIException(obj_error)
+    locking_door_objs = locking_objs_result["account_objects"]
     if len(locking_door_objs) > 0:
         assert (
             len(locking_door_objs) == 1
@@ -437,9 +443,15 @@ def setup_bridge(
 
     # check if the bridge already exists
     issuing_bridge_exists = False
-    issuing_door_objs = issuing_client.request(
+    issuing_objs_result = issuing_client.request(
         AccountObjects(account=issuing_door, type=AccountObjectType.BRIDGE)
-    ).result["account_objects"]
+    ).result
+    if "account_objects" not in issuing_objs_result:
+        obj_error = issuing_objs_result.get("error_message") or json.dumps(
+            issuing_objs_result
+        )
+        raise XBridgeCLIException(obj_error)
+    issuing_door_objs = issuing_objs_result["account_objects"]
     if len(issuing_door_objs) > 0:
         assert (
             len(issuing_door_objs) == 1
