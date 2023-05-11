@@ -26,13 +26,13 @@ def _pid_is_alive(pid: int) -> bool:
 @click.command(name="stop")
 @click.option("--name", help="The name of the server to stop.")
 @click.option(
-    "--all", "stop_all", is_flag=True, help="Whether to stop all of the servers."
+    "--all", "stop_all", is_flag=True, help="Stop all of the servers."
 )
 @click.option(
     "-v",
     "--verbose",
     is_flag=True,
-    help="Whether or not to print more verbose information.",
+    help="Print more verbose information.",
 )
 def stop_server(
     name: Optional[str] = None, stop_all: bool = False, verbose: bool = False

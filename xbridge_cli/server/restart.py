@@ -16,13 +16,13 @@ from xbridge_cli.utils import ServerConfig, get_config
 @click.command(name="restart")
 @click.option("--name", help="The name of the server to restart.")
 @click.option(
-    "--all", "restart_all", is_flag=True, help="Whether to stop all of the servers."
+    "--all", "restart_all", is_flag=True, help="Stop all of the servers."
 )
 @click.option(
     "-v",
     "--verbose",
     is_flag=True,
-    help="Whether or not to print more verbose information.",
+    help="Print more verbose information.",
 )
 @click.pass_context
 def restart_server(

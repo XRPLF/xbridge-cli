@@ -21,13 +21,13 @@ from xbridge_cli.utils import get_config, submit_tx
     nargs=-1,
 )
 @click.option(
-    "--amount", type=int, default=1000, help="The amount to fund each account (in XRP)."
+    "--amount", type=int, default=1000, help="The amount of XRP to fund each account."
 )
 @click.option(
     "-v",
     "--verbose",
     is_flag=True,
-    help="Whether or not to print more verbose information.",
+    help="Print more verbose information.",
 )
 def fund_account(
     chain: str, accounts: List[str], amount: int = 1000, verbose: bool = False

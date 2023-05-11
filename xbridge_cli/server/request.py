@@ -19,7 +19,7 @@ from xbridge_cli.utils import ChainConfig, get_config
     "-v",
     "--verbose",
     is_flag=True,
-    help="Whether or not to print more verbose information.",
+    help="Print more verbose information.",
 )
 def request_server(
     name: str, command: str, args: Tuple[str], verbose: bool = False
@@ -53,7 +53,7 @@ def request_server(
 
 @click.command(name="status")
 @click.option("--name", help="The name of the server to query.")
-@click.option("--all", is_flag=True, help="Whether to query all of the servers.")
+@click.option("--all", is_flag=True, help="Query all of the servers.")
 def get_server_status(name: Optional[str] = None, query_all: bool = False) -> None:
     """
     Get the status of a rippled or witness node(s).

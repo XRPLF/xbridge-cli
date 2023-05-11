@@ -54,7 +54,7 @@ def _submit_tx(
     required=True,
     prompt=True,
     type=str,
-    help="The bridge to transfer across.",
+    help="Specify the transfer bridge.",
 )
 @click.option(
     "--from-locking/--from-issuing",
@@ -62,7 +62,7 @@ def _submit_tx(
     required=True,
     prompt=True,
     help=(
-        "Whether funding from the locking chain or the issuing chain. "
+        "Specify if funding comes from the locking chain or the issuing chain. "
         "Defaults to the locking chain."
     ),
 )
@@ -71,7 +71,7 @@ def _submit_tx(
     required=True,
     prompt=True,
     type=float,
-    help="The amount to transfer.",
+    help="Specify the amount to transfer.",
 )
 @click.option(
     "--from",
@@ -79,7 +79,7 @@ def _submit_tx(
     required=True,
     prompt=True,
     type=str,
-    help="The seed of the account to transfer from.",
+    help="Specify the seed of the account to transfer from.",
 )
 @click.option(
     "--to",
@@ -87,34 +87,34 @@ def _submit_tx(
     required=True,
     prompt=True,
     type=str,
-    help="The seed of the account to transfer to.",
+    help="Specify the seed of the account to transfer to.",
 )
 @click.option(
     "--close-ledgers/--no-close-ledgers",
     "close_ledgers",
     default=True,
     help=(
-        "Whether to close ledgers manually (via `ledger_accept`) or wait for ledgers "
-        "to close automatically. A standalone node requires ledgers to be closed; an "
-        "external network does not support ledger closing."
+        "Close ledgers manually with `ledger_accept` or wait for ledgers "
+        "to close automatically. Standalone nodes requires ledgers to be closed; "
+        "external networks don't support ledger closing."
     ),
 )
 @click.option(
     "-v",
     "--verbose",
     count=True,
-    help="Whether or not to print more verbose information. Supports `-vv`.",
+    help="Print more verbose information. Supports `-vv`.",
 )
 @click.option(
     "-s",
     "--silent",
     is_flag=True,
-    help="Whether or not to print no information. Cannot be used with -v.",
+    help="Print no information. Can't be used with -v.",
 )
 @click.option(
     "--tutorial",
     is_flag=True,
-    help="Turn this flag on if you want to slow down and really understand each step.",
+    help="Enable this flag to slow down and understand each step.",
 )
 def send_transfer(
     bridge: str,
