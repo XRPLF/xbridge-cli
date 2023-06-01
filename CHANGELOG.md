@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [[Unreleased]]
 
+### Fixed
+
+- Better error handling for the `account_objects` call in `bridge create`
+
 ## [0.3.0] - 2023-04-17
 
 ### Added
@@ -30,11 +34,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Updated to match the latest versions of rippled and the witness server
+- Update to match the latest versions of rippled and the witness server
 
 ### Fixed
 
-- Fixed a key algorithm-seed type mismatch for IOU bridge config generation
+- Fix a key algorithm-seed type mismatch for IOU bridge config generation
 
 ## [0.1.0] - 2023-02-22
 
