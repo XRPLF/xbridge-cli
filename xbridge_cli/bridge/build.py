@@ -16,7 +16,7 @@ from xrpl.models import (
     AccountObjects,
     AccountObjectType,
     AccountSet,
-    AccountSetFlag,
+    AccountSetAsfFlag,
     Currency,
     IssuedCurrency,
     Payment,
@@ -42,7 +42,7 @@ from xbridge_cli.utils.misc import is_standalone_network
 
 _GENESIS_ACCOUNT = "rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh"
 _GENESIS_SEED = "snoPBrXtMeMyMHUVTgbuqAfg1SUTb"
-_GENESIS_WALLET = Wallet(_GENESIS_SEED, 0)
+_GENESIS_WALLET = Wallet.from_seed(_GENESIS_SEED)
 
 LSF_DISABLE_MASTER = 0x00100000
 
@@ -216,10 +216,14 @@ def setup_bridge(
                     "Must include `funding_seed` for external XRP-XRP bridge."
                 )
     funding_wallet_algo = (
-        CryptoAlgorithm(funding_algorithm) if funding_algorithm else None
+        CryptoAlgorithm(funding_algorithm)
+        if funding_algorithm
+        else CryptoAlgorithm.ED25519
     )
     funding_wallet = (
-        Wallet(funding_seed, 0, algorithm=funding_wallet_algo) if funding_seed else None
+        Wallet.from_seed(funding_seed, algorithm=funding_wallet_algo)
+        if funding_seed
+        else None
     )
 
     accounts_locking_check = set(
@@ -281,13 +285,13 @@ def setup_bridge(
 
     locking_door_seed = bootstrap_locking["DoorAccount"]["Seed"]
     locking_door_seed_algo = bootstrap_locking["DoorAccount"]["KeyType"]
-    locking_door_wallet = Wallet(
-        locking_door_seed, 0, algorithm=CryptoAlgorithm(locking_door_seed_algo)
+    locking_door_wallet = Wallet.from_seed(
+        locking_door_seed, algorithm=CryptoAlgorithm(locking_door_seed_algo)
     )
     issuing_door_seed = bootstrap_issuing["DoorAccount"]["Seed"]
     issuing_door_seed_algo = bootstrap_issuing["DoorAccount"]["KeyType"]
-    issuing_door_wallet = Wallet(
-        issuing_door_seed, 0, algorithm=CryptoAlgorithm(issuing_door_seed_algo)
+    issuing_door_wallet = Wallet.from_seed(
+        issuing_door_seed, algorithm=CryptoAlgorithm(issuing_door_seed_algo)
     )
 
     ###################################################################################
@@ -383,7 +387,9 @@ def setup_bridge(
     # disable the master key
     if not locking_account_info["Flags"] & LSF_DISABLE_MASTER:
         locking_txs.append(
-            AccountSet(account=locking_door, set_flag=AccountSetFlag.ASF_DISABLE_MASTER)
+            AccountSet(
+                account=locking_door, set_flag=AccountSetAsfFlag.ASF_DISABLE_MASTER
+            )
         )
 
     # submit transactions
@@ -403,9 +409,11 @@ def setup_bridge(
 
         assert funding_seed is not None  # for typing purposes - checked earlier
         funding_wallet_algo = (
-            CryptoAlgorithm(funding_algorithm) if funding_algorithm else None
+            CryptoAlgorithm(funding_algorithm)
+            if funding_algorithm
+            else CryptoAlgorithm.ED25519
         )
-        funding_wallet = Wallet(funding_seed, 0, algorithm=funding_wallet_algo)
+        funding_wallet = Wallet.from_seed(funding_seed, algorithm=funding_wallet_algo)
 
         # TODO: add param to customize amount
         amount = str(min_create2 * 2)  # submit accounts need spare funds
@@ -505,7 +513,9 @@ def setup_bridge(
     # disable the master key
     if not issuing_account_info["Flags"] & LSF_DISABLE_MASTER:
         issuing_txs.append(
-            AccountSet(account=issuing_door, set_flag=AccountSetFlag.ASF_DISABLE_MASTER)
+            AccountSet(
+                account=issuing_door, set_flag=AccountSetAsfFlag.ASF_DISABLE_MASTER
+            )
         )
 
     # submit transactions

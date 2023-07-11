@@ -6,11 +6,7 @@ from typing import List, Union
 import click
 from xrpl.clients.sync_client import SyncClient
 from xrpl.models import GenericRequest, Response, Transaction
-from xrpl.transaction import (
-    safe_sign_and_autofill_transaction,
-    send_reliable_submission,
-    submit_transaction,
-)
+from xrpl.transaction import autofill_and_sign, submit, submit_and_wait
 from xrpl.wallet import Wallet
 
 
@@ -49,20 +45,20 @@ def submit_tx(
     if close_ledgers:
         results = []
         for tx in txs:
-            signed_tx = safe_sign_and_autofill_transaction(tx, wallet, client)
-            results.append(submit_transaction(signed_tx, client))
+            signed_tx = autofill_and_sign(tx, client, wallet)
+            results.append(submit(signed_tx, client))
         client.request(GenericRequest(method="ledger_accept"))
         tx_results = [
             result.result.get("error") or result.result.get("engine_result")
             for result in results
         ]
     else:
-        # TODO: improve runtime when there is a batch send_reliable_submission
+        # TODO: improve runtime when there is a batch submit_and_wait
         results = []
         tx_results = []
         for tx in txs:
-            signed_tx = safe_sign_and_autofill_transaction(tx, wallet, client)
-            result = send_reliable_submission(signed_tx, client)
+            signed_tx = autofill_and_sign(tx, client, wallet)
+            result = submit_and_wait(signed_tx, client)
             results.append(result)
             tx_results.append(result.result["meta"]["TransactionResult"])
 

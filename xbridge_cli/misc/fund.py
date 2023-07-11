@@ -56,7 +56,7 @@ def fund_account(
     chain_config = get_config().get_chain(chain)
     client = chain_config.get_client()
 
-    wallet = Wallet("snoPBrXtMeMyMHUVTgbuqAfg1SUTb", 0)
+    wallet = Wallet.from_seed("snoPBrXtMeMyMHUVTgbuqAfg1SUTb")
     payments: List[Transaction] = []
     for account in accounts:
         payments.append(

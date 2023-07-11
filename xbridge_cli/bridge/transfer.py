@@ -182,15 +182,15 @@ def send_transfer(
         amount = int(xrp_to_drops(amount))
 
     try:
-        from_wallet = Wallet(from_account, 0)
+        from_wallet = Wallet.from_seed(from_account)
     except ValueError as error:
         raise XBridgeCLIException(f"Invalid `from` seed: {from_account}") from error
     try:
-        to_wallet = Wallet(to_account, 0)
+        to_wallet = Wallet.from_seed(to_account)
     except ValueError as error:
         raise XBridgeCLIException(f"Invalid `to` seed: {to_account}") from error
 
-    transfer_amount = original_issue.to_amount(amount)  # type: ignore
+    transfer_amount = original_issue.to_amount(amount)
 
     # XChainSeqNumCreate
     if tutorial:
