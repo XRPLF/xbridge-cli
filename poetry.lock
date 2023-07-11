@@ -1293,20 +1293,20 @@ files = [
 
 [[package]]
 name = "xrpl-py"
-version = "1.9.0b1"
+version = "2.1.0b0"
 description = "A complete Python library for interacting with the XRP ledger"
 optional = false
 python-versions = ">=3.7,<4.0"
 files = [
-    {file = "xrpl_py-1.9.0b1-py3-none-any.whl", hash = "sha256:34b991368920138448349086033d7760d3a416add7f2153a9c9cf0541a04ef84"},
-    {file = "xrpl_py-1.9.0b1.tar.gz", hash = "sha256:f8f813fb8673028d4c1f7ade057130254d333422ebfc9715e1fa9fb9fd68a8b0"},
+    {file = "xrpl_py-2.1.0b0-py3-none-any.whl", hash = "sha256:e3c680d02401f49081da55eac24972ada4e252b5b9e50645d43a6a2091a36c31"},
+    {file = "xrpl_py-2.1.0b0.tar.gz", hash = "sha256:1b91b0e4ad67caacc996b6b4fcadde0b767996d40aff597c70785221c4661ed5"},
 ]
 
 [package.dependencies]
 base58 = ">=2.1.0,<3.0.0"
 Deprecated = ">=1.2.13,<2.0.0"
 ECPy = ">=1.2.5,<2.0.0"
-httpx = ">=0.18.1,<0.24.0"
+httpx = ">=0.18.1,<0.25.0"
 pycryptodome = ">=3.16.0,<4.0.0"
 types-Deprecated = ">=1.2.9,<2.0.0"
 typing-extensions = ">=4.2.0,<5.0.0"
@@ -1333,4 +1333,4 @@ testing = ["flake8 (<5)", "func-timeout", "jaraco.functools", "jaraco.itertools"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.7.1"
-content-hash = "aa77cf2f2e5959925d4eb06daa70989b5afb2564c959403e5b386eb3874dbcd0"
+content-hash = "2f1d130701b2ba788442f84864281c7d8b20b6d8f210188fff5814c0445fc256"
