@@ -1,6 +1,7 @@
 import json
 import os
 import tempfile
+import traceback
 import unittest
 import unittest.mock
 from contextlib import contextmanager
@@ -107,7 +108,10 @@ def _base_fixture():
 
     # start servers
     start_result = cli_runner.invoke(main, ["server", "start-all", "--verbose"])
-    assert start_result.exit_code == 0, start_result.output
+    if start_result.exit_code != 0:
+        print(start_result.output)
+        traceback.print_exception(start_result.exception)
+        assert start_result.exit_code == 0
 
     try:
         yield cli_runner
