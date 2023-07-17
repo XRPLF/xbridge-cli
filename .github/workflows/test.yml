@@ -53,7 +53,7 @@ jobs:
       - name: Pull images from docker
         run: |
           docker pull mvadariripple/rippled-xbridge
-          docker pull mvadariripple/xbridge-witness
+          docker pull seelabs/xbridge-witness
 
       - name: Run tests
         id: runTests
