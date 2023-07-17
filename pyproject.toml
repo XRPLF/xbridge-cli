@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "xbridge-cli"
-version = "0.3.0"
+version = "0.3.1"
 description = "A CLI that helps you set up an XRPL-XRPL bridge."
 readme = "README.md"
 repository = "https://github.com/xpring-eng/xbridge-cli"
