@@ -5,7 +5,7 @@ on:
     branches: [main]
   pull_request:
     paths-ignore:
-      - "docs/**"
+      - "scripts/**"
       - "**.md"
       - ".vscode/**"
   workflow_dispatch:
