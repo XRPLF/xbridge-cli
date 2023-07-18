@@ -14,6 +14,7 @@ from jinja2 import Environment, FileSystemLoader
 from xrpl import CryptoAlgorithm
 from xrpl.wallet import Wallet
 
+from xbridge_cli.exceptions import XBridgeCLIException
 from xbridge_cli.server.config.ports import Ports
 from xbridge_cli.utils import CryptoAlgorithmChoice, CurrencyDict
 
@@ -354,7 +355,7 @@ def generate_witness_config(
 @click.option(
     "--issuing-seed",
     "issuing_seed",
-    default="snoPBrXtMeMyMHUVTgbuqAfg1SUTb",
+    default=_GENESIS_SEED,
     help="The seed of the issuing chain door account. Defaults to the genesis account.",
 )
 @click.option(
@@ -435,8 +436,8 @@ def generate_bootstrap(
         if issuing_algorithm
         else CryptoAlgorithm.ED25519
     )
-    locking_door = Wallet(locking_seed, 0, algorithm=locking_wallet_algo)
-    issuing_door = Wallet(issuing_seed, 0, algorithm=issuing_wallet_algo)
+    locking_door = Wallet.from_seed(locking_seed, algorithm=locking_wallet_algo)
+    issuing_door = Wallet.from_seed(issuing_seed, algorithm=issuing_wallet_algo)
 
     assert (locking_currency == "XRP" and issuing_currency == "XRP") or (
         locking_currency != "XRP" and issuing_currency != "XRP"
@@ -530,17 +531,22 @@ def generate_all_configs(
         currency: The currency that is being transferred across the bridge.
         is_docker: Whether the config files are for a docker setup.
         verbose: Whether or not to print more verbose information.
+
+    Raises:
+        XBridgeCLIException: If something really weird goes wrong.
     """
     # TODO: add support for external networks
     abs_config_dir = os.path.abspath(config_dir)
 
     locking_port, issuing_port = _generate_rippled_configs(abs_config_dir, is_docker)
-    locking_door = Wallet.create(crypto_algorithm=CryptoAlgorithm.SECP256K1)
+    locking_door = Wallet.create(algorithm=CryptoAlgorithm.SECP256K1)
 
     if currency == "XRP":
         locking_currency = "XRP"
         issuing_currency = "XRP"
-        issuing_door = Wallet(_GENESIS_SEED, 0, algorithm=CryptoAlgorithm.SECP256K1)
+        issuing_door = Wallet.from_seed(
+            _GENESIS_SEED, algorithm=CryptoAlgorithm.SECP256K1
+        )
         issuing_algorithm = "secp256k1"
     else:
         assert currency.count(".") == 1
@@ -553,13 +559,23 @@ def generate_all_configs(
     reward_accounts = []
     signing_accounts = []
     for i in range(num_witnesses):
-        original_wallet = Wallet.create(crypto_algorithm=CryptoAlgorithm.SECP256K1)
-        witness_reward_wallet = Wallet(
-            original_wallet.seed, 0, algorithm=CryptoAlgorithm.ED25519
+        original_wallet = Wallet.create(algorithm=CryptoAlgorithm.SECP256K1)
+        if original_wallet.seed is None:
+            raise XBridgeCLIException(
+                "Something weird happened, the wallet should have a seed"
+            )
+        witness_reward_wallet = Wallet.from_seed(
+            original_wallet.seed, algorithm=CryptoAlgorithm.ED25519
         )
         reward_accounts.append(witness_reward_wallet.classic_address)
-        wallet = Wallet.create(CryptoAlgorithm.SECP256K1)
-        signing_wallet = Wallet(wallet.seed, 0, algorithm=CryptoAlgorithm.ED25519)
+        wallet = Wallet.create(algorithm=CryptoAlgorithm.SECP256K1)
+        if wallet.seed is None:
+            raise XBridgeCLIException(
+                "Something weird happened, the wallet should have a seed"
+            )
+        signing_wallet = Wallet.from_seed(
+            wallet.seed, algorithm=CryptoAlgorithm.ED25519
+        )
         signing_accounts.append(signing_wallet.classic_address)
         ctx.invoke(
             generate_witness_config,

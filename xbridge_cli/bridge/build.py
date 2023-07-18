@@ -16,7 +16,7 @@ from xrpl.models import (
     AccountObjects,
     AccountObjectType,
     AccountSet,
-    AccountSetFlag,
+    AccountSetAsfFlag,
     Currency,
     IssuedCurrency,
     Payment,
@@ -42,7 +42,7 @@ from xbridge_cli.utils.misc import is_standalone_network
 
 _GENESIS_ACCOUNT = "rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh"
 _GENESIS_SEED = "snoPBrXtMeMyMHUVTgbuqAfg1SUTb"
-_GENESIS_WALLET = Wallet(_GENESIS_SEED, 0)
+_GENESIS_WALLET = Wallet.from_seed(_GENESIS_SEED, algorithm=CryptoAlgorithm.SECP256K1)
 
 LSF_DISABLE_MASTER = 0x00100000
 
@@ -69,6 +69,7 @@ LSF_DISABLE_MASTER = 0x00100000
 )
 @click.option(
     "--funding-seed",
+    "funding_seed",
     help=(
         "The master key of an account on the locking chain that can fund accounts on "
         "the issuing chain. This is only needed for an XRP-XRP bridge."
@@ -207,19 +208,25 @@ def setup_bridge(
     min_create1_rippled = str(min_create1) if min_create1 is not None else None
     min_create2_rippled = str(min_create2) if min_create2 is not None else None
 
+    funding_wallet_algo = (
+        CryptoAlgorithm(funding_algorithm)
+        if funding_algorithm
+        else CryptoAlgorithm.ED25519
+    )
     if funding_seed is None:
         if is_xrp_bridge and funding_seed is None:
             if close_ledgers:
-                funding_seed = "snoPBrXtMeMyMHUVTgbuqAfg1SUTb"
+                funding_seed = _GENESIS_SEED
+                funding_wallet_algo = CryptoAlgorithm.SECP256K1
             else:
                 raise XBridgeCLIException(
                     "Must include `funding_seed` for external XRP-XRP bridge."
                 )
-    funding_wallet_algo = (
-        CryptoAlgorithm(funding_algorithm) if funding_algorithm else None
-    )
+
     funding_wallet = (
-        Wallet(funding_seed, 0, algorithm=funding_wallet_algo) if funding_seed else None
+        Wallet.from_seed(funding_seed, algorithm=funding_wallet_algo)
+        if funding_seed
+        else None
     )
 
     accounts_locking_check = set(
@@ -281,13 +288,13 @@ def setup_bridge(
 
     locking_door_seed = bootstrap_locking["DoorAccount"]["Seed"]
     locking_door_seed_algo = bootstrap_locking["DoorAccount"]["KeyType"]
-    locking_door_wallet = Wallet(
-        locking_door_seed, 0, algorithm=CryptoAlgorithm(locking_door_seed_algo)
+    locking_door_wallet = Wallet.from_seed(
+        locking_door_seed, algorithm=CryptoAlgorithm(locking_door_seed_algo)
     )
     issuing_door_seed = bootstrap_issuing["DoorAccount"]["Seed"]
     issuing_door_seed_algo = bootstrap_issuing["DoorAccount"]["KeyType"]
-    issuing_door_wallet = Wallet(
-        issuing_door_seed, 0, algorithm=CryptoAlgorithm(issuing_door_seed_algo)
+    issuing_door_wallet = Wallet.from_seed(
+        issuing_door_seed, algorithm=CryptoAlgorithm(issuing_door_seed_algo)
     )
 
     ###################################################################################
@@ -383,7 +390,9 @@ def setup_bridge(
     # disable the master key
     if not locking_account_info["Flags"] & LSF_DISABLE_MASTER:
         locking_txs.append(
-            AccountSet(account=locking_door, set_flag=AccountSetFlag.ASF_DISABLE_MASTER)
+            AccountSet(
+                account=locking_door, set_flag=AccountSetAsfFlag.ASF_DISABLE_MASTER
+            )
         )
 
     # submit transactions
@@ -400,12 +409,7 @@ def setup_bridge(
 
     if is_xrp_bridge:
         # we need to create the witness reward + submission accounts
-
-        assert funding_seed is not None  # for typing purposes - checked earlier
-        funding_wallet_algo = (
-            CryptoAlgorithm(funding_algorithm) if funding_algorithm else None
-        )
-        funding_wallet = Wallet(funding_seed, 0, algorithm=funding_wallet_algo)
+        assert funding_wallet is not None  # for typing purposes
 
         # TODO: add param to customize amount
         amount = str(min_create2 * 2)  # submit accounts need spare funds
@@ -505,7 +509,9 @@ def setup_bridge(
     # disable the master key
     if not issuing_account_info["Flags"] & LSF_DISABLE_MASTER:
         issuing_txs.append(
-            AccountSet(account=issuing_door, set_flag=AccountSetFlag.ASF_DISABLE_MASTER)
+            AccountSet(
+                account=issuing_door, set_flag=AccountSetAsfFlag.ASF_DISABLE_MASTER
+            )
         )
 
     # submit transactions
