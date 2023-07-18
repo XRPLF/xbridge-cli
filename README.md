@@ -1,14 +1,16 @@
-# xrpl-sidechain-cli
+# xbridge-cli
 
 ## Install
 
 ```bash
-pip install xrpl-sidechain-cli
+pip install xbridge-cli
 ```
+
 NOTE: if you're looking at the repo before it's published, this won't work. Instead, you'll do this:
+
 ```bash
-git clone https://github.com/xpring-eng/sidechain-cli.git
-cd sidechain-cli
+git clone https://github.com/xpring-eng/xbridge-cli.git
+cd xbridge-cli
 # install poetry
 curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python -
 poetry install
@@ -31,14 +33,15 @@ export WITNESSD_EXE={witnessd exe filepath}
 ```
 
 To stop the servers:
+
 ```bash
-sidechain-cli server stop --all
+xbridge-cli server stop --all
 ```
 
 ## Use Commands
 
 ```bash
-sidechain-cli --help
+xbridge-cli --help
 ```
 
 Each subcommand also has a `--help` flag, to tell you what fields you'll need.

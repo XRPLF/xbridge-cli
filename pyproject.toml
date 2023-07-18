@@ -1,9 +1,9 @@
 [tool.poetry]
-name = "xrpl-sidechain-cli"
-version = "1.0.0b4"
-description = "A CLI that helps you set up an XRPL sidechain."
+name = "xbridge-cli"
+version = "0.3.1"
+description = "A CLI that helps you set up an XRPL-XRPL bridge."
 readme = "README.md"
-repository = "https://github.com/xpring-eng/sidechain-cli"
+repository = "https://github.com/xpring-eng/xbridge-cli"
 authors = ["Mayukha Vadari <mvadari@ripple.com>"]
 keywords = [
   "xrp",
@@ -15,11 +15,11 @@ include = [
   "LICENSE",
 ]
 packages = [
-  { include = "sidechain_cli" },
+  { include = "xbridge_cli" },
 ]
 
 [tool.poetry.scripts]
-sidechain-cli = 'sidechain_cli.main:main'
+xbridge-cli = 'xbridge_cli.main:main'
 
 [tool.poetry.dependencies]
 python = "^3.7.1"
@@ -30,14 +30,15 @@ websockets = "^10.3"
 Jinja2 = "^3.1.2"
 psutil = "^5.9.2"
 docker = "^6.0.0"
-xrpl-py = "^1.8.0b0"
+xrpl-py = "2.1.0b0"
+pycryptodome = "^3.17"
 
 [tool.poetry.dev-dependencies]
 flake8 = "^5.0.4"
-black = "^22.12"
+black = "^23.3"
 flake8-black = "^0.3.6"
 flake8-docstrings = "^1.5.0"
-mypy = "^0"
+mypy = "^1"
 isort = "^5.11.4"
 flake8-isort = "^6.0.0"
 flake8-annotations = "^2.5.0"
@@ -54,7 +55,7 @@ profile = "black"
 [tool.coverage.run]
 branch = true
 command_line = "-m pytest tests"
-source = ["sidechain_cli"]
+source = ["xbridge_cli"]
 
 [tool.coverage.report]
 show_missing = true

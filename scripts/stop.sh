@@ -1,2 +1,2 @@
-sidechain-cli server stop --all
-sidechain-cli server list
+xbridge-cli server stop --all
+xbridge-cli server list

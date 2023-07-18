@@ -63,8 +63,7 @@ jobs:
         env:
           RIPPLED_EXE: docker
           WITNESSD_EXE: docker
-          XCHAIN_CONFIG_DIR: /home/runner/work/sidechain-config
-          GITHUB_CI: "True"
+          XCHAIN_CONFIG_DIR: /home/runner/work/xbridge-config
 
       - name: Debug Test Failure (Chain Outputs)
         if: always() && steps.runTests.outcome == 'failure'
@@ -74,7 +73,7 @@ jobs:
           echo "start of issuing_chain logs"
           cat $XCHAIN_CONFIG_DIR/issuing_chain/debug.log
         env:
-          XCHAIN_CONFIG_DIR: /home/runner/work/sidechain-config
+          XCHAIN_CONFIG_DIR: /home/runner/work/xbridge-config
 
       - name: Debug Test Failure (Witness Outputs)
         if: always() && steps.runTests.outcome == 'failure'
@@ -91,4 +90,4 @@ jobs:
           echo "start of witness4 logs"
           cat $XCHAIN_CONFIG_DIR/witness4/witness.log
         env:
-          XCHAIN_CONFIG_DIR: /home/runner/work/sidechain-config
+          XCHAIN_CONFIG_DIR: /home/runner/work/xbridge-config

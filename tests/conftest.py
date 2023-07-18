@@ -1,6 +1,7 @@
 import json
 import os
 import tempfile
+import traceback
 import unittest
 import unittest.mock
 from contextlib import contextmanager
@@ -9,8 +10,8 @@ from typing import Any, Dict, List, Optional
 import pytest
 from click.testing import CliRunner
 
-from sidechain_cli.main import main
-from sidechain_cli.utils import get_config_folder
+from xbridge_cli.main import main
+from xbridge_cli.utils import get_config_folder
 
 config_dir: Optional[tempfile.TemporaryDirectory] = None
 mocked_home_dir: Optional[tempfile.TemporaryDirectory] = None
@@ -32,8 +33,12 @@ def pytest_configure(config):
     global mocked_home_dir, config_dir, mocked_vars
     runner = CliRunner()
     runner.invoke(main, ["server", "stop", "--all"])
+    if os.getenv("RIPPLED_EXE") is None:
+        raise Exception("Environment variable `RIPPLED_EXE` is not defined.")
+    if os.getenv("WITNESSD_EXE") is None:
+        raise Exception("Environment variable `WITNESSD_EXE` is not defined.")
 
-    if os.getenv("GITHUB_CI") != "True":
+    if os.getenv("CI") != "True":
         config_dir = tempfile.TemporaryDirectory()
         env_vars = unittest.mock.patch.dict(
             os.environ,
@@ -46,7 +51,7 @@ def pytest_configure(config):
 
         mocked_home_dir = tempfile.TemporaryDirectory()
         config_var = unittest.mock.patch(
-            "sidechain_cli.utils.config_file.config_file.CONFIG_FOLDER",
+            "xbridge_cli.utils.config_file.config_file.CONFIG_FOLDER",
             mocked_home_dir.name,
         )
         config_var.start()
@@ -57,7 +62,7 @@ def pytest_configure(config):
             data: Dict[str, List[Any]] = {"chains": [], "witnesses": [], "bridges": []}
             json.dump(data, f, indent=4)
         config_var2 = unittest.mock.patch(
-            "sidechain_cli.utils.config_file.config_file._CONFIG_FILE",
+            "xbridge_cli.utils.config_file.config_file._CONFIG_FILE",
             config_file,
         )
         config_var2.start()
@@ -94,28 +99,6 @@ def _create_config_files() -> None:
     assert result.exit_code == 0, result.output
 
 
-def _fund_locking_accounts(cli_runner: CliRunner) -> None:
-    raw_xchain_config_dir = os.getenv("XCHAIN_CONFIG_DIR")
-    if raw_xchain_config_dir is None:
-        raise Exception("Error: $XCHAIN_CONFIG_DIR is not defined.")
-    xchain_config_dir = os.path.abspath(raw_xchain_config_dir)
-    with open(os.path.join(xchain_config_dir, "bridge_bootstrap.json")) as f:
-        bootstrap = json.load(f)
-
-    locking_door = bootstrap["LockingChain"]["DoorAccount"]["Address"]
-
-    # fund needed accounts on the locking chain
-    accounts_locking_fund = set(
-        [locking_door]
-        + bootstrap["LockingChain"]["WitnessRewardAccounts"]
-        + bootstrap["LockingChain"]["WitnessSubmitAccounts"]
-    )
-    fund_result = cli_runner.invoke(
-        main, ["fund", "locking_chain", *accounts_locking_fund]
-    )
-    assert fund_result.exit_code == 0, fund_result.output
-
-
 @contextmanager
 def _base_fixture():
     _reset_cli_config()
@@ -125,7 +108,10 @@ def _base_fixture():
 
     # start servers
     start_result = cli_runner.invoke(main, ["server", "start-all", "--verbose"])
-    assert start_result.exit_code == 0, start_result.output
+    if start_result.exit_code != 0:
+        print(start_result.output)
+        traceback.print_exception(start_result.exception)
+        assert start_result.exit_code == 0
 
     try:
         yield cli_runner
@@ -144,8 +130,6 @@ def runner():
 @pytest.fixture(scope="class")
 def create_bridge():
     with _base_fixture() as cli_runner:
-        _fund_locking_accounts(cli_runner)
-
         # build bridge
         build_result = cli_runner.invoke(
             main,
@@ -153,6 +137,7 @@ def create_bridge():
                 "bridge",
                 "build",
                 "--name=test_bridge",
+                "--fund-locking",
                 "--verbose",
             ],
         )
@@ -163,6 +148,5 @@ def create_bridge():
 
 @pytest.fixture(scope="function")
 def bridge_build_setup():
-    with _base_fixture() as cli_runner:
-        _fund_locking_accounts(cli_runner)
+    with _base_fixture():
         yield

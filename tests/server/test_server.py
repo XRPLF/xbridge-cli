@@ -5,14 +5,14 @@ import signal
 import subprocess
 import time
 
+import docker
 import psutil
 import pytest
 
-import docker
-from sidechain_cli.main import main
-from sidechain_cli.server.start import _DOCKER_COMPOSE
-from sidechain_cli.utils import get_config
-from sidechain_cli.utils.config_file import get_config_folder
+from xbridge_cli.main import main
+from xbridge_cli.server.start import _DOCKER_COMPOSE
+from xbridge_cli.utils import get_config
+from xbridge_cli.utils.config_file import get_config_folder
 
 CONFIG_FOLDER = get_config_folder()
 
@@ -34,13 +34,13 @@ class TestServer:
             r"[a-zA-Z0-9-_\/\.]+ *\| *[0-9\.]+ *\| *[0-9]+ *\| *[0-9\.]+ *\| *[0-9]+"
             r" *$",
             lines[3],
-        )
+        ), lines[3]
         assert re.match(
             r"^ *locking_chain *\| *[0-9]+ *\| *[a-zA-Z0-9-_\.\/]+ *\| *"
             r"[a-zA-Z0-9-_\/\.]+ *\| *[0-9\.]+ *\| *[0-9]+ *\| *[0-9\.]+ *\| *[0-9]+"
             r" *$",
             lines[4],
-        )
+        ), lines[4]
         assert lines[5] == ""
 
         assert all([f"witness{i}" in server_list.output for i in range(5)])
@@ -55,27 +55,27 @@ class TestServer:
             r"^ *witness[0-9] *\| *[0-9]+ *\| *[a-zA-Z0-9-_\.\/]+ *\| *"
             r"[a-zA-Z0-9-_\/\.]+ *\| *[0-9\.]+ *\| *[0-9]+ *$",
             lines[9],
-        )
+        ), lines[9]
         assert re.match(
             r"^ *witness[0-9] *\| *[0-9]+ *\| *[a-zA-Z0-9-_\.\/]+ *\| *"
             r"[a-zA-Z0-9-_\/\.]+ *\| *[0-9\.]+ *\| *[0-9]+ *$",
             lines[10],
-        )
+        ), lines[10]
         assert re.match(
             r"^ *witness[0-9] *\| *[0-9]+ *\| *[a-zA-Z0-9-_\.\/]+ *\| *"
             r"[a-zA-Z0-9-_\/\.]+ *\| *[0-9\.]+ *\| *[0-9]+ *$",
             lines[11],
-        )
+        ), lines[11]
         assert re.match(
             r"^ *witness[0-9] *\| *[0-9]+ *\| *[a-zA-Z0-9-_\.\/]+ *\| *"
             r"[a-zA-Z0-9-_\/\.]+ *\| *[0-9\.]+ *\| *[0-9]+ *$",
             lines[12],
-        )
+        ), lines[12]
         assert re.match(
             r"^ *witness[0-9] *\| *[0-9]+ *\| *[a-zA-Z0-9-_\.\/]+ *\| *"
             r"[a-zA-Z0-9-_\/\.]+ *\| *[0-9\.]+ *\| *[0-9]+ *$",
             lines[13],
-        )
+        ), lines[13]
         assert lines[14] == ""
 
     def test_list_dead_process(self, runner):
@@ -98,6 +98,7 @@ class TestServer:
         else:
             witness = get_config().get_witness(process_to_kill)
             os.kill(witness.pid, signal.SIGINT)
+            time.sleep(0.01)
 
             process = psutil.Process(pid=witness.pid)
             assert (
