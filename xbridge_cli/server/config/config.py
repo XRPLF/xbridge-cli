@@ -355,7 +355,7 @@ def generate_witness_config(
 @click.option(
     "--issuing-seed",
     "issuing_seed",
-    default="snoPBrXtMeMyMHUVTgbuqAfg1SUTb",
+    default=_GENESIS_SEED,
     help="The seed of the issuing chain door account. Defaults to the genesis account.",
 )
 @click.option(

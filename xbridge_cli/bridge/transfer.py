@@ -4,17 +4,7 @@ from typing import Any, Dict, cast
 
 import click
 from xrpl.clients import JsonRpcClient
-from xrpl.models import (
-    XRP,
-    Currency,
-    IssuedCurrency,
-    Response,
-    Transaction,
-    Tx,
-    XChainCommit,
-    XChainCreateClaimID,
-)
-from xrpl.utils import xrp_to_drops
+from xrpl.models import Response, Transaction, Tx, XChainCommit, XChainCreateClaimID
 from xrpl.wallet import Wallet
 
 from xbridge_cli.exceptions import XBridgeCLIException
@@ -175,12 +165,6 @@ def send_transfer(
             "Must use `--no-close-ledgers` on a non-standalone node."
         )
 
-    if isinstance(from_issue, IssuedCurrency):
-        original_issue: Currency = from_issue
-    else:
-        original_issue = XRP()
-        amount = int(xrp_to_drops(amount))
-
     try:
         from_wallet = Wallet.from_seed(from_account)
     except ValueError as error:
@@ -190,9 +174,9 @@ def send_transfer(
     except ValueError as error:
         raise XBridgeCLIException(f"Invalid `to` seed: {to_account}") from error
 
-    transfer_amount = original_issue.to_amount(amount)
+    transfer_amount = from_issue.to_amount(amount)
 
-    # XChainSeqNumCreate
+    # XChainCreateClaimID
     if tutorial:
         click.pause(
             info=click.style(
@@ -224,7 +208,7 @@ def send_transfer(
     assert len(claim_ids_ledger_entries) == 1, len(claim_ids_ledger_entries)
     xchain_claim_id = claim_ids_ledger_entries[0]["NewFields"]["XChainClaimID"]
 
-    # XChainTransfer
+    # XChainCommit
     if tutorial:
         click.pause(
             info=click.style("\nLocking the funds on the source chain...", fg="blue")
