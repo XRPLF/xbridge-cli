@@ -24,7 +24,6 @@ def _get_bridge(client: JsonRpcClient, door_account: str) -> Dict[str, Any]:
     # TODO: filter by bridge when that's implemented
     objects = _get_account_objects(client, door_account)
     bridge_objects = [obj for obj in objects if obj["LedgerEntryType"] == "Bridge"]
-    assert len(bridge_objects) == 1
     return bridge_objects[0]
 
 

@@ -338,10 +338,10 @@ def setup_bridge(
         raise XBridgeCLIException(obj_error)
     locking_door_objs = locking_objs_result["account_objects"]
     if len(locking_door_objs) > 0:
-        assert (
-            len(locking_door_objs) == 1
-        ), "Cannot have multiple bridges on one account"
-        if XChainBridge.from_xrpl(locking_door_objs[0]["XChainBridge"]) == bridge_obj:
+        if any(
+            XChainBridge.from_xrpl(obj["XChainBridge"]) == bridge_obj
+            for obj in locking_door_objs
+        ):
             locking_bridge_exists = True
         else:
             raise XBridgeCLIException(
@@ -457,10 +457,10 @@ def setup_bridge(
         raise XBridgeCLIException(obj_error)
     issuing_door_objs = issuing_objs_result["account_objects"]
     if len(issuing_door_objs) > 0:
-        assert (
-            len(issuing_door_objs) == 1
-        ), "Cannot have multiple bridges on one account"
-        if XChainBridge.from_xrpl(issuing_door_objs[0]["XChainBridge"]) == bridge_obj:
+        if any(
+            XChainBridge.from_xrpl(obj["XChainBridge"]) == bridge_obj
+            for obj in issuing_door_objs
+        ):
             issuing_bridge_exists = True
         else:
             raise XBridgeCLIException(
