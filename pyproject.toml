@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "xbridge-cli"
-version = "0.3.1"
+version = "0.3.2"
 description = "A CLI that helps you set up an XRPL-XRPL bridge."
 readme = "README.md"
 repository = "https://github.com/xpring-eng/xbridge-cli"
@@ -30,7 +30,7 @@ websockets = "^10.3"
 Jinja2 = "^3.1.2"
 psutil = "^5.9.2"
 docker = "^6.0.0"
-xrpl-py = "2.1.0b0"
+xrpl-py = "2.4.0b0"
 pycryptodome = "^3.17"
 
 [tool.poetry.dev-dependencies]
