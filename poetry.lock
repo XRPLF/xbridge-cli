@@ -1293,13 +1293,13 @@ files = [
 
 [[package]]
 name = "xrpl-py"
-version = "2.4.0b0"
+version = "2.4.0"
 description = "A complete Python library for interacting with the XRP ledger"
 optional = false
 python-versions = ">=3.7,<4.0"
 files = [
-    {file = "xrpl_py-2.4.0b0-py3-none-any.whl", hash = "sha256:54c3d3d2824ac57fbae6e63b30bd3558412b026c087bfd1ca1b7f404f0de0b5c"},
-    {file = "xrpl_py-2.4.0b0.tar.gz", hash = "sha256:d6a81165e61da0cbe1e7eb30494a32c3ed02b2771808c0cc15fcbcdf397bdb65"},
+    {file = "xrpl_py-2.4.0-py3-none-any.whl", hash = "sha256:e60e50a670a0e7194140d6b04cb5a7a74fa47a58bdf0c9bbd86aceea0f656bb4"},
+    {file = "xrpl_py-2.4.0.tar.gz", hash = "sha256:6d3d7262ca66b929105a4e989bb4259a164fb626ef3dfa1252f6f0a994850b5c"},
 ]
 
 [package.dependencies]
@@ -1333,4 +1333,4 @@ testing = ["flake8 (<5)", "func-timeout", "jaraco.functools", "jaraco.itertools"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.7.1"
-content-hash = "0394b1486527c2fd439d679fc807fca8caaea302f19e1a21d3491040e8822037"
+content-hash = "abde372440824dfbd0b163e426f3ca3dd9d115a6de4486d4e7769c1cdadbae92"
