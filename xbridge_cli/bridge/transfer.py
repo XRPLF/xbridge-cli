@@ -1,6 +1,6 @@
 """CLI command for setting up a bridge."""
 
-from typing import Any, Dict, cast
+from typing import Any, Dict, Union, cast
 
 import click
 from xrpl.clients import JsonRpcClient
@@ -109,7 +109,7 @@ def _submit_tx(
 def send_transfer(
     bridge: str,
     from_locking: bool,
-    amount: int | float,
+    amount: Union[int, float],
     from_account: str,
     to_account: str,
     close_ledgers: bool = True,
