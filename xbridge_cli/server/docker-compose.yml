@@ -34,7 +34,7 @@ services:
   witness0:
     container_name: witness0
     image: seelabs/xbridge-witness
-    platform: linux/arm64/v8
+    platform: linux/amd64
     command: "/opt/witness/witness.json"
     volumes:
       - ${XCHAIN_CONFIG_DIR}/witness0:/opt/witness/
@@ -47,7 +47,7 @@ services:
   witness1:
     container_name: witness1
     image: seelabs/xbridge-witness
-    platform: linux/arm64/v8
+    platform: linux/amd64
     command: "/opt/witness/witness.json"
     volumes:
       - ${XCHAIN_CONFIG_DIR}/witness1:/opt/witness/
@@ -60,7 +60,7 @@ services:
   witness2:
     container_name: witness2
     image: seelabs/xbridge-witness
-    platform: linux/arm64/v8
+    platform: linux/amd64
     command: "/opt/witness/witness.json"
     volumes:
       - ${XCHAIN_CONFIG_DIR}/witness2:/opt/witness/
@@ -73,7 +73,7 @@ services:
   witness3:
     container_name: witness3
     image: seelabs/xbridge-witness
-    platform: linux/arm64/v8
+    platform: linux/amd64
     command: "/opt/witness/witness.json"
     volumes:
       - ${XCHAIN_CONFIG_DIR}/witness3:/opt/witness/
@@ -86,7 +86,7 @@ services:
   witness4:
     container_name: witness4
     image: seelabs/xbridge-witness
-    platform: linux/arm64/v8
+    platform: linux/amd64
     command: "/opt/witness/witness.json"
     volumes:
       - ${XCHAIN_CONFIG_DIR}/witness4:/opt/witness/
