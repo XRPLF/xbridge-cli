@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [[Unreleased]]
 
+### Fixed
+
+- Throw an error if a transaction fails instead of continuing
+
+### Changed
+
+- Switched to Docker containers with the latest versions of rippled and the witness server
+
 ## [0.3.3] - 2023-10-10
 
 ### Fixed
