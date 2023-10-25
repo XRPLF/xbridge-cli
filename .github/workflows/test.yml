@@ -32,7 +32,7 @@ jobs:
         uses: actions/cache@v3
         with:
           path: /home/runner/.local
-          key: dotlocal-${{ env.POETRY_VERSION }}
+          key: dotlocal-${{ matrix.python-version }}-${{ env.POETRY_VERSION }}
 
       - name: Install poetry
         if: steps.cache-poetry.outputs.cache-hit != 'true'
@@ -43,7 +43,7 @@ jobs:
       - name: Install Python + Retrieve Poetry dependencies from cache
         uses: actions/setup-python@v4
         with:
-          python-version: "3.11"
+          python-version: ${{ matrix.python-version }}
           cache: "poetry"
 
       - name: Display Python version
