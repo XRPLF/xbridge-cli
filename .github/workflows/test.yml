@@ -12,7 +12,6 @@ on:
 
 env:
   POETRY_VERSION: 1.4.2
-  PYTHON_VERSION: "3.11"
 
 jobs:
   test:
@@ -46,7 +45,7 @@ jobs:
       - name: Install Python + Retrieve Poetry dependencies from cache
         uses: actions/setup-python@v4
         with:
-          python-version: ${{ env.PYTHON_VERSION }}
+          python-version: "${{ matrix.python-version }}"
           cache: "poetry"
 
       - name: Display Python version
