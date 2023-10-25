@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Throw an error if a transaction fails instead of continuing
+- Support door accounts with multiple bridges
 
 ### Changed
 
