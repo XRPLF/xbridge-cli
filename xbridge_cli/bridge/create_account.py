@@ -163,8 +163,10 @@ def create_xchain_account(
             )
         create_amount = xrp_to_drops(amount)
 
-    wallet_algorithm = CryptoAlgorithm(algorithm) if algorithm else None
-    from_wallet = Wallet(from_seed, 0, algorithm=wallet_algorithm)
+    wallet_algorithm = (
+        CryptoAlgorithm(algorithm) if algorithm else CryptoAlgorithm.ED25519
+    )
+    from_wallet = Wallet.from_seed(from_seed, algorithm=wallet_algorithm)
 
     # submit XChainAccountCreate tx
     fund_tx = XChainAccountCreateCommit(

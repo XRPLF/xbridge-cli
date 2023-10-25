@@ -54,7 +54,7 @@ def set_trustline(
 
     trust_sets: List[Transaction] = []
     for account in accounts:
-        wallet = Wallet(account, 0)
+        wallet = Wallet.from_seed(account)
         trust_sets.append(
             TrustSet(
                 account=wallet.classic_address,

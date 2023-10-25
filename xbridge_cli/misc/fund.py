@@ -4,6 +4,7 @@ from pprint import pformat
 from typing import List
 
 import click
+from xrpl import CryptoAlgorithm
 from xrpl.models import AccountInfo, Payment, Transaction
 from xrpl.utils import xrp_to_drops
 from xrpl.wallet import Wallet
@@ -30,7 +31,7 @@ from xbridge_cli.utils import get_config, submit_tx
     help="Print more verbose information.",
 )
 def fund_account(
-    chain: str, accounts: List[str], amount: int = 1000, verbose: bool = False
+    chain: str, accounts: List[str], amount: int = 10000, verbose: bool = False
 ) -> None:
     """
     Of the form `xbridge-cli fund CHAIN ACCOUNT1 [ACCOUNT2 ...].
@@ -56,7 +57,9 @@ def fund_account(
     chain_config = get_config().get_chain(chain)
     client = chain_config.get_client()
 
-    wallet = Wallet("snoPBrXtMeMyMHUVTgbuqAfg1SUTb", 0)
+    wallet = Wallet.from_seed(
+        "snoPBrXtMeMyMHUVTgbuqAfg1SUTb", algorithm=CryptoAlgorithm.SECP256K1
+    )
     payments: List[Transaction] = []
     for account in accounts:
         payments.append(

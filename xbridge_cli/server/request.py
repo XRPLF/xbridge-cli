@@ -42,7 +42,7 @@ def request_server(
 
     if isinstance(server, ChainConfig):  # is a rippled node
         if server.is_docker():
-            to_run = ["docker", "exec", name, "/opt/rippled/bin/rippled"]
+            to_run = ["docker", "exec", name, "/opt/ripple/bin/rippled"]
         else:
             to_run = [server.rippled, "--conf", server.config]
         to_run.extend([command, *args])
