@@ -19,11 +19,15 @@ def _get_account_objects(
     return cast(List[Dict[str, Any]], object_result.result["account_objects"])
 
 
-# TODO: add support for door accounts that have multiple bridges
-def _get_bridge(client: JsonRpcClient, door_account: str) -> Dict[str, Any]:
-    # TODO: filter by bridge when that's implemented
-    objects = _get_account_objects(client, door_account)
-    bridge_objects = [obj for obj in objects if obj["LedgerEntryType"] == "Bridge"]
+def _get_bridge(
+    client: JsonRpcClient, door_account: str, currency: str
+) -> Dict[str, Any]:
+    objects = _get_account_objects(client, door_account, AccountObjectType.BRIDGE)
+    bridge_objects = [
+        obj
+        for obj in objects
+        if obj["XChainBridge"]["LockingChainIssue"]["currency"] == currency
+    ]
     assert len(bridge_objects) == 1
     return bridge_objects[0]
 
@@ -88,6 +92,14 @@ def _get_bootstrap_chain_and_door(chain_json: Dict[str, Any]) -> Tuple[str, str]
     ),
 )
 @click.option(
+    "--currency",
+    type=str,
+    default="XRP",
+    help=(
+        "The currency that is being transferred across the bridge. The default is XRP."
+    ),
+)
+@click.option(
     "-v",
     "--verbose",
     is_flag=True,
@@ -98,6 +110,7 @@ def register_bridge(
     chains: Optional[Tuple[str, str]],
     doors: Optional[Tuple[str, str]],
     bootstrap: Optional[str],
+    currency: str = "XRP",
     verbose: int = 0,
 ) -> None:
     """
@@ -108,6 +121,8 @@ def register_bridge(
         name: The name of the bridge (only used locally).
         chains: The locking chain and issuing chain.
         doors: The locking chain door and issuing chain door.
+        currency: The currency that is being transferred across the bridge. The default
+            is XRP.
         bootstrap: The bootstrap file.
         verbose: Whether or not to print more verbose information.
 
@@ -154,8 +169,8 @@ def register_bridge(
     quorum = signer_list1["SignerQuorum"]
 
     # TODO: determine whether the bridge was set up properly.
-    bridge1 = _get_bridge(locking_client, doors[0])
-    bridge2 = _get_bridge(issuing_client, doors[1])
+    bridge1 = _get_bridge(locking_client, doors[0], currency)
+    bridge2 = _get_bridge(issuing_client, doors[1], currency)
     assert bridge1["XChainBridge"] == bridge2["XChainBridge"]
     assert bridge1["XChainAccountCreateCount"] == bridge2["XChainAccountClaimCount"]
     assert bridge2["XChainAccountCreateCount"] == bridge1["XChainAccountClaimCount"]
