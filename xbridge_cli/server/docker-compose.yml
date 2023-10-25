@@ -35,7 +35,7 @@ services:
     container_name: witness0
     image: rippleci/xbwd
     platform: linux/amd64
-    command: "/opt/witness/witness.json"
+    command: "/opt/xbwd/bin/xbridge_witnessd --conf /opt/witness/witness.json"
     volumes:
       - ${XCHAIN_CONFIG_DIR}/witness0:/opt/witness/
     ports:
@@ -48,7 +48,7 @@ services:
     container_name: witness1
     image: rippleci/xbwd
     platform: linux/amd64
-    command: "/opt/witness/witness.json"
+    command: "/opt/xbwd/bin/xbridge_witnessd --conf /opt/witness/witness.json"
     volumes:
       - ${XCHAIN_CONFIG_DIR}/witness1:/opt/witness/
     ports:
@@ -61,7 +61,7 @@ services:
     container_name: witness2
     image: rippleci/xbwd
     platform: linux/amd64
-    command: "/opt/witness/witness.json"
+    command: "/opt/xbwd/bin/xbridge_witnessd --conf /opt/witness/witness.json"
     volumes:
       - ${XCHAIN_CONFIG_DIR}/witness2:/opt/witness/
     ports:
@@ -74,7 +74,7 @@ services:
     container_name: witness3
     image: rippleci/xbwd
     platform: linux/amd64
-    command: "/opt/witness/witness.json"
+    command: "/opt/xbwd/bin/xbridge_witnessd --conf /opt/witness/witness.json"
     volumes:
       - ${XCHAIN_CONFIG_DIR}/witness3:/opt/witness/
     ports:
@@ -87,7 +87,7 @@ services:
     container_name: witness4
     image: rippleci/xbwd
     platform: linux/amd64
-    command: "/opt/witness/witness.json"
+    command: "/opt/xbwd/bin/xbridge_witnessd --conf /opt/witness/witness.json"
     volumes:
       - ${XCHAIN_CONFIG_DIR}/witness4:/opt/witness/
     ports:
