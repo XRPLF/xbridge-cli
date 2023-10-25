@@ -127,6 +127,8 @@ class TestBridgeBuild:
                 "--fund-locking",
                 "--funding-seed",
                 "snoPBrXtMeMyMHUVTgbuqAfg1SUTb",
+                "--funding-algorithm",
+                "secp256k1",
                 "--verbose",
             ],
         )

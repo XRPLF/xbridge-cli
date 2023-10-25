@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [[Unreleased]]
 
+## [0.3.3] - 2023-10-10
+
+### Fixed
+
+- Updated xrpl-py version to the latest to fix `XChainCreateBridge`` serialization
+
+## [0.3.2] - 2023-09-25
+
+### Fixed
+
+- Updated xrpl-py beta version to add support for Network ID feature
+
+## [0.3.1] - 2023-07-12
+
 ### Fixed
 
 - Better error handling for the `account_objects` call in `bridge create`
