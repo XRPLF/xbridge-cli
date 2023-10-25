@@ -1,4 +1,5 @@
 {
+    "python.defaultInterpreterPath": ".venv/bin/python",
     "python.formatting.provider": "black",
     "python.linting.pylintEnabled": false,
     "python.linting.flake8Enabled": true,
