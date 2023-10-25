@@ -1,8 +1,10 @@
+import pytest
 from click.testing import CliRunner
 
 from xbridge_cli.main import main
 
 
+@pytest.mark.usefixtures("basic")
 class TestBasicCreation:
     def test_start_stop(self):
         runner = CliRunner()

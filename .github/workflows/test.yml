@@ -5,10 +5,13 @@ on:
     branches: [main]
   pull_request:
     paths-ignore:
-      - "docs/**"
+      - "scripts/**"
       - "**.md"
       - ".vscode/**"
   workflow_dispatch:
+
+env:
+  POETRY_VERSION: 1.4.2
 
 jobs:
   test:
@@ -17,8 +20,6 @@ jobs:
     timeout-minutes: 10
     strategy:
       matrix:
-        # we have to use 3.7.1 to get around openssl issues
-        # TODO: add 3.7 once xrpl-py has been updated
         python-version: ["3.8", "3.9", "3.10", "3.11"]
       fail-fast: false
 
@@ -27,20 +28,22 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Load cached .local
+        id: cache-poetry
         uses: actions/cache@v3
         with:
           path: /home/runner/.local
-          key: dotlocal-${{ matrix.python-version }}-${{ hashFiles('.github/workflows') }}
+          key: dotlocal-${{ matrix.python-version }}-${{ env.POETRY_VERSION }}
 
       - name: Install poetry
+        if: steps.cache-poetry.outputs.cache-hit != 'true'
         run: |
-          curl -sSL https://install.python-poetry.org/ | python -
+          curl -sSL https://install.python-poetry.org/ | python - --version ${{ env.POETRY_VERSION }}
           echo "$HOME/.local/bin" >> $GITHUB_PATH
 
       - name: Install Python + Retrieve Poetry dependencies from cache
         uses: actions/setup-python@v4
         with:
-          python-version: "${{ matrix.python-version }}"
+          python-version: ${{ matrix.python-version }}
           cache: "poetry"
 
       - name: Display Python version
@@ -52,8 +55,8 @@ jobs:
 
       - name: Pull images from docker
         run: |
-          docker pull legleux/rippled-xbridge-test
-          docker pull legleux/xbridge_witnessd-test
+          docker pull rippleci/rippled:2.0.0-b4
+          docker pull rippleci/xbwd
 
       - name: Run tests
         id: runTests
