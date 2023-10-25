@@ -4,7 +4,7 @@ services:
   locking_chain:
     container_name: locking_chain
     image: rippleci/rippled:2.0.0-b4
-    platform: linux/arm64/v8
+    platform: linux/amd64
     command: "/opt/ripple/bin/rippled --conf /etc/opt/ripple/rippled.cfg -a"
     volumes:
       - ${XCHAIN_CONFIG_DIR}/locking_chain:/etc/opt/ripple/
@@ -19,7 +19,7 @@ services:
   issuing_chain:
     container_name: issuing_chain
     image: rippleci/rippled:2.0.0-b4
-    platform: linux/arm64/v8
+    platform: linux/amd64
     command: "/opt/ripple/bin/rippled --conf /etc/opt/ripple/rippled.cfg -a"
     volumes:
       - ${XCHAIN_CONFIG_DIR}/issuing_chain:/etc/opt/ripple/
