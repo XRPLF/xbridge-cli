@@ -122,6 +122,12 @@ def _base_fixture():
 
 
 @pytest.fixture(scope="class")
+def basic():
+    _reset_cli_config()
+    _create_config_files()
+
+
+@pytest.fixture(scope="class")
 def runner():
     with _base_fixture() as cli_runner:
         yield cli_runner

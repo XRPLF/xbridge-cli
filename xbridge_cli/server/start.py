@@ -148,7 +148,9 @@ def start_server(
             config_json = json.load(f)
         is_rippled = False
     if check_server_exists(name, config):
-        raise XBridgeCLIException("Server already running with that name or config.")
+        raise XBridgeCLIException(
+            f"Server already running with the name {name} or config {config}."
+        )
 
     server_type = "rippled" if is_rippled else "witness"
     if verbose:
