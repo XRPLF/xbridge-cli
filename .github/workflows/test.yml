@@ -52,7 +52,7 @@ jobs:
 
       - name: Pull images from docker
         run: |
-          docker pull mvadariripple/rippled-xbridge
+          docker pull rippleci/rippled
           docker pull seelabs/xbridge-witness
 
       - name: Run tests
