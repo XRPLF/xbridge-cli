@@ -53,7 +53,7 @@ class TestBridgeBuild:
             ],
             "xchain_currencies": [{"currency": "XRP"}, {"currency": "XRP"}],
             "signature_reward": "100",
-            "create_account_amounts": ["5000000", "5000000"],
+            "create_account_amounts": ["10000000", "10000000"],
         }
 
         assert config_result["bridges"][0] == expected_result
@@ -149,7 +149,7 @@ class TestBridgeBuild:
             ],
             "xchain_currencies": [{"currency": "XRP"}, {"currency": "XRP"}],
             "signature_reward": "100",
-            "create_account_amounts": ["5000000", "5000000"],
+            "create_account_amounts": ["10000000", "10000000"],
         }
 
         assert config_result["bridges"][0] == expected_result
