@@ -19,7 +19,6 @@ def _get_account_objects(
     return cast(List[Dict[str, Any]], object_result.result["account_objects"])
 
 
-# TODO: add support for door accounts that have multiple bridges
 def _get_bridge(
     client: JsonRpcClient, door_account: str, currency: str
 ) -> Dict[str, Any]:
