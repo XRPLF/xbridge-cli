@@ -56,7 +56,7 @@ jobs:
       - name: Pull images from docker
         run: |
           docker pull rippleci/rippled:2.0.0-b4
-          docker pull seelabs/xbridge-witness
+          docker pull rippleci/xbwd
 
       - name: Run tests
         id: runTests

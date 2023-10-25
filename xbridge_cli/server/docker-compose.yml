@@ -33,7 +33,7 @@ services:
 
   witness0:
     container_name: witness0
-    image: seelabs/xbridge-witness
+    image: rippleci/xbwd
     platform: linux/amd64
     command: "/opt/witness/witness.json"
     volumes:
@@ -46,7 +46,7 @@ services:
 
   witness1:
     container_name: witness1
-    image: seelabs/xbridge-witness
+    image: rippleci/xbwd
     platform: linux/amd64
     command: "/opt/witness/witness.json"
     volumes:
@@ -59,7 +59,7 @@ services:
 
   witness2:
     container_name: witness2
-    image: seelabs/xbridge-witness
+    image: rippleci/xbwd
     platform: linux/amd64
     command: "/opt/witness/witness.json"
     volumes:
@@ -72,7 +72,7 @@ services:
 
   witness3:
     container_name: witness3
-    image: seelabs/xbridge-witness
+    image: rippleci/xbwd
     platform: linux/amd64
     command: "/opt/witness/witness.json"
     volumes:
@@ -85,7 +85,7 @@ services:
 
   witness4:
     container_name: witness4
-    image: seelabs/xbridge-witness
+    image: rippleci/xbwd
     platform: linux/amd64
     command: "/opt/witness/witness.json"
     volumes:
