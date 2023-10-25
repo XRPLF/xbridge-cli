@@ -43,7 +43,7 @@ jobs:
       - name: Install Python + Retrieve Poetry dependencies from cache
         uses: actions/setup-python@v4
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: "${{ matrix.python-version }}"
           cache: "poetry"
 
       - name: Display Python version
