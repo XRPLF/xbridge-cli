@@ -31,7 +31,7 @@ from xbridge_cli.utils import get_config, submit_tx
     help="Whether or not to print more verbose information.",
 )
 def fund_account(
-    chain: str, accounts: List[str], amount: int = 1000, verbose: bool = False
+    chain: str, accounts: List[str], amount: int = 10000, verbose: bool = False
 ) -> None:
     """
     Of the form `xbridge-cli fund CHAIN ACCOUNT1 [ACCOUNT2 ...].

@@ -43,7 +43,7 @@ class TestBridgeTransfer:
                 "--to",
                 receive_wallet.classic_address,
                 "--amount",
-                "10",
+                "100",
                 "--verbose",
             ],
         )
@@ -114,7 +114,7 @@ class TestBridgeTransfer:
                 "--to",
                 receive_wallet.classic_address,
                 "--amount",
-                "10",
+                "100",
                 "--verbose",
             ],
         )
