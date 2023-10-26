@@ -2,34 +2,40 @@ name: Lint and Type Check
 
 on:
   push:
-    branches: [master]
+    branches: [main]
   pull_request:
   workflow_dispatch:
+
+env:
+  POETRY_VERSION: 1.4.2
+  PYTHON_VERSION: "3.8"
 
 jobs:
   lint-and-type-check:
     name: Lint and type-check
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
       - name: Load cached .local
+        id: cache-poetry
         uses: actions/cache@v3
         with:
           path: /home/runner/.local
-          key: dotlocal-3.11-${{ hashFiles('.github/workflows') }}
+          key: dotlocal-${{ env.POETRY_VERSION }}
 
       - name: Install poetry
+        if: steps.cache-poetry.outputs.cache-hit != 'true'
         run: |
-          curl -sSL https://install.python-poetry.org/ | python -
+          curl -sSL https://install.python-poetry.org/ | python - --version ${{ env.POETRY_VERSION }}
           echo "$HOME/.local/bin" >> $GITHUB_PATH
 
       - name: Install Python + Retrieve Poetry dependencies from cache
         uses: actions/setup-python@v4
         with:
-          python-version: "3.11"
+          python-version: ${{ env.PYTHON_VERSION }}
           cache: "poetry"
 
       - name: Display Python version

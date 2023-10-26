@@ -28,9 +28,6 @@ _DOCKER_COMPOSE_FILE = os.path.abspath(
     os.path.join(
         os.path.realpath(__file__),
         "..",
-        "..",
-        "..",
-        "docker-setup",
         "docker-compose.yml",
     )
 )
@@ -151,7 +148,9 @@ def start_server(
             config_json = json.load(f)
         is_rippled = False
     if check_server_exists(name, config):
-        raise XBridgeCLIException("Server already running with that name or config.")
+        raise XBridgeCLIException(
+            f"Server already running with the name {name} or config {config}."
+        )
 
     server_type = "rippled" if is_rippled else "witness"
     if verbose:
@@ -219,15 +218,17 @@ def start_server(
 
 @click.command(name="start-all")
 @click.option(
-    "--config_dir",
+    "--config-dir",
+    "config_dir",
     envvar="XCHAIN_CONFIG_DIR",
     required=True,
     prompt=True,
     type=click.Path(exists=True),
-    help="The folder in which config files are storeds.",
+    help="The folder in which config files are stored.",
 )
 @click.option(
-    "--rippled_exe",
+    "--rippled-exe",
+    "rippled_exe",
     envvar="RIPPLED_EXE",
     required=True,
     prompt=True,
@@ -235,7 +236,7 @@ def start_server(
     help="The filepath to the rippled executable.",
 )
 @click.option(
-    "--witnessd_exe",
+    "--witnessd-exe",
     envvar="WITNESSD_EXE",
     required=True,
     prompt=True,

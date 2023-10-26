@@ -1,19 +1,10 @@
 """CLI command for setting up a bridge."""
 
-from typing import Any, Dict, cast
+from typing import Any, Dict, Union, cast
 
 import click
 from xrpl.clients import JsonRpcClient
-from xrpl.models import (
-    XRP,
-    Currency,
-    IssuedCurrency,
-    Response,
-    Transaction,
-    Tx,
-    XChainCommit,
-    XChainCreateClaimID,
-)
+from xrpl.models import Response, Transaction, Tx, XChainCommit, XChainCreateClaimID
 from xrpl.wallet import Wallet
 
 from xbridge_cli.exceptions import XBridgeCLIException
@@ -25,10 +16,10 @@ def _submit_tx(
     tx: Transaction,
     client: JsonRpcClient,
     wallet: Wallet,
-    verbose: int,
+    verbosity: int,
     close_ledgers: bool,
 ) -> Response:
-    result = submit_tx(tx, client, wallet, verbose, close_ledgers)[0]
+    result = submit_tx(tx, client, wallet, verbosity, close_ledgers)[0]
     tx_result = (
         result.result.get("error")
         or result.result.get("engine_result")
@@ -56,7 +47,7 @@ def _submit_tx(
     help="The bridge to transfer across.",
 )
 @click.option(
-    "--from_locking/--from_issuing",
+    "--from-locking/--from-issuing",
     "from_locking",
     required=True,
     prompt=True,
@@ -66,7 +57,11 @@ def _submit_tx(
     ),
 )
 @click.option(
-    "--amount", required=True, prompt=True, type=str, help="The amount to transfer."
+    "--amount",
+    required=True,
+    prompt=True,
+    type=float,
+    help="The amount to transfer.",
 )
 @click.option(
     "--from",
@@ -101,6 +96,12 @@ def _submit_tx(
     help="Whether or not to print more verbose information. Supports `-vv`.",
 )
 @click.option(
+    "-s",
+    "--silent",
+    is_flag=True,
+    help="Whether or not to print no information. Cannot be used with -v.",
+)
+@click.option(
     "--tutorial",
     is_flag=True,
     help="Turn this flag on if you want to slow down and really understand each step.",
@@ -108,11 +109,12 @@ def _submit_tx(
 def send_transfer(
     bridge: str,
     from_locking: bool,
-    amount: str,
+    amount: Union[int, float],
     from_account: str,
     to_account: str,
     close_ledgers: bool = True,
     verbose: int = 0,
+    silent: bool = False,
     tutorial: bool = False,
 ) -> None:
     """
@@ -123,13 +125,14 @@ def send_transfer(
         bridge: The bridge to transfer across.
         from_locking: Whether funding from the locking chain or the issuing chain.
             Defaults to the locking chain.
-        amount: The amount to transfer.
+        amount: The amount to transfer (in XRP).
         from_account: The seed of the account to transfer from.
         to_account: The seed of the account to transfer to.
         close_ledgers: Whether to close ledgers manually (via `ledger_accept`) or wait
             for ledgers to close automatically. A standalone node requires ledgers to
             be closed; an external network does not support ledger closing.
         verbose: Whether or not to print more verbose information. Supports `-vv`.
+        silent: Whether or not to print no information. Cannot be used with `-v`.
         tutorial: Whether to slow down and explain each step.
 
     Raises:
@@ -138,7 +141,13 @@ def send_transfer(
         AttestationTimeoutException: If there is a timeout when waiting for
             attestations.
     """  # noqa: D301
-    print_level = max(verbose, 2 if tutorial else 0)
+    if silent and verbose > 0:
+        raise XBridgeCLIException("Cannot have verbose and silent flags.")
+    if silent and tutorial:
+        raise XBridgeCLIException("Cannot have tutorial and silent flags.")
+
+    verbosity = 0 if silent else 1 + verbose
+    print_level = max(verbosity, 2 if tutorial else 0)
     bridge_config = get_config().get_bridge(bridge)
     bridge_obj = bridge_config.get_bridge()
     locking_client, issuing_client = bridge_config.get_clients()
@@ -156,23 +165,18 @@ def send_transfer(
             "Must use `--no-close-ledgers` on a non-standalone node."
         )
 
-    if isinstance(from_issue, IssuedCurrency):
-        original_issue: Currency = from_issue
-    else:
-        original_issue = XRP()
-
     try:
-        from_wallet = Wallet(from_account, 0)
-    except ValueError:
-        raise XBridgeCLIException(f"Invalid `from` seed: {from_account}")
+        from_wallet = Wallet.from_seed(from_account)
+    except ValueError as error:
+        raise XBridgeCLIException(f"Invalid `from` seed: {from_account}") from error
     try:
-        to_wallet = Wallet(to_account, 0)
-    except ValueError:
-        raise XBridgeCLIException(f"Invalid `to` seed: {to_account}")
+        to_wallet = Wallet.from_seed(to_account)
+    except ValueError as error:
+        raise XBridgeCLIException(f"Invalid `to` seed: {to_account}") from error
 
-    transfer_amount = original_issue.to_amount(amount)
+    transfer_amount = from_issue.to_amount(amount)
 
-    # XChainSeqNumCreate
+    # XChainCreateClaimID
     if tutorial:
         click.pause(
             info=click.style(
@@ -204,7 +208,7 @@ def send_transfer(
     assert len(claim_ids_ledger_entries) == 1, len(claim_ids_ledger_entries)
     xchain_claim_id = claim_ids_ledger_entries[0]["NewFields"]["XChainClaimID"]
 
-    # XChainTransfer
+    # XChainCommit
     if tutorial:
         click.pause(
             info=click.style("\nLocking the funds on the source chain...", fg="blue")
@@ -243,5 +247,5 @@ def send_transfer(
         transfer_amount,
         xchain_claim_id,
         close_ledgers,
-        verbose,
+        verbosity,
     )

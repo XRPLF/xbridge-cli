@@ -68,14 +68,13 @@ class TestRegister:
             [
                 "bridge",
                 "create-account",
-                "--from_locking",
+                "--from-locking",
                 "--bridge",
                 bridge_name,
                 "--from",
                 send_wallet.seed,
                 "--to",
                 wallet_to_create.classic_address,
-                "--verbose",
             ],
         )
         assert runner_result.exit_code == 0, runner_result.output
@@ -148,14 +147,13 @@ class TestRegister:
             [
                 "bridge",
                 "create-account",
-                "--from_locking",
+                "--from-locking",
                 "--bridge",
                 bridge_name,
                 "--from",
                 send_wallet.seed,
                 "--to",
                 wallet_to_create.classic_address,
-                "--verbose",
             ],
         )
         assert runner_result.exit_code == 0, runner_result.output

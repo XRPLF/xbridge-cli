@@ -32,6 +32,7 @@ class TestBridgeBuild:
                 "bridge",
                 "build",
                 "--name=test_bridge",
+                "--fund-locking",
                 "--close-ledgers",
                 "--verbose",
             ],
@@ -52,7 +53,7 @@ class TestBridgeBuild:
             ],
             "xchain_currencies": [{"currency": "XRP"}, {"currency": "XRP"}],
             "signature_reward": "100",
-            "create_account_amounts": ["5000000", "5000000"],
+            "create_account_amounts": ["10000000", "10000000"],
         }
 
         assert config_result["bridges"][0] == expected_result
@@ -123,8 +124,11 @@ class TestBridgeBuild:
                 "--name",
                 "test_bridge",
                 "--no-close-ledgers",
-                "--funding_seed",
+                "--fund-locking",
+                "--funding-seed",
                 "snoPBrXtMeMyMHUVTgbuqAfg1SUTb",
+                "--funding-algorithm",
+                "secp256k1",
                 "--verbose",
             ],
         )
@@ -145,7 +149,7 @@ class TestBridgeBuild:
             ],
             "xchain_currencies": [{"currency": "XRP"}, {"currency": "XRP"}],
             "signature_reward": "100",
-            "create_account_amounts": ["5000000", "5000000"],
+            "create_account_amounts": ["10000000", "10000000"],
         }
 
         assert config_result["bridges"][0] == expected_result

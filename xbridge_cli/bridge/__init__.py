@@ -2,9 +2,9 @@
 
 import click
 
+from xbridge_cli.bridge.build import setup_bridge
 from xbridge_cli.bridge.create_account import create_xchain_account
 from xbridge_cli.bridge.register import register_bridge
-from xbridge_cli.bridge.setup import setup_bridge
 from xbridge_cli.bridge.transfer import send_transfer
 
 

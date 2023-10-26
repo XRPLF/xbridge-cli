@@ -4,6 +4,7 @@ from pprint import pformat
 from typing import List
 
 import click
+from xrpl import CryptoAlgorithm
 from xrpl.models import AccountInfo, Payment, Transaction
 from xrpl.utils import xrp_to_drops
 from xrpl.wallet import Wallet
@@ -13,11 +14,7 @@ from xbridge_cli.utils import get_config, submit_tx
 
 
 @click.command(name="fund")
-@click.argument(
-    "chain",
-    required=True,
-    type=str,
-)
+@click.argument("chain", required=True, type=str)
 @click.argument(
     "accounts",
     required=True,
@@ -25,12 +22,17 @@ from xbridge_cli.utils import get_config, submit_tx
     nargs=-1,
 )
 @click.option(
+    "--amount", type=int, default=1000, help="The amount to fund each account (in XRP)."
+)
+@click.option(
     "-v",
     "--verbose",
     is_flag=True,
     help="Whether or not to print more verbose information.",
 )
-def fund_account(chain: str, accounts: List[str], verbose: bool = False) -> None:
+def fund_account(
+    chain: str, accounts: List[str], amount: int = 10000, verbose: bool = False
+) -> None:
     """
     Of the form `xbridge-cli fund CHAIN ACCOUNT1 [ACCOUNT2 ...].
 
@@ -41,6 +43,7 @@ def fund_account(chain: str, accounts: List[str], verbose: bool = False) -> None
     Args:
         chain: The chain to fund an account on.
         accounts: The account(s) to fund.
+        amount: The amount to fund each account (in XRP).
         verbose: Whether or not to print more verbose information.
 
     Raises:
@@ -54,14 +57,16 @@ def fund_account(chain: str, accounts: List[str], verbose: bool = False) -> None
     chain_config = get_config().get_chain(chain)
     client = chain_config.get_client()
 
-    wallet = Wallet("snoPBrXtMeMyMHUVTgbuqAfg1SUTb", 0)
+    wallet = Wallet.from_seed(
+        "snoPBrXtMeMyMHUVTgbuqAfg1SUTb", algorithm=CryptoAlgorithm.SECP256K1
+    )
     payments: List[Transaction] = []
     for account in accounts:
         payments.append(
             Payment(
                 account=wallet.classic_address,
                 destination=account,
-                amount=xrp_to_drops(1000),
+                amount=xrp_to_drops(amount),
             )
         )
     submit_tx(payments, client, wallet)

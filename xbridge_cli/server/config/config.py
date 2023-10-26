@@ -14,6 +14,7 @@ from jinja2 import Environment, FileSystemLoader
 from xrpl import CryptoAlgorithm
 from xrpl.wallet import Wallet
 
+from xbridge_cli.exceptions import XBridgeCLIException
 from xbridge_cli.server.config.ports import Ports
 from xbridge_cli.utils import CryptoAlgorithmChoice, CurrencyDict
 
@@ -110,7 +111,8 @@ def _generate_rippled_configs(config_dir: str, docker: bool = False) -> Tuple[in
 
 @click.command(name="witness")
 @click.option(
-    "--config_dir",
+    "--config-dir",
+    "config_dir",
     required=True,
     prompt=True,
     help="The folder in which to store config files.",
@@ -127,14 +129,14 @@ def _generate_rippled_configs(config_dir: str, docker: bool = False) -> Tuple[in
     help="Whether the config files are for a docker setup.",
 )
 @click.option(
-    "--locking_ip",
+    "--locking-ip",
     "locking_chain_ip",
     default="127.0.0.1",
     type=str,
     help="The IP address of the locking chain node.",
 )
 @click.option(
-    "--locking_port",
+    "--locking-port",
     "locking_chain_port",
     required=True,
     prompt=True,
@@ -142,14 +144,14 @@ def _generate_rippled_configs(config_dir: str, docker: bool = False) -> Tuple[in
     help="The port used by the locking chain.",
 )
 @click.option(
-    "--issuing_ip",
+    "--issuing-ip",
     "issuing_chain_ip",
     default="127.0.0.1",
     type=str,
     help="The IP address of the issuing chain node.",
 )
 @click.option(
-    "--issuing_port",
+    "--issuing-port",
     "issuing_chain_port",
     required=True,
     prompt=True,
@@ -157,20 +159,23 @@ def _generate_rippled_configs(config_dir: str, docker: bool = False) -> Tuple[in
     help="The port used by the issuing chain.",
 )
 @click.option(
-    "--witness_port",
+    "--witness-port",
+    "witness_port",
     required=True,
     prompt=True,
     type=int,
     help="The port that will be used by the witness server.",
 )
 @click.option(
-    "--src_door",
+    "--src-door",
+    "src_door",
     required=True,
     prompt=True,
     help="The door account on the source chain.",
 )
 @click.option(
-    "--src_currency",
+    "--src-currency",
+    "src_currency",
     default="XRP",
     help=(
         "The currency on the source chain. Defaults to XRP. An issued currency is of "
@@ -178,12 +183,14 @@ def _generate_rippled_configs(config_dir: str, docker: bool = False) -> Tuple[in
     ),
 )
 @click.option(
-    "--dst_door",
+    "--dst-door",
+    "dst_door",
     default="rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh",
     help="The door account on the destination chain. Defaults to the genesis account.",
 )
 @click.option(
-    "--dst_currency",
+    "--dst-currency",
+    "dst_currency",
     default="XRP",
     help=(
         "The currency on the destination chain. Defaults to XRP. An issued currency "
@@ -191,31 +198,36 @@ def _generate_rippled_configs(config_dir: str, docker: bool = False) -> Tuple[in
     ),
 )
 @click.option(
-    "--locking_reward_seed",
+    "--locking-reward-seed",
+    "locking_reward_seed",
     required=True,
     prompt=True,
     help="The seed for the reward account for the witness on the locking chain.",
 )
 @click.option(
-    "--locking_reward_account",
+    "--locking-reward-account",
+    "locking_reward_account",
     required=True,
     prompt=True,
     help="The reward account for the witness on the locking chain.",
 )
 @click.option(
-    "--signing_seed",
+    "--signing-seed",
+    "signing_seed",
     required=True,
     prompt=True,
     help="The seed to use for signing attestations.",
 )
 @click.option(
-    "--issuing_reward_seed",
+    "--issuing-reward-seed",
+    "issuing_reward_seed",
     required=True,
     prompt=True,
     help="The seed for the reward account for the witness on the issuing chain.",
 )
 @click.option(
-    "--issuing_reward_account",
+    "--issuing-reward-account",
+    "issuing_reward_account",
     required=True,
     prompt=True,
     help="The reward account for the witness on the issuing chain.",
@@ -339,19 +351,20 @@ def generate_witness_config(
     help="The folder in which to store the bridge bootstrap file.",
 )
 @click.option(
-    "--locking_seed",
+    "--locking-seed",
     "locking_seed",
     required=True,
     prompt=True,
     help="The seed of the locking chain door account.",
 )
 @click.option(
-    "--locking_algorithm",
+    "--locking-algorithm",
+    "locking_algorithm",
     type=CryptoAlgorithmChoice,
     help="The algorithm used to generate the keypair from the locking door's seed.",
 )
 @click.option(
-    "--locking_currency",
+    "--locking-currency",
     "locking_currency",
     default="XRP",
     help=(
@@ -360,18 +373,19 @@ def generate_witness_config(
     ),
 )
 @click.option(
-    "--issuing_seed",
+    "--issuing-seed",
     "issuing_seed",
-    default="snoPBrXtMeMyMHUVTgbuqAfg1SUTb",
+    default=_GENESIS_SEED,
     help="The seed of the issuing chain door account. Defaults to the genesis account.",
 )
 @click.option(
-    "--issuing_algorithm",
+    "--issuing-algorithm",
+    "issuing_algorithm",
     type=CryptoAlgorithmChoice,
     help="The algorithm used to generate the keypair from the issuing door's seed.",
 )
 @click.option(
-    "--issuing_currency",
+    "--issuing-currency",
     "issuing_currency",
     default="XRP",
     help=(
@@ -380,7 +394,7 @@ def generate_witness_config(
     ),
 )
 @click.option(
-    "--reward_account",
+    "--reward-account",
     "reward_accounts",
     required=True,
     prompt=True,
@@ -388,7 +402,7 @@ def generate_witness_config(
     help="The seed of the witness reward account.",
 )
 @click.option(
-    "--signing_account",
+    "--signing-account",
     "signing_accounts",
     required=True,
     prompt=True,
@@ -442,8 +456,8 @@ def generate_bootstrap(
         if issuing_algorithm
         else CryptoAlgorithm.ED25519
     )
-    locking_door = Wallet(locking_seed, 0, algorithm=locking_wallet_algo)
-    issuing_door = Wallet(issuing_seed, 0, algorithm=issuing_wallet_algo)
+    locking_door = Wallet.from_seed(locking_seed, algorithm=locking_wallet_algo)
+    issuing_door = Wallet.from_seed(issuing_seed, algorithm=issuing_wallet_algo)
 
     assert (locking_currency == "XRP" and issuing_currency == "XRP") or (
         locking_currency != "XRP" and issuing_currency != "XRP"
@@ -483,7 +497,8 @@ def generate_bootstrap(
 
 @click.command(name="all")
 @click.option(
-    "--config_dir",
+    "--config-dir",
+    "config_dir",
     envvar="XCHAIN_CONFIG_DIR",
     required=True,
     prompt=True,
@@ -491,7 +506,8 @@ def generate_bootstrap(
     help="The folder in which to store config files.",
 )
 @click.option(
-    "--num_witnesses",
+    "--num-witnesses",
+    "num_witnesses",
     default=5,
     type=int,
     help="The number of witness configs to generate. Defaults to 5.",
@@ -535,17 +551,22 @@ def generate_all_configs(
         currency: The currency that is being transferred across the bridge.
         is_docker: Whether the config files are for a docker setup.
         verbose: Whether or not to print more verbose information.
+
+    Raises:
+        XBridgeCLIException: If something really weird goes wrong.
     """
     # TODO: add support for external networks
     abs_config_dir = os.path.abspath(config_dir)
 
     locking_port, issuing_port = _generate_rippled_configs(abs_config_dir, is_docker)
-    locking_door = Wallet.create(crypto_algorithm=CryptoAlgorithm.SECP256K1)
+    locking_door = Wallet.create(algorithm=CryptoAlgorithm.SECP256K1)
 
     if currency == "XRP":
         locking_currency = "XRP"
         issuing_currency = "XRP"
-        issuing_door = Wallet(_GENESIS_SEED, 0, algorithm=CryptoAlgorithm.SECP256K1)
+        issuing_door = Wallet.from_seed(
+            _GENESIS_SEED, algorithm=CryptoAlgorithm.SECP256K1
+        )
         issuing_algorithm = "secp256k1"
     else:
         assert currency.count(".") == 1
@@ -558,13 +579,23 @@ def generate_all_configs(
     reward_accounts = []
     signing_accounts = []
     for i in range(num_witnesses):
-        original_wallet = Wallet.create(crypto_algorithm=CryptoAlgorithm.SECP256K1)
-        witness_reward_wallet = Wallet(
-            original_wallet.seed, 0, algorithm=CryptoAlgorithm.ED25519
+        original_wallet = Wallet.create(algorithm=CryptoAlgorithm.SECP256K1)
+        if original_wallet.seed is None:
+            raise XBridgeCLIException(
+                "Something weird happened, the wallet should have a seed"
+            )
+        witness_reward_wallet = Wallet.from_seed(
+            original_wallet.seed, algorithm=CryptoAlgorithm.ED25519
         )
         reward_accounts.append(witness_reward_wallet.classic_address)
-        wallet = Wallet.create(CryptoAlgorithm.SECP256K1)
-        signing_wallet = Wallet(wallet.seed, 0, algorithm=CryptoAlgorithm.ED25519)
+        wallet = Wallet.create(algorithm=CryptoAlgorithm.SECP256K1)
+        if wallet.seed is None:
+            raise XBridgeCLIException(
+                "Something weird happened, the wallet should have a seed"
+            )
+        signing_wallet = Wallet.from_seed(
+            wallet.seed, algorithm=CryptoAlgorithm.ED25519
+        )
         signing_accounts.append(signing_wallet.classic_address)
         ctx.invoke(
             generate_witness_config,

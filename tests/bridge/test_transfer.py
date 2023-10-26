@@ -17,7 +17,8 @@ class TestBridgeTransfer:
 
         send_wallet = Wallet.create()
         receive_wallet = Wallet.create()
-        amount = xrp_to_drops(10)
+        xrp_amount = 10
+        amount = xrp_to_drops(xrp_amount)
 
         # initialize accounts
         fund_result1 = runner.invoke(
@@ -34,7 +35,7 @@ class TestBridgeTransfer:
             [
                 "bridge",
                 "create-account",
-                "--from_locking",
+                "--from-locking",
                 "--bridge",
                 "test_bridge",
                 "--from",
@@ -42,7 +43,7 @@ class TestBridgeTransfer:
                 "--to",
                 receive_wallet.classic_address,
                 "--amount",
-                "10",
+                "100",
                 "--verbose",
             ],
         )
@@ -63,8 +64,8 @@ class TestBridgeTransfer:
                 "bridge",
                 "transfer",
                 "--bridge=test_bridge",
-                "--from_locking",
-                f"--amount={amount}",
+                "--from-locking",
+                f"--amount={xrp_amount}",
                 f"--from={send_wallet.seed}",
                 f"--to={receive_wallet.seed}",
                 "-vv",
@@ -87,7 +88,8 @@ class TestBridgeTransfer:
 
         send_wallet = Wallet.create()
         receive_wallet = Wallet.create()
-        amount = xrp_to_drops(10)
+        xrp_amount = 10
+        amount = xrp_to_drops(xrp_amount)
 
         # initialize accounts
         fund_result1 = runner.invoke(
@@ -104,7 +106,7 @@ class TestBridgeTransfer:
             [
                 "bridge",
                 "create-account",
-                "--from_locking",
+                "--from-locking",
                 "--bridge",
                 "test_bridge",
                 "--from",
@@ -112,7 +114,7 @@ class TestBridgeTransfer:
                 "--to",
                 receive_wallet.classic_address,
                 "--amount",
-                "10",
+                "100",
                 "--verbose",
             ],
         )
@@ -136,8 +138,8 @@ class TestBridgeTransfer:
                 "bridge",
                 "transfer",
                 "--bridge=test_bridge",
-                "--from_locking",
-                f"--amount={amount}",
+                "--from-locking",
+                f"--amount={xrp_amount}",
                 f"--from={send_wallet.seed}",
                 f"--to={receive_wallet.seed}",
                 "-vv",
