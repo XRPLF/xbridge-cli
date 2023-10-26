@@ -1084,13 +1084,13 @@ files = [
 
 [[package]]
 name = "types-tabulate"
-version = "0.9.0.0"
+version = "0.9.0.3"
 description = "Typing stubs for tabulate"
 optional = false
 python-versions = "*"
 files = [
-    {file = "types-tabulate-0.9.0.0.tar.gz", hash = "sha256:4a79474714cea156bcd2185bb9bddd8fb9d3d5227c8d0a7f21bf21caf5f60e67"},
-    {file = "types_tabulate-0.9.0.0-py3-none-any.whl", hash = "sha256:a1cc2aa52d2a9abfe0acbb361ccd49e3400794086a41626ce8784ed2e1ec0b0d"},
+    {file = "types-tabulate-0.9.0.3.tar.gz", hash = "sha256:197651f9d6467193cd166d8500116a6d3a26f2a4eb2db093bc9535ee1c0be55e"},
+    {file = "types_tabulate-0.9.0.3-py3-none-any.whl", hash = "sha256:462d1b62e01728416e8277614d6a3eb172d53a8efaf04a04a973ff2dd45238f6"},
 ]
 
 [[package]]
