@@ -128,7 +128,7 @@ def generate_prod_witness_config(
     issuing_chain_ip, issuing_chain_port = issuing_chain.split(":")
 
     if signing_seed_param == "":
-        signing_seed = Wallet.create(crypto_algorithm=CryptoAlgorithm.SECP256K1).seed
+        signing_seed = Wallet.create(algorithm=CryptoAlgorithm.SECP256K1).seed
     else:
         signing_seed = signing_seed_param
 

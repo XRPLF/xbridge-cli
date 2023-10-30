@@ -47,8 +47,8 @@ def get_bootstrap_piece_from_witness(
     issuing_submit_account = issuing_config["TxnSubmit"]["SubmittingAccount"]
     signing_key_seed = witness_config["SigningKeySeed"]
     signing_key_algo = CryptoAlgorithm(witness_config["SigningKeyType"].upper())
-    signing_key_account = Wallet(
-        signing_key_seed, 0, algorithm=signing_key_algo
+    signing_key_account = Wallet.from_seed(
+        signing_key_seed, algorithm=signing_key_algo
     ).classic_address
 
     template_data = {
@@ -122,8 +122,8 @@ def combine_bootstrap_pieces(
         )
         signing_accounts.append(bootstrap_config["SigningKeyAccount"])
 
-    locking_door = Wallet(locking_door_seed, 0)
-    issuing_door = Wallet(issuing_door_seed, 0)
+    locking_door = Wallet.from_seed(locking_door_seed)
+    issuing_door = Wallet.from_seed(issuing_door_seed)
     locking_issue = "XRP"
     issuing_issue = "XRP"
 
