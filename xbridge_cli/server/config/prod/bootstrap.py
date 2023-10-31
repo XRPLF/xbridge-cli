@@ -25,11 +25,15 @@ from xbridge_cli.server.config.config import _generate_template
     "-o",
     "--output_file",
     prompt=True,
+    default="./bootstrap-piece.json",
     type=click.Path(),
-    help="The location of the witness config file.",
+    help=(
+        "The location of the witness config file. The default is "
+        "'./bootstrap-piece.json'."
+    ),
 )
 def get_bootstrap_piece_from_witness(
-    witness_file: str, output_file: Optional[str] = None
+    witness_file: str, output_file: Optional[str] = "./bootstrap-piece.json"
 ) -> None:
     """
     Extract the info needed for the bootstrap file from a witness config file, without
