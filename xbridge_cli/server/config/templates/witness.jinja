@@ -3,6 +3,8 @@
     "Endpoint": {
       {% if is_docker %}
       "Host": "192.168.176.2",
+      {% elif locking_chain_ip %}
+      "Host": "{{ locking_chain_ip }}",
       {% else %}
       "Host": "127.0.0.1",
       {% endif %}
@@ -20,6 +22,8 @@
     "Endpoint": {
       {% if is_docker %}
       "Host": "192.168.176.3",
+      {% elif issuing_chain_ip %}
+      "Host": "{{ issuing_chain_ip }}",
       {% elif is_linux %}
       "Host": "127.0.0.2",
       {% else %}
