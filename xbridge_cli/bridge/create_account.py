@@ -26,7 +26,7 @@ from xbridge_cli.utils.misc import is_standalone_network
     required=True,
     prompt=True,
     help=(
-        "Whether funding from the locking chain or the issuing chain. "
+        "Choose funding from the locking chain or issuing chain. "
         "Defaults to the locking chain."
     ),
 )
@@ -35,7 +35,7 @@ from xbridge_cli.utils.misc import is_standalone_network
     required=True,
     prompt=True,
     type=str,
-    help="The bridge across which to create the account.",
+    help="Specify the bridge to create the account with.",
 )
 @click.option(
     "--from",
@@ -43,7 +43,7 @@ from xbridge_cli.utils.misc import is_standalone_network
     required=True,
     prompt=True,
     type=str,
-    help="The seed of the account that the funds come from.",
+    help="Specify the seed of the account that the funds come from.",
 )
 @click.option(
     "--algorithm",
@@ -63,8 +63,8 @@ from xbridge_cli.utils.misc import is_standalone_network
     default=None,
     type=int,
     help=(
-        "The amount (in XRP) with which to fund the account. Must be greater than the "
-        "account reserve. Defaults to the account reserve."
+        "The amount of XRP to fund the account with. This must be greater than "
+        "the account reserve. Defaults to the account reserve."
     ),
 )
 @click.option(
@@ -72,22 +72,22 @@ from xbridge_cli.utils.misc import is_standalone_network
     "close_ledgers",
     default=True,
     help=(
-        "Whether to close ledgers manually (via `ledger_accept`) or wait for ledgers "
-        "to close automatically. A standalone node requires ledgers to be closed; an "
-        "external network does not support ledger closing."
+        "Close ledgers manually with `ledger_accept` or wait for ledgers "
+        "to close automatically. Standalone nodes requires ledgers to be closed; "
+        "external networks don't support ledger closing."
     ),
 )
 @click.option(
     "-v",
     "--verbose",
-    help="Whether or not to print more verbose information. Also supports `-vv`.",
+    help="Print more verbose information. Also supports `-vv`.",
     count=True,
 )
 @click.option(
     "-s",
     "--silent",
     is_flag=True,
-    help="Whether or not to print no information. Cannot be used with -v.",
+    help="Print no information. Can't be used with -v.",
 )
 def create_xchain_account(
     from_locking: bool,

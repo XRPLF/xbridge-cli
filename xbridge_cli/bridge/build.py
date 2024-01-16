@@ -52,7 +52,7 @@ LSF_DISABLE_MASTER = 0x00100000
     "--name",
     required=True,
     prompt=True,
-    help="The name of the bridge (used for differentiation purposes).",
+    help="Name the bridge.",
 )
 @click.option(
     "--bootstrap",
@@ -60,19 +60,19 @@ LSF_DISABLE_MASTER = 0x00100000
     required=True,
     prompt=True,
     type=click.Path(exists=True),
-    help="The filepath to the bootstrap config file.",
+    help="Specify the filepath to the bootstrap config file.",
 )
 @click.option(
     "--signature-reward",
     default="100",
-    help="The reward for witnesses providing a signature.",
+    help="The reward for witness servers that provide a signature.",
 )
 @click.option(
     "--funding-seed",
     "funding_seed",
     help=(
-        "The master key of an account on the locking chain that can fund accounts on "
-        "the issuing chain. This is only needed for an XRP-XRP bridge."
+        "The master key of the account on the locking chain that funds "
+        "accounts on the issuing chain. This is only needed for XRP-XRP bridges."
     ),
 )
 @click.option(
@@ -85,28 +85,28 @@ LSF_DISABLE_MASTER = 0x00100000
     "close_ledgers",
     default=True,
     help=(
-        "Whether to close ledgers manually (via `ledger_accept`) or wait for ledgers "
-        "to close automatically. A standalone node requires ledgers to be closed; an "
-        "external network does not support ledger closing."
+        "Close ledgers manually with `ledger_accept`, or wait for ledgers "
+        "to close automatically. Standalone nodes require ledgers to be closed; "
+        "external networks don't support ledger closing."
     ),
 )
 @click.option(
     "--fund-locking",
     "fund_locking",
     is_flag=True,
-    help="Whether to fund the locking chain accounts from the funding seed.",
+    help="Fund the locking chain accounts from the funding seed.",
 )
 @click.option(
     "-v",
     "--verbose",
-    help="Whether or not to print more verbose information. Also supports `-vv`.",
+    help="Print more verbose information. Also supports `-vv`.",
     count=True,
 )
 @click.option(
     "-s",
     "--silent",
     is_flag=True,
-    help="Whether or not to print no information. Cannot be used with -v.",
+    help="Print no information. Can't be used with -v.",
 )
 def setup_bridge(
     name: str,

@@ -63,14 +63,13 @@ def _get_bootstrap_chain_and_door(chain_json: Dict[str, Any]) -> Tuple[str, str]
     "--name",
     required=True,
     prompt=True,
-    help="The name of the bridge (used for differentiation purposes).",
+    help="Name the bridge.",
 )
 @click.option(
     "--bootstrap",
     type=click.Path(exists=True),
     help=(
-        "The filepath to the bootstrap config file. Optional. If you don't have it, "
-        "enter the info by hand."
+        "(Optional) The filepath of the bootstrap config file."
     ),
 )
 @click.option(
@@ -78,8 +77,8 @@ def _get_bootstrap_chain_and_door(chain_json: Dict[str, Any]) -> Tuple[str, str]
     nargs=2,
     type=str,
     help=(
-        "The URLs for HTTP connections for the two chains that the bridge is between. "
-        "Must be in the order (locking_chain, issuing_chain)."
+        "The URLs for HTTP connections to the chains on the bridge. "
+        "Must be in the order of `locking_chain, issuing_chain`."
     ),
 )
 @click.option(
@@ -87,8 +86,8 @@ def _get_bootstrap_chain_and_door(chain_json: Dict[str, Any]) -> Tuple[str, str]
     nargs=2,
     type=str,
     help=(
-        "The two door accounts. Must be in the order (locking_chain_door, "
-        "issuing_chain_door)."
+        "The two door accounts. Must be in the order of `locking_chain_door, "
+        "issuing_chain_door`."
     ),
 )
 @click.option(
@@ -103,7 +102,7 @@ def _get_bootstrap_chain_and_door(chain_json: Dict[str, Any]) -> Tuple[str, str]
     "-v",
     "--verbose",
     is_flag=True,
-    help="Whether or not to print more verbose information.",
+    help="Print more verbose information.",
 )
 def register_bridge(
     name: str,

@@ -115,18 +115,18 @@ def _generate_rippled_configs(config_dir: str, docker: bool = False) -> Tuple[in
     "config_dir",
     required=True,
     prompt=True,
-    help="The folder in which to store config files.",
+    help="Specify the folder to store config files in.",
 )
 @click.option(
     "--name",
     default="witness",
-    help="The name of the witness server. Used for the folder name.",
+    help="The name of the witness server (also used for the folder name).",
 )
 @click.option(
     "--docker",
     "is_docker",
     is_flag=True,
-    help="Whether the config files are for a docker setup.",
+    help="Specify the config files are for a docker setup.",
 )
 @click.option(
     "--locking-port",
@@ -150,7 +150,7 @@ def _generate_rippled_configs(config_dir: str, docker: bool = False) -> Tuple[in
     required=True,
     prompt=True,
     type=int,
-    help="The port that will be used by the witness server.",
+    help="The port used by the witness server.",
 )
 @click.option(
     "--src-door",
@@ -188,7 +188,7 @@ def _generate_rippled_configs(config_dir: str, docker: bool = False) -> Tuple[in
     "locking_reward_seed",
     required=True,
     prompt=True,
-    help="The seed for the reward account for the witness on the locking chain.",
+    help="The seed of the reward account for the witness on the locking chain.",
 )
 @click.option(
     "--locking-reward-account",
@@ -202,14 +202,14 @@ def _generate_rippled_configs(config_dir: str, docker: bool = False) -> Tuple[in
     "signing_seed",
     required=True,
     prompt=True,
-    help="The seed to use for signing attestations.",
+    help="The seed for signing attestations.",
 )
 @click.option(
     "--issuing-reward-seed",
     "issuing_reward_seed",
     required=True,
     prompt=True,
-    help="The seed for the reward account for the witness on the issuing chain.",
+    help="The seed of the reward account for the witness on the issuing chain.",
 )
 @click.option(
     "--issuing-reward-account",
@@ -222,7 +222,7 @@ def _generate_rippled_configs(config_dir: str, docker: bool = False) -> Tuple[in
     "-v",
     "--verbose",
     is_flag=True,
-    help="Whether or not to print more verbose information.",
+    help="Print more verbose information.",
 )
 def generate_witness_config(
     config_dir: str,
@@ -328,7 +328,7 @@ def generate_witness_config(
     "config_dir",
     required=True,
     prompt=True,
-    help="The folder in which to store the bridge bootstrap file.",
+    help="Specify the folder to store the bridge bootstrap file in.",
 )
 @click.option(
     "--locking-seed",
@@ -393,7 +393,7 @@ def generate_witness_config(
     "-v",
     "--verbose",
     is_flag=True,
-    help="Whether or not to print more verbose information.",
+    help="Print more verbose information.",
 )
 def generate_bootstrap(
     config_dir: str,

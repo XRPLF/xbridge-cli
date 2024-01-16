@@ -30,7 +30,7 @@ from xbridge_cli.utils import get_config, submit_tx
     "-v",
     "--verbose",
     is_flag=True,
-    help="Whether or not to print more verbose information.",
+    help="Print more verbose information.",
 )
 def set_trustline(
     chain: str, currency: str, accounts: List[str], verbose: bool = False

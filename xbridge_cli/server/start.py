@@ -98,27 +98,27 @@ def _run_process(
     "--name",
     required=True,
     prompt=True,
-    help="The name of the chain (used for differentiation purposes).",
+    help="Name the chain.",
 )
 @click.option(
     "--exe",
     required=True,
     prompt=True,
     type=str,  # TODO: should be Union[Literal["docker"], click.Path(exists=True)]
-    help="The filepath to the executable.",
+    help="Specify the filepath to the executable.",
 )
 @click.option(
     "--config",
     required=True,
     prompt=True,
     type=click.Path(exists=True),
-    help="The filepath to the exe config file.",
+    help="Specify the filepath to the exe config file.",
 )
 @click.option(
     "-v",
     "--verbose",
     is_flag=True,
-    help="Whether or not to print more verbose information.",
+    help="Print more verbose information.",
 )
 @click.pass_context
 def start_server(
@@ -224,7 +224,7 @@ def start_server(
     required=True,
     prompt=True,
     type=click.Path(exists=True),
-    help="The folder in which config files are stored.",
+    help="Specify the folder the config files are stored in.",
 )
 @click.option(
     "--rippled-exe",
@@ -233,7 +233,7 @@ def start_server(
     required=True,
     prompt=True,
     type=str,  # TODO: should be Union[Literal["docker"], click.Path(exists=True)]
-    help="The filepath to the rippled executable.",
+    help="Specify the filepath to the rippled executable.",
 )
 @click.option(
     "--witnessd-exe",
@@ -241,7 +241,7 @@ def start_server(
     required=True,
     prompt=True,
     type=str,  # TODO: should be Union[Literal["docker"], click.Path(exists=True)]
-    help="The filepath to the witnessd executable.",
+    help="Specify the filepath to the witnessd executable.",
 )
 @click.option("--docker", is_flag=True, help="Use executables from Docker.")
 @click.option("--rippled-only", is_flag=True, help="Only start up the rippled servers.")
@@ -250,7 +250,7 @@ def start_server(
     "-v",
     "--verbose",
     is_flag=True,
-    help="Whether or not to print more verbose information.",
+    help="Print more verbose information.",
 )
 @click.pass_context
 def start_all_servers(
