@@ -43,7 +43,7 @@ from xbridge_cli.utils.misc import is_standalone_network
     required=True,
     prompt=True,
     type=str,
-    help="Specify the account seed that the funds come from.",
+    help="Specify the seed of the account that the funds come from.",
 )
 @click.option(
     "--algorithm",
