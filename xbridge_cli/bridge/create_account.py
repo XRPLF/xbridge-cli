@@ -35,7 +35,7 @@ from xbridge_cli.utils.misc import is_standalone_network
     required=True,
     prompt=True,
     type=str,
-    help="Specify the bridge to create the account on.",
+    help="Specify the bridge to create the account with.",
 )
 @click.option(
     "--from",
