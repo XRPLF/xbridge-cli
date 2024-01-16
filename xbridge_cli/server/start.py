@@ -32,7 +32,7 @@ _DOCKER_COMPOSE_FILE = os.path.abspath(
     )
 )
 
-_DOCKER_COMPOSE = ["docker", "compose", "-f", _DOCKER_COMPOSE_FILE]
+_DOCKER_COMPOSE = ["docker-compose", "-f", _DOCKER_COMPOSE_FILE]
 
 _START_UP_TIME = 30  # seconds
 _WAIT_INCREMENT = 0.5  # seconds
