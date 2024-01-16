@@ -52,7 +52,7 @@ def _submit_tx(
     required=True,
     prompt=True,
     help=(
-        "Specify if funding comes from the locking chain or the issuing chain. "
+        "Specify if transfer comes from the locking chain or the issuing chain. "
         "Defaults to the locking chain."
     ),
 )
